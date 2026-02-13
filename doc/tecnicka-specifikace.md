@@ -1,0 +1,552 @@
+# Technická specifikace projektu TappyFaktur
+
+## 0. Stav dokumentu
+- Verze: `0.4`
+- Datum: `2026-02-12`
+- Stav: `Rozpracováno`
+- Vazba na funkční specifikaci: `doc/funkcni-specifikace.md` (verze `1.2`)
+
+## 1. Technologický stack
+
+### 1.1 Povinné technologie ze zadání
+- Backend: `Node.js`
+- Frontend: `React`
+- Databáze: `PostgreSQL`
+- Provoz: `Docker` (všechny části aplikace)
+
+### 1.2 Navržený stack v1
+- Jazyk: `TypeScript` (backend + frontend)
+- Backend framework: `NestJS` (REST API)
+- Frontend build: `Vite`
+- Frontend routing: `React Router`
+- Frontend data fetching: `TanStack Query`
+- Formuláře + validace: `React Hook Form` + `Zod`
+- ORM/migrace: `Prisma`
+- Auth: `argon2` (hash hesel) + session cookie (httpOnly)
+- PDF: `pdfkit`
+- QR (SPD): knihovna generující QR PNG/SVG + vlastní builder SPD payloadu
+- XML: `fast-xml-parser` + XSD validace
+- Testy backend: `Jest` + `Supertest`
+- Testy frontend: `Vitest` + `Testing Library`
+- E2E: `Playwright`
+
+## 2. Architektura systému
+
+### 2.1 Logická architektura
+1. `web` (React SPA)
+2. `api` (Node.js REST API)
+3. `db` (PostgreSQL)
+4. `smtp` (odeslání e-mailu pro reset hesla)
+
+V1 běží synchronně přes REST API; samostatný worker/queue není povinný.
+
+### 2.2 Návrh repozitářové struktury
+1. `apps/web` - React aplikace
+2. `apps/api` - Node API
+3. `packages/shared` - sdílené typy/schéma (DTO, enumy)
+4. `infra/docker` - Dockerfile, compose, init skripty
+5. `doc` - funkční + technická dokumentace
+
+### 2.3 Komunikační pravidla
+- Frontend komunikuje pouze s API (`/api/v1/*`).
+- API komunikuje s DB přes ORM.
+- Žádný přímý přístup z frontend do DB.
+
+## 3. Docker a runtime
+
+### 3.1 Služby v docker-compose
+1. `web` - port `3000`
+2. `api` - port `4000`
+3. `db` - port `5432`
+
+### 3.2 Inicializace databáze
+- Při startu `api` proběhne:
+1. kontrola připojení na DB,
+2. aplikace migrací,
+3. seed minimálních referenčních dat (sazby DPH, enum mapování).
+
+### 3.3 Persistované svazky
+- `postgres_data` pro data DB.
+- Volitelně `tmp_exports` pro dočasné generované soubory během requestu (pokud generátor nepoužívá stream v paměti).
+
+### 3.4 Základní env proměnné
+- `DATABASE_URL`
+- `TZ=Europe/Prague`
+- `API_PORT`
+- `WEB_PORT`
+- `APP_BASE_URL`
+- `INVOICE_NUMBER_FORMAT`
+- `XML_SCHEMA_DPH_VERSION`
+- `XML_SCHEMA_SH_VERSION`
+- `XML_SCHEMA_KH_VERSION`
+- `SESSION_SECRET`
+- `SESSION_TTL_HOURS`
+- `RESET_TOKEN_TTL_MINUTES`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `SMTP_FROM`
+
+## 4. Datový model (PostgreSQL)
+
+### 4.1 Přehled tabulek
+1. `users`
+2. `user_sessions`
+3. `password_reset_tokens`
+4. `subjects`
+5. `invoice_number_sequences`
+6. `invoices`
+7. `invoice_items`
+8. `pdf_export_metadata`
+9. `tax_report_runs`
+10. `tax_report_run_entries`
+
+### 4.2 Klíčové tabulky
+
+#### 4.2.1 users
+- `id` UUID PK
+- `email` unique (case-insensitive)
+- `password_hash`
+- `is_active` bool default true
+- `last_login_at` nullable
+- `created_at`, `updated_at`
+
+#### 4.2.2 user_sessions
+- `id` UUID PK
+- `user_id` FK -> users
+- `session_token_hash` unique
+- `user_agent` nullable
+- `ip_address` nullable
+- `expires_at`
+- `revoked_at` nullable
+- `created_at`
+
+Poznámka:
+- Do cookie se ukládá pouze opaque session token, v DB je uložen pouze jeho hash.
+
+#### 4.2.3 password_reset_tokens
+- `id` UUID PK
+- `user_id` FK -> users
+- `token_hash` unique
+- `expires_at`
+- `used_at` nullable
+- `created_at`
+
+Pravidla:
+- Token je jednorázový.
+- Po úspěšném resetu hesla se všechny aktivní session uživatele revokují.
+
+#### 4.2.4 subjects
+- `id` UUID PK
+- `user_id` FK -> users (1:1 v1)
+- Identita: `first_name`, `last_name`, `business_name`, `ico`, `dic`
+- Adresa: `street`, `city`, `postal_code`, `country_code`
+- DPH: `is_vat_payer`, `vat_registration_date`
+- Banka: `bank_account_prefix`, `bank_account_number`, `bank_code`
+- Výchozí nastavení: `default_variable_symbol_type`, `default_variable_symbol_value`, `default_due_days`
+- Unikátní constraint: `user_id` (v1 jen 1 subjekt na účet)
+
+#### 4.2.5 invoice_number_sequences
+- `id` UUID PK
+- `subject_id` FK unique
+- `period_year` int
+- `current_value` int
+- Unikátní constraint: (`subject_id`, `period_year`)
+
+#### 4.2.6 invoices
+- `id` UUID PK
+- `subject_id` FK
+- `status` enum: `draft | issued | paid | cancelled`
+- `invoice_number` nullable, unique per subject when not null
+- `variable_symbol`
+- `issue_date`, `taxable_supply_date`, `due_date`
+- `payment_method` enum: `bank_transfer`
+- `tax_classification` enum:
+  - `domestic_standard`
+  - `domestic_reverse_charge`
+  - `eu_service`
+  - `eu_goods`
+  - `export_third_country`
+  - `exempt_without_credit`
+- Odběratel snapshot:
+  - `customer_name`, `customer_ico`, `customer_dic`
+  - `customer_street`, `customer_city`, `customer_postal_code`, `customer_country_code`
+- Dodavatel snapshot (JSONB): `supplier_snapshot`
+- Součty:
+  - `total_without_vat`
+  - `total_vat`
+  - `total_with_vat`
+- Platební metadata:
+  - `paid_at` nullable
+- Poznámka: `note`
+- PDF metadata:
+  - `pdf_version` int default 0
+  - `pdf_payload_hash` nullable
+- Audit:
+  - `created_at`, `updated_at`
+
+Poznámka ke stavu `overdue`:
+- V DB se neukládá fyzicky.
+- API vrací vypočtený `effectiveStatus`:
+  - `overdue`, pokud `status='issued'` a `due_date < local_today`.
+  - jinak hodnota `status`.
+
+#### 4.2.7 invoice_items
+- `id` UUID PK
+- `invoice_id` FK (ON DELETE CASCADE)
+- `position` int
+- `description`
+- `quantity` numeric(15,3)
+- `unit` varchar(20)
+- `unit_price` numeric(15,2)
+- `vat_rate` smallint (`0|12|21`)
+- `line_total_without_vat` numeric(15,2)
+- `line_vat_amount` numeric(15,2)
+- `line_total_with_vat` numeric(15,2)
+
+#### 4.2.8 pdf_export_metadata
+- `id` UUID PK
+- `invoice_id` FK
+- `exported_at`
+- `exported_by_user_id` FK
+- `pdf_version`
+- `payload_hash`
+
+#### 4.2.9 tax_report_runs
+- `id` UUID PK
+- `subject_id` FK
+- `report_type` enum: `vat_return | summary_statement | control_statement`
+- `period_type` enum: `month | quarter`
+- `period_year` int
+- `period_value` int
+- `run_version` int
+- `dataset_hash`
+- `generated_by_user_id` FK
+- `generated_at`
+
+#### 4.2.10 tax_report_run_entries
+- `id` UUID PK
+- `run_id` FK -> tax_report_runs (ON DELETE CASCADE)
+- `invoice_id` FK -> invoices
+- `invoice_updated_at_snapshot`
+
+### 4.3 Indexy a constrainty
+- Unique index na `lower(users.email)`.
+- Index `user_sessions(user_id, expires_at)`.
+- Index `password_reset_tokens(user_id, expires_at)`.
+- Index `invoices(subject_id, issue_date desc)`
+- Index `invoices(subject_id, due_date)`
+- Index `invoices(subject_id, status)`
+- Index `invoices(subject_id, taxable_supply_date)`
+- Fulltext-like index pro hledání (trigram) nad:
+  - `invoice_number`
+  - `customer_name`
+  - `note`
+- Constraint: `due_date >= issue_date`
+- Constraint: `default_due_days between 1 and 90`
+- Constraint: `vat_rate in (0,12,21)`
+
+## 5. API kontrakty (REST, /api/v1)
+
+### 5.1 Auth (Scope 7)
+1. `POST /auth/register`
+2. `POST /auth/login`
+3. `POST /auth/logout`
+4. `POST /auth/forgot-password`
+5. `POST /auth/reset-password`
+6. `GET /auth/me`
+
+Pravidla:
+- `register`:
+  - vytvoří uživatele,
+  - založí session,
+  - vrací profil `me`.
+- `login`:
+  - validuje credentials,
+  - zakládá novou session pro aktuální zařízení.
+- `logout`:
+  - ruší pouze aktuální session (potvrzené rozhodnutí Scope 7).
+- `forgot-password`:
+  - vždy vrací obecnou odpověď bez prozrazení existence účtu.
+- `reset-password`:
+  - ověří reset token,
+  - uloží nové heslo,
+  - revokuje všechny aktivní session uživatele.
+- session je přenášena přes `httpOnly` cookie.
+
+### 5.2 Subject (Scope 1)
+1. `GET /subject`
+2. `POST /subject`
+3. `PATCH /subject`
+
+Backend validace:
+- IČO checksum.
+- DIČ povinné jen když `isVatPayer=true`.
+- Bankovní účet validace délky/povolených znaků.
+
+### 5.3 Invoices (Scope 2 + 3)
+1. `GET /invoices`
+2. `POST /invoices` (create draft)
+3. `POST /invoices/:id/copy`
+4. `GET /invoices/:id`
+5. `PATCH /invoices/:id`
+6. `POST /invoices/:id/issue`
+7. `POST /invoices/:id/mark-paid`
+8. `DELETE /invoices/:id`
+
+`GET /invoices` query:
+- `status=all|paid|unpaid|overdue`
+- `q=string`
+- `page=int`
+- `pageSize=10|20|50`
+
+Pravidla:
+- `DELETE` povoleno jen pro `draft`; jinak `409 Conflict`.
+- `issue` běží transakčně včetně přidělení čísla faktury.
+- `mark-paid` nastaví `status=paid` + `paid_at`.
+
+### 5.4 PDF export (Scope 4)
+1. `GET /invoices/:id/pdf`
+
+Pravidla:
+- Povolené stavy: `issued|paid|overdue`.
+- `draft` vrací `409`.
+- Export vrací `application/pdf` stream.
+- Pokud se payload změnil od posledního exportu, zvýší se `pdf_version`.
+
+### 5.5 Tax reports (Scope 5)
+1. `POST /tax-reports/preview`
+2. `POST /tax-reports/export`
+3. `GET /tax-reports/runs`
+
+`POST /tax-reports/preview` vstup:
+- `reportType`: `vat_return|summary_statement|control_statement`
+- `periodType`: `month|quarter`
+- `year`
+- `value` (1-12 nebo 1-4)
+
+`POST /tax-reports/export`:
+- stejné vstupy jako preview
+- odpověď: `application/xml`
+- současně se uloží záznam `tax_report_runs`.
+
+## 6. Klíčové transakční scénáře
+
+### 6.1 Registrace uživatele
+1. Validace vstupu (`email`, `heslo`, `potvrzení hesla`).
+2. V DB transakci:
+   - kontrola unikátnosti e-mailu,
+   - vytvoření uživatele s `password_hash`,
+   - vytvoření session.
+3. Nastavení auth cookie.
+
+### 6.2 Přihlášení uživatele
+1. Ověření credentials.
+2. Vytvoření session záznamu (`user_sessions`).
+3. Nastavení auth cookie.
+4. Aktualizace `users.last_login_at`.
+
+### 6.3 Reset hesla
+1. `forgot-password`: vytvoření jednorázového tokenu a odeslání e-mailu.
+2. `reset-password`:
+   - validace tokenu,
+   - update `users.password_hash`,
+   - označení tokenu jako použitý,
+   - revokace všech aktivních session uživatele.
+
+### 6.4 Vystavení faktury
+1. Validace draftu.
+2. DB transakce:
+   - lock sekvence (`FOR UPDATE`),
+   - inkrement sekvence,
+   - výpočet čísla faktury,
+   - update faktury na `issued`.
+3. Commit.
+
+### 6.5 Kopie faktury
+1. Načíst zdrojovou fakturu + položky.
+2. Vytvořit novou `draft` fakturu bez `invoice_number`.
+3. Přepočítat datumy (`issueDate=today`, `dueDate=+defaultDueDays`).
+4. Zkopírovat položky.
+
+### 6.6 Mazání faktury
+1. Ověřit `status=draft`.
+2. Smazat fakturu (cascade položek).
+3. Vrátit `204`.
+
+### 6.7 Export PDF
+1. Načíst fakturu + položky + subject snapshot.
+2. Ověřit pravidla exportu.
+3. Sestavit render payload + hash.
+4. Pokud hash != `pdf_payload_hash`:
+   - `pdf_version += 1`,
+   - uložit nový hash.
+5. Vygenerovat a streamovat PDF.
+
+### 6.8 Export XML daňových podkladů
+1. Spočítat dataset pro období.
+2. Sestavit XML dle typu podání.
+3. Validovat proti XSD.
+4. Spočítat `dataset_hash`.
+5. Určit `run_version`:
+   - +1 pouze pokud se změnil hash proti poslednímu běhu stejného typu/období.
+6. Uložit `tax_report_runs` + `tax_report_run_entries`.
+7. Vrátit XML stream.
+
+## 7. Frontend technický návrh
+
+### 7.1 Routing
+- React Router routes odpovídají funkční mapě:
+  - `/auth/login`
+  - `/auth/register`
+  - `/auth/forgot-password`
+  - `/auth/reset-password`
+  - `/onboarding/subject`
+  - `/invoices`
+  - `/invoices/new`
+  - `/invoices/:invoiceId`
+  - `/invoices/:invoiceId/edit`
+  - `/invoices/:invoiceId/copy`
+  - `/tax-reports`
+  - `/settings/subject`
+
+### 7.2 Stav a data
+- Server state: `TanStack Query`.
+- Form state: `React Hook Form`.
+- Validace formulářů: `Zod` schema shodná s backend DTO.
+- Kontext seznamu faktur držený v URL query parametrech.
+- Auth guard:
+  - veřejné routy pouze `/auth/*`,
+  - ostatní routy vyžadují validní session (`/auth/me`).
+
+### 7.3 UI komponenty
+- Tabulka faktur: server-side pagination.
+- Formulář položek: dynamické řádky.
+- Globální toast provider.
+- Confirm modal pro destruktivní akce.
+
+## 8. Výpočty a formátování
+
+### 8.1 Finanční výpočty
+- Výpočty probíhají na backendu.
+- Frontend jen zobrazuje výsledky.
+- Decimal aritmetika přes knihovnu (`decimal.js`), nikdy `float`.
+
+### 8.2 Datum a čas
+- Ukládání timestampů v UTC.
+- Business pravidla (splatnost, overdue) podle `Europe/Prague`.
+- Formát zobrazení: `DD.MM.YYYY`.
+
+### 8.3 Měna
+- V1 pouze `CZK`.
+- Formát částek: `1 234,56 Kč`.
+
+## 9. PDF a QR (SPD)
+
+### 9.1 PDF renderer
+- Server-side render do PDF.
+- Embedded font s podporou češtiny.
+- Layout odpovídá funkční specifikaci Scope 4.
+
+### 9.2 SPD payload
+- Povinná pole: `ACC`, `AM`, `CC`, `X-VS`.
+- `ACC` se skládá z IBAN.
+- Převod CZ účtu (`prefix/number/bankCode`) -> `CZ IBAN` probíhá backendově.
+
+### 9.3 Chybové stavy
+- Chybějící bankovní údaje: `422 Unprocessable Entity`.
+- Nevalidní IBAN/SPD payload: `422`.
+
+## 10. XML výstupy pro daňová podání
+
+### 10.1 Obecně
+- Každý typ podání má vlastní mapper dat -> XML model.
+- Nad výsledkem probíhá XSD validace.
+- Chyby mapování/validace vrací `422` s detailním listem problémů.
+
+### 10.2 Typy exportu v1
+1. `Přiznání k DPH`
+2. `Souhrnné hlášení`
+3. `Kontrolní hlášení`
+
+### 10.3 Strategie verzování běhů
+- Verze běhu je interní metadata.
+- XML soubor se nearchivuje, vždy se generuje z aktuálních dat.
+
+## 11. Bezpečnost a audit
+
+### 11.1 API bezpečnost
+- `helmet`, `cors`, size limits.
+- Basic rate limit na write endpointy.
+- Validace všech vstupů na DTO vrstvě.
+- Hesla hashovaná přes `argon2id`.
+- Session cookie:
+  - `httpOnly`,
+  - `secure` (mimo local dev),
+  - `sameSite=lax`.
+- Přísnější rate limiting na auth endpointy (`/auth/login`, `/auth/forgot-password`).
+
+### 11.2 Auditní logika
+- `created_at`, `updated_at` na hlavních tabulkách.
+- `tax_report_runs` jako audit exportů.
+- `pdf_export_metadata` jako audit PDF exportů.
+- `user_sessions` a `password_reset_tokens` jako audit auth operací.
+
+### 11.3 Přístupový model v1
+- 1 uživatel = 1 subjekt.
+- Multi-user role model je mimo v1.
+
+## 12. Testovací strategie
+
+### 12.1 Unit testy
+- Výpočet DPH a součtů.
+- IČO validace.
+- IBAN/SPD builder.
+- Mappery pro XML.
+- Validace hesla.
+- Hash/verify auth helpery.
+
+### 12.2 Integrační testy
+- Auth lifecycle: register -> login -> me -> logout.
+- Forgot/reset password včetně revokace session.
+- CRUD Subject.
+- Invoice lifecycle: create -> issue -> paid.
+- Delete draft vs. zákaz delete issued.
+- PDF export a verze.
+- Tax report export + run versioning.
+
+### 12.3 E2E testy
+- Registrace -> onboarding subjektu -> invoices landing.
+- Onboarding -> vytvoření faktury -> export PDF.
+- Seznam faktur: filtry + stránkování + návrat kontextu.
+- DPH podklady: preview + export XML.
+
+## 13. Nefunkční požadavky
+
+### 13.1 Výkonové cíle v1
+- `GET /invoices` p95 < 500 ms pro dataset do 10k faktur/subjekt.
+- `GET /invoices/:id/pdf` p95 < 2 s.
+- `POST /tax-reports/export` p95 < 5 s pro běžné období.
+
+### 13.2 Dostupnost a provoz
+- Lokální provoz přes Docker Compose.
+- Produkční deploy mimo rozsah této verze specifikace.
+
+### 13.3 Logging a observabilita
+- Strukturované logy JSON.
+- Request ID korelace mezi web/api.
+- Error tracking hook (Sentry-compatible).
+
+## 14. Potvrzená rozhodnutí
+1. Číselná řada faktur používá formát `YYYYNNNN` (např. `20260001`).
+2. V1 používá login (single-user bez autentizace se nepoužije).
+3. PDF renderer pro v1 je `pdfkit`.
+4. Registrace ve v1 nevyžaduje ověření e-mailu před prvním přihlášením.
+5. Ve v1 je povolena samoregistrace bez pozvánky.
+6. Odhlášení ukončí pouze aktuální session.
+
+## 15. Potvrzené rozhodnutí k XSD verzím
+1. XML schémata jsou konfigurovatelná přes env.
+2. Aplikace povolí pouze whitelist podporovaných verzí.
+3. V kódu je definována výchozí pinned verze pro každý typ podání.

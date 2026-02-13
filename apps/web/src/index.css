@@ -1,0 +1,36 @@
+:root {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #111827;
+  background: #eef2ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.card {
+  width: min(680px, 100%);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 12px 48px rgba(17, 24, 39, 0.12);
+  padding: 32px;
+}
+
+h1 {
+  margin-top: 0;
+}
+
+ul {
+  padding-left: 20px;
+}
