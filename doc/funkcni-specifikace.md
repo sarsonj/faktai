@@ -337,14 +337,14 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
   - každá položka zobrazuje průběžný řádkový součet `Celkem`.
 - `Součty`
 - `Poznámka`
-- `Sticky akční lišta` s hlavními akcemi (`Uložit`, `Vystavit`, `Smazat`, `Zrušit`) dostupná i při scrollu.
+- `Sticky akční lišta` s hlavními akcemi dostupná i při scrollu.
 
 #### 3.4.2 Akce editoru
 - Režim `create`:
-  - `Uložit koncept` (status `draft`)
-  - `Vystavit fakturu` (status `issued`)
+  - primární akce `Vystavit fakturu` (status `issued`)
+  - sekundární akce `Uložit koncept` (status `draft`)
 - Režim `edit`:
-  - `Uložit` (uložení změn existující faktury)
+  - `Uložit` (uložení změn existující faktury; ve standardním zamčeném režimu pro `paid` je tlačítko neaktivní)
   - po úspěšném uložení návrat na seznam faktur se zachováním aktivních filtrů
 - `Zrušit` (návrat na seznam)
 - `Smazat` (hard delete, dostupné ze seznamu faktur)
@@ -425,6 +425,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 12. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
 13. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
 14. Po `Uložit` v režimu `edit` se uživatel vrací na seznam faktur (`/invoices`) ve stejném kontextu filtrů/stránkování.
+15. V režimu `edit` se v hlavičce editoru nezobrazují pomocné akce (`Zpět na seznam`, `Detail faktury`, `PDF`); hlavní workflow je veden přes spodní akční lištu.
 
 ### 3.8 Stavy a chování UI
 - `Loading`: načítání editoru / faktury.

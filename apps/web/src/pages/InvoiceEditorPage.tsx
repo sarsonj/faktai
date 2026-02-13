@@ -2,13 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   createInvoice,
-  downloadInvoicePdf,
   getInvoice,
   issueInvoice,
-  markInvoicePaid,
   reserveInvoiceNumber,
   updateInvoice,
-  deleteInvoice,
 } from '../invoice-api';
 import { searchRegistryCompanies } from '../registry-api';
 import { getSubject } from '../subject-api';
@@ -391,49 +388,6 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
     }
   };
 
-  const onMarkPaid = async () => {
-    if (!invoice) {
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const paid = await markInvoicePaid(invoice.id);
-      setInvoice(paid);
-      setState(fromInvoice(paid));
-      setSuccess('Faktura byla označena jako uhrazená.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Označení úhrady selhalo');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const onDelete = async () => {
-    if (!invoice) {
-      return;
-    }
-
-    if (!window.confirm('Smazat koncept faktury? Tato akce je nevratná.')) {
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-
-    try {
-      await deleteInvoice(invoice.id);
-      navigate(backHref, { replace: true });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Smazání faktury selhalo');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const applyCustomerLookup = (item: RegistryCompanyResult) => {
     setState((current) => ({
       ...current,
@@ -505,30 +459,13 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
             </small>
           )}
         </div>
-        <div className="page-actions">
-          <Link className="action-link" to={backHref}>
-            Zpět na seznam
-          </Link>
-          {mode === 'edit' && invoice && (
-            <Link className="action-link secondary-link" to={`/invoices/${invoice.id}${listQuery ? `?${listQuery}` : ''}`}>
-              Detail faktury
+        {mode === 'create' && (
+          <div className="page-actions">
+            <Link className="action-link" to={backHref}>
+              Zpět na seznam
             </Link>
-          )}
-          {mode === 'edit' && invoice && (
-            <button
-              type="button"
-              className="secondary"
-              disabled={invoice.status === 'draft' || invoice.status === 'cancelled'}
-              onClick={() => {
-                void downloadInvoicePdf(invoice.id).catch((err: unknown) => {
-                  setError(err instanceof Error ? err.message : 'Export PDF selhal');
-                });
-              }}
-            >
-              PDF
-            </button>
-          )}
-        </div>
+          </div>
+        )}
       </header>
 
       {error && <p className="error">{error}</p>}
@@ -806,41 +743,63 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
         </label>
 
         <div className="totals-box">
-          <p>Bez DPH: {formatMoney(totals.withoutVat)}</p>
-          <p>DPH: {formatMoney(totals.vat)}</p>
-          <p>
-            <strong>Celkem: {formatMoney(totals.withVat)}</strong>
-          </p>
+          <div className="totals-row">
+            <span>Bez DPH</span>
+            <strong>{formatMoney(totals.withoutVat)}</strong>
+          </div>
+          <div className="totals-row">
+            <span>DPH</span>
+            <strong>{formatMoney(totals.vat)}</strong>
+          </div>
+          <div className="totals-row totals-row-final">
+            <span>Celkem</span>
+            <strong>{formatMoney(totals.withVat)}</strong>
+          </div>
         </div>
       </section>
 
       <section className="editor-action-bar">
         <div className="button-row wrap">
-          {!readOnly && (
+          {mode === 'create' && (
             <>
-              <button disabled={saving || reservingNumber} type="button" onClick={onSave}>
-                {saving ? 'Ukládám...' : mode === 'create' ? 'Uložit koncept' : 'Uložit'}
+              <button disabled={saving || reservingNumber} type="button" onClick={onIssue}>
+                {saving ? 'Vystavuji...' : 'Vystavit fakturu'}
               </button>
-              {mode === 'create' && (
-                <button disabled={saving || reservingNumber} type="button" onClick={onIssue}>
-                  Vystavit fakturu
-                </button>
-              )}
+              <button
+                disabled={saving || reservingNumber}
+                type="button"
+                className="secondary"
+                onClick={onSave}
+              >
+                {saving ? 'Ukládám...' : 'Uložit koncept'}
+              </button>
             </>
           )}
-          {mode === 'edit' && invoice?.status === 'draft' && (
-            <button disabled={saving} type="button" className="danger" onClick={onDelete}>
-              Smazat koncept
+          {mode === 'edit' && (
+            <>
+              <button disabled={saving || readOnly} type="button" onClick={onSave}>
+                {saving ? 'Ukládám...' : 'Uložit'}
+              </button>
+              <button
+                disabled={saving || reservingNumber}
+                type="button"
+                className="secondary"
+                onClick={() => navigate(backHref)}
+              >
+                Zrušit
+              </button>
+            </>
+          )}
+          {mode === 'create' && (
+            <button
+              disabled={saving || reservingNumber}
+              type="button"
+              className="secondary"
+              onClick={() => navigate(backHref)}
+            >
+              Zrušit
             </button>
           )}
-          {mode === 'edit' && invoice && (invoice.status === 'issued' || invoice.status === 'overdue') && (
-            <button disabled={saving} type="button" className="secondary" onClick={onMarkPaid}>
-              Označit jako uhrazené
-            </button>
-          )}
-          <button disabled={saving || reservingNumber} type="button" className="secondary" onClick={() => navigate(backHref)}>
-            Zrušit
-          </button>
         </div>
       </section>
     </section>
