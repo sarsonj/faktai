@@ -1057,15 +1057,15 @@ button:disabled {
 }
 
 .invoice-list-table .col-customer {
-  width: 190px;
+  width: 220px;
 }
 
 .invoice-list-table .col-dates {
-  width: 160px;
+  width: 180px;
 }
 
 .invoice-list-table .col-amounts {
-  width: 140px;
+  width: 170px;
 }
 
 .invoice-list-table .col-status {
@@ -1097,16 +1097,44 @@ button:disabled {
   font-weight: 700;
 }
 
-.invoice-list-table .cell-amounts {
+.invoice-list-table .invoice-meta-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: baseline;
+}
+
+.invoice-list-table .invoice-meta-row + .invoice-meta-row {
+  margin-top: 4px;
+}
+
+.invoice-list-table .invoice-meta-key {
+  color: #6a7f94;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.invoice-list-table .invoice-meta-value {
+  color: #274660;
+  font-size: 0.84rem;
+  font-weight: 700;
   text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .invoice-list-table .invoice-amount-main {
-  font-variant-numeric: tabular-nums;
   color: #163a57;
+  font-weight: 800;
 }
 
 .invoice-list-table .invoice-amount-sub {
+  color: #274660;
+}
+
+.invoice-list-table .invoice-status-date {
   font-variant-numeric: tabular-nums;
 }
 

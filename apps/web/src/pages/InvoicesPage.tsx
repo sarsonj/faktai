@@ -321,9 +321,6 @@ export function InvoicesPage() {
                         >
                           {item.invoiceNumber ?? 'Koncept'}
                         </Link>
-                        <div className="invoice-cell-secondary">
-                          {item.issueDate.slice(0, 4)}
-                        </div>
                       </td>
                       <td className="cell-customer">
                         <div className="invoice-cell-primary" title={item.customerName}>
@@ -334,20 +331,38 @@ export function InvoicesPage() {
                         </div>
                       </td>
                       <td className="cell-dates">
-                        <div className="invoice-cell-primary">Vystaveno: {formatDate(item.issueDate)}</div>
-                        <div className="invoice-cell-secondary">Splatnost: {formatDate(item.dueDate)}</div>
+                        <div className="invoice-meta-row">
+                          <span className="invoice-meta-key">Vystaveno</span>
+                          <span className="invoice-meta-value">{formatDate(item.issueDate)}</span>
+                        </div>
+                        <div className="invoice-meta-row">
+                          <span className="invoice-meta-key">Splatnost</span>
+                          <span className="invoice-meta-value">{formatDate(item.dueDate)}</span>
+                        </div>
                       </td>
                       <td className="cell-amounts">
-                        <div className="invoice-cell-primary invoice-amount-main">{formatMoney(item.totalWithVat)}</div>
-                        <div className="invoice-cell-secondary invoice-amount-sub">Bez DPH: {formatMoney(item.totalWithoutVat)}</div>
+                        <div className="invoice-meta-row">
+                          <span className="invoice-meta-key">Celkem</span>
+                          <span className="invoice-meta-value invoice-amount-main">
+                            {formatMoney(item.totalWithVat)}
+                          </span>
+                        </div>
+                        <div className="invoice-meta-row">
+                          <span className="invoice-meta-key">Bez DPH</span>
+                          <span className="invoice-meta-value invoice-amount-sub">
+                            {formatMoney(item.totalWithoutVat)}
+                          </span>
+                        </div>
                       </td>
                       <td className="cell-status">
                         <div className="invoice-cell-primary">
                           <span className={statusClassName(item.status)}>{statusLabel(item.status)}</span>
                         </div>
-                        <div className="invoice-cell-secondary">
-                          Uhrazeno: {item.paidAt ? formatDate(item.paidAt) : '-'}
-                        </div>
+                        {item.status === 'paid' && item.paidAt && (
+                          <div className="invoice-cell-secondary invoice-status-date">
+                            {formatDate(item.paidAt)}
+                          </div>
+                        )}
                       </td>
                       <td className="cell-actions">
                         <div className="table-actions">
