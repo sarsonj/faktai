@@ -1,4 +1,5 @@
 import { DefaultVariableSymbolType } from '@prisma/client';
+import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
@@ -14,78 +15,115 @@ import {
 } from 'class-validator';
 
 export class CreateSubjectDto {
-  @IsString()
-  @MinLength(1)
-  @MaxLength(100)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString({ message: 'Jméno musí být text.' })
+  @MinLength(1, { message: 'Jméno je povinné.' })
+  @MaxLength(100, { message: 'Jméno může mít maximálně 100 znaků.' })
   firstName!: string;
 
-  @IsString()
-  @MinLength(1)
-  @MaxLength(100)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString({ message: 'Příjmení musí být text.' })
+  @MinLength(1, { message: 'Příjmení je povinné.' })
+  @MaxLength(100, { message: 'Příjmení může mít maximálně 100 znaků.' })
   lastName!: string;
 
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsOptional()
-  @IsString()
-  @MaxLength(150)
+  @IsString({ message: 'Obchodní název musí být text.' })
+  @MaxLength(150, { message: 'Obchodní název může mít maximálně 150 znaků.' })
   businessName?: string;
 
-  @IsString()
-  @Matches(/^\d{8}$/)
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.replace(/\s+/g, '') : value,
+  )
+  @IsString({ message: 'IČO musí být text.' })
+  @Matches(/^\d{8}$/, { message: 'IČO musí obsahovat přesně 8 číslic.' })
   ico!: string;
 
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsOptional()
-  @IsString()
-  @MaxLength(20)
+  @IsString({ message: 'DIČ musí být text.' })
+  @MaxLength(20, { message: 'DIČ může mít maximálně 20 znaků.' })
   dic?: string;
 
-  @IsBoolean()
+  @IsBoolean({ message: 'Pole plátce DPH musí být ano/ne.' })
   isVatPayer!: boolean;
 
   @IsOptional()
-  @IsDateString()
+  @IsDateString({}, { message: 'Datum registrace DPH musí být platné datum.' })
   vatRegistrationDate?: string;
 
-  @IsString()
-  @MinLength(1)
-  @MaxLength(150)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString({ message: 'Ulice musí být text.' })
+  @MinLength(1, { message: 'Ulice je povinná.' })
+  @MaxLength(150, { message: 'Ulice může mít maximálně 150 znaků.' })
   street!: string;
 
-  @IsString()
-  @MinLength(1)
-  @MaxLength(100)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString({ message: 'Město musí být text.' })
+  @MinLength(1, { message: 'Město je povinné.' })
+  @MaxLength(100, { message: 'Město může mít maximálně 100 znaků.' })
   city!: string;
 
-  @IsString()
-  @Matches(/^\d{3}\s?\d{2}$/)
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.replace(/\s+/g, '') : value,
+  )
+  @IsString({ message: 'PSČ musí být text.' })
+  @Matches(/^\d{3}\d{2}$/, { message: 'PSČ musí mít formát 12345.' })
   postalCode!: string;
 
-  @IsString()
-  @Matches(/^[A-Z]{2}$/)
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.replace(/\s+/g, '').toUpperCase() : value,
+  )
+  @IsString({ message: 'Kód země musí být text.' })
+  @Matches(/^[A-Z]{2}$/, {
+    message: 'Kód země musí být ve formátu ISO-2 (např. CZ).',
+  })
   countryCode!: string;
 
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.replace(/\s+/g, '') : value,
+  )
   @IsOptional()
-  @IsString()
-  @Matches(/^\d{1,6}$/)
+  @IsString({ message: 'Prefix účtu musí být text.' })
+  @Matches(/^\d{1,6}$/, {
+    message: 'Prefix účtu může obsahovat 1 až 6 číslic.',
+  })
   bankAccountPrefix?: string;
 
-  @IsString()
-  @Matches(/^\d{2,10}$/)
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.replace(/\s+/g, '') : value,
+  )
+  @IsString({ message: 'Číslo účtu musí být text.' })
+  @Matches(/^\d{2,10}$/, {
+    message: 'Číslo účtu musí obsahovat 2 až 10 číslic.',
+  })
   bankAccountNumber!: string;
 
-  @IsString()
-  @Matches(/^\d{4}$/)
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.replace(/\s+/g, '') : value,
+  )
+  @IsString({ message: 'Kód banky musí být text.' })
+  @Matches(/^\d{4}$/, { message: 'Kód banky musí obsahovat přesně 4 číslice.' })
   bankCode!: string;
 
-  @IsEnum(DefaultVariableSymbolType)
+  @IsEnum(DefaultVariableSymbolType, {
+    message: 'Strategie variabilního symbolu musí být ico nebo custom.',
+  })
   defaultVariableSymbolType!: DefaultVariableSymbolType;
 
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.replace(/\s+/g, '') : value,
+  )
   @IsOptional()
-  @IsString()
-  @Matches(/^\d{1,10}$/)
+  @IsString({ message: 'Výchozí variabilní symbol musí být text.' })
+  @Matches(/^\d{1,10}$/, {
+    message: 'Výchozí variabilní symbol musí mít 1 až 10 číslic.',
+  })
   defaultVariableSymbolValue?: string;
 
-  @IsInt()
-  @Min(1)
-  @Max(90)
+  @IsInt({ message: 'Splatnost musí být celé číslo.' })
+  @Min(1, { message: 'Splatnost musí být alespoň 1 den.' })
+  @Max(90, { message: 'Splatnost může být maximálně 90 dní.' })
   defaultDueDays!: number;
 }

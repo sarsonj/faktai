@@ -51,13 +51,20 @@ export class AuthService {
     return this.getSessionTtlHours() * 60 * 60 * 1000;
   }
 
-  private assertPasswordConfirm(password: string, passwordConfirm: string): void {
+  private assertPasswordConfirm(
+    password: string,
+    passwordConfirm: string,
+  ): void {
     if (password !== passwordConfirm) {
-      throw new BadRequestException('Password confirmation does not match');
+      throw new BadRequestException('Potvrzení hesla se neshoduje.');
     }
   }
 
-  private async createSession(userId: string, userAgent?: string, ipAddress?: string): Promise<string> {
+  private async createSession(
+    userId: string,
+    userAgent?: string,
+    ipAddress?: string,
+  ): Promise<string> {
     const rawToken = randomBytes(48).toString('base64url');
     const tokenHash = this.hashOpaqueToken(rawToken);
     const expiresAt = new Date(Date.now() + this.getSessionCookieMaxAgeMs());
@@ -75,16 +82,22 @@ export class AuthService {
     return rawToken;
   }
 
-  async register(dto: RegisterDto, userAgent?: string, ipAddress?: string): Promise<{ sessionToken: string; me: MeResponse }> {
+  async register(
+    dto: RegisterDto,
+    userAgent?: string,
+    ipAddress?: string,
+  ): Promise<{ sessionToken: string; me: MeResponse }> {
     this.assertPasswordConfirm(dto.password, dto.passwordConfirm);
     const email = this.normalizeEmail(dto.email);
 
     const exists = await this.prisma.user.findUnique({ where: { email } });
     if (exists) {
-      throw new ConflictException('User with this email already exists');
+      throw new ConflictException('Uživatel s tímto e-mailem již existuje.');
     }
 
-    const passwordHash = await argon2.hash(dto.password, { type: argon2.argon2id });
+    const passwordHash = await argon2.hash(dto.password, {
+      type: argon2.argon2id,
+    });
     const user = await this.prisma.user.create({
       data: {
         email,
@@ -92,7 +105,11 @@ export class AuthService {
       },
     });
 
-    const sessionToken = await this.createSession(user.id, userAgent, ipAddress);
+    const sessionToken = await this.createSession(
+      user.id,
+      userAgent,
+      ipAddress,
+    );
     return {
       sessionToken,
       me: {
@@ -103,26 +120,36 @@ export class AuthService {
     };
   }
 
-  async login(dto: LoginDto, userAgent?: string, ipAddress?: string): Promise<{ sessionToken: string; me: MeResponse }> {
+  async login(
+    dto: LoginDto,
+    userAgent?: string,
+    ipAddress?: string,
+  ): Promise<{ sessionToken: string; me: MeResponse }> {
     const email = this.normalizeEmail(dto.email);
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Neplatné přihlašovací údaje.');
     }
 
     const validPassword = await argon2.verify(user.passwordHash, dto.password);
     if (!validPassword) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Neplatné přihlašovací údaje.');
     }
 
-    const sessionToken = await this.createSession(user.id, userAgent, ipAddress);
+    const sessionToken = await this.createSession(
+      user.id,
+      userAgent,
+      ipAddress,
+    );
     await this.prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
     });
 
-    const hasSubject = Boolean(await this.prisma.subject.findUnique({ where: { userId: user.id } }));
+    const hasSubject = Boolean(
+      await this.prisma.subject.findUnique({ where: { userId: user.id } }),
+    );
     return {
       sessionToken,
       me: {
@@ -165,10 +192,12 @@ export class AuthService {
   async getMeFromSession(rawToken: string): Promise<MeResponse> {
     const user = await this.getSessionUser(rawToken);
     if (!user) {
-      throw new UnauthorizedException('Not authenticated');
+      throw new UnauthorizedException('Uživatel není přihlášen.');
     }
 
-    const hasSubject = Boolean(await this.prisma.subject.findUnique({ where: { userId: user.id } }));
+    const hasSubject = Boolean(
+      await this.prisma.subject.findUnique({ where: { userId: user.id } }),
+    );
     return {
       id: user.id,
       email: user.email,
@@ -176,10 +205,14 @@ export class AuthService {
     };
   }
 
-  private async createResetToken(userId: string): Promise<{ rawToken: string; record: PasswordResetToken }> {
+  private async createResetToken(
+    userId: string,
+  ): Promise<{ rawToken: string; record: PasswordResetToken }> {
     const rawToken = randomBytes(32).toString('base64url');
     const tokenHash = this.hashOpaqueToken(rawToken);
-    const expiresAt = new Date(Date.now() + this.getResetTokenTtlMinutes() * 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() + this.getResetTokenTtlMinutes() * 60 * 1000,
+    );
 
     const record = await this.prisma.passwordResetToken.create({
       data: {
@@ -193,14 +226,16 @@ export class AuthService {
   }
 
   private async sendResetEmail(email: string, rawToken: string): Promise<void> {
-    const appBaseUrl = this.config.get<string>('APP_BASE_URL') ?? 'http://localhost:3000';
+    const appBaseUrl =
+      this.config.get<string>('APP_BASE_URL') ?? 'http://localhost:3000';
     const resetUrl = `${appBaseUrl}/auth/reset-password?token=${rawToken}`;
 
     const smtpHost = this.config.get<string>('SMTP_HOST');
     const smtpPort = Number(this.config.get<string>('SMTP_PORT') ?? 25);
     const smtpUser = this.config.get<string>('SMTP_USER');
     const smtpPass = this.config.get<string>('SMTP_PASS');
-    const smtpFrom = this.config.get<string>('SMTP_FROM') ?? 'no-reply@tappyfaktur.local';
+    const smtpFrom =
+      this.config.get<string>('SMTP_FROM') ?? 'no-reply@tappyfaktur.local';
 
     if (!smtpHost) {
       this.logger.log(`Password reset requested for ${email}: ${resetUrl}`);
@@ -247,10 +282,12 @@ export class AuthService {
     });
 
     if (!token) {
-      throw new BadRequestException('Token is invalid or expired');
+      throw new BadRequestException('Token je neplatný nebo expiroval.');
     }
 
-    const passwordHash = await argon2.hash(dto.password, { type: argon2.argon2id });
+    const passwordHash = await argon2.hash(dto.password, {
+      type: argon2.argon2id,
+    });
 
     await this.prisma.$transaction([
       this.prisma.user.update({

@@ -10,6 +10,7 @@ import { SubjectModule } from './subject/subject.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { TaxReportsModule } from './tax-reports/tax-reports.module';
 import { RequestContextMiddleware } from './common/request-context.middleware';
+import { RegistryModule } from './registry/registry.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { RequestContextMiddleware } from './common/request-context.middleware';
     AuthModule,
     SubjectModule,
     InvoiceModule,
+    RegistryModule,
     TaxReportsModule,
   ],
   controllers: [AppController],

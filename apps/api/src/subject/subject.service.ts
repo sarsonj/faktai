@@ -14,6 +14,10 @@ import { UpdateSubjectDto } from './dto/update-subject.dto';
 export class SubjectService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private normalizeIco(ico: string): string {
+    return ico.replace(/\s+/g, '');
+  }
+
   private normalizePostalCode(postalCode: string): string {
     return postalCode.replace(/\s+/g, '');
   }
@@ -27,27 +31,34 @@ export class SubjectService {
     defaultVariableSymbolValue?: string | null;
   }) {
     if (payload.ico && !isValidIco(payload.ico)) {
-      throw new BadRequestException('Invalid ICO checksum');
+      throw new BadRequestException('IČO není platné (kontrolní součet).');
     }
 
     if (payload.isVatPayer) {
       if (!payload.dic) {
-        throw new BadRequestException('DIC is required for VAT payer');
+        throw new BadRequestException('DIČ je povinné pro plátce DPH.');
       }
       if (!payload.vatRegistrationDate) {
-        throw new BadRequestException('VAT registration date is required for VAT payer');
+        throw new BadRequestException(
+          'Datum registrace DPH je povinné pro plátce DPH.',
+        );
       }
     }
 
-    if (payload.defaultVariableSymbolType === 'custom' && !payload.defaultVariableSymbolValue) {
-      throw new BadRequestException('Custom variable symbol value is required');
+    if (
+      payload.defaultVariableSymbolType === 'custom' &&
+      !payload.defaultVariableSymbolValue
+    ) {
+      throw new BadRequestException(
+        'Pro vlastní variabilní symbol musíte vyplnit jeho hodnotu.',
+      );
     }
   }
 
   async getSubject(userId: string) {
     const subject = await this.prisma.subject.findUnique({ where: { userId } });
     if (!subject) {
-      throw new NotFoundException('Subject not found');
+      throw new NotFoundException('Subjekt nebyl nalezen.');
     }
     return subject;
   }
@@ -55,17 +66,19 @@ export class SubjectService {
   async createSubject(userId: string, dto: CreateSubjectDto) {
     const exists = await this.prisma.subject.findUnique({ where: { userId } });
     if (exists) {
-      throw new ConflictException('Subject already exists');
+      throw new ConflictException('Subjekt již existuje.');
     }
 
     const payload: Prisma.SubjectCreateInput = {
       firstName: dto.firstName,
       lastName: dto.lastName,
       businessName: dto.businessName,
-      ico: dto.ico,
+      ico: this.normalizeIco(dto.ico),
       dic: dto.dic,
       isVatPayer: dto.isVatPayer,
-      vatRegistrationDate: dto.vatRegistrationDate ? new Date(dto.vatRegistrationDate) : null,
+      vatRegistrationDate: dto.vatRegistrationDate
+        ? new Date(dto.vatRegistrationDate)
+        : null,
       street: dto.street,
       city: dto.city,
       postalCode: this.normalizePostalCode(dto.postalCode),
@@ -75,7 +88,9 @@ export class SubjectService {
       bankCode: dto.bankCode,
       defaultVariableSymbolType: dto.defaultVariableSymbolType,
       defaultVariableSymbolValue:
-        dto.defaultVariableSymbolType === 'custom' ? dto.defaultVariableSymbolValue ?? null : null,
+        dto.defaultVariableSymbolType === 'custom'
+          ? (dto.defaultVariableSymbolValue ?? null)
+          : null,
       defaultDueDays: dto.defaultDueDays,
       user: { connect: { id: userId } },
     };
@@ -84,7 +99,10 @@ export class SubjectService {
       ico: payload.ico,
       dic: payload.dic,
       isVatPayer: payload.isVatPayer,
-      vatRegistrationDate: payload.vatRegistrationDate as Date | null | undefined,
+      vatRegistrationDate: payload.vatRegistrationDate as
+        | Date
+        | null
+        | undefined,
       defaultVariableSymbolType: payload.defaultVariableSymbolType,
       defaultVariableSymbolValue: payload.defaultVariableSymbolValue,
     });
@@ -95,13 +113,16 @@ export class SubjectService {
   async updateSubject(userId: string, dto: UpdateSubjectDto) {
     const current = await this.prisma.subject.findUnique({ where: { userId } });
     if (!current) {
-      throw new NotFoundException('Subject not found');
+      throw new NotFoundException('Subjekt nebyl nalezen.');
     }
 
     const merged = {
       ...current,
       ...dto,
-      postalCode: dto.postalCode ? this.normalizePostalCode(dto.postalCode) : current.postalCode,
+      ico: dto.ico ? this.normalizeIco(dto.ico) : current.ico,
+      postalCode: dto.postalCode
+        ? this.normalizePostalCode(dto.postalCode)
+        : current.postalCode,
       vatRegistrationDate: dto.vatRegistrationDate
         ? new Date(dto.vatRegistrationDate)
         : dto.isVatPayer === false
@@ -111,7 +132,7 @@ export class SubjectService {
 
     const defaultVariableSymbolValue =
       merged.defaultVariableSymbolType === 'custom'
-        ? dto.defaultVariableSymbolValue ?? current.defaultVariableSymbolValue
+        ? (dto.defaultVariableSymbolValue ?? current.defaultVariableSymbolValue)
         : null;
 
     this.validateBusinessRules({
@@ -127,7 +148,10 @@ export class SubjectService {
       where: { userId },
       data: {
         ...dto,
-        postalCode: dto.postalCode ? this.normalizePostalCode(dto.postalCode) : undefined,
+        ico: dto.ico ? this.normalizeIco(dto.ico) : undefined,
+        postalCode: dto.postalCode
+          ? this.normalizePostalCode(dto.postalCode)
+          : undefined,
         vatRegistrationDate: dto.vatRegistrationDate
           ? new Date(dto.vatRegistrationDate)
           : dto.isVatPayer === false

@@ -130,6 +130,14 @@ export class InvoiceService {
     return postalCode.replace(/\s+/g, '');
   }
 
+  private normalizeIco(value?: string): string | null {
+    const normalized = this.normalizeOptionalText(value);
+    if (!normalized) {
+      return null;
+    }
+    return normalized.replace(/\s+/g, '');
+  }
+
   private normalizeOptionalText(value?: string): string | null {
     if (!value) {
       return null;
@@ -166,10 +174,15 @@ export class InvoiceService {
       return subject.defaultVariableSymbolValue;
     }
 
-    throw new BadRequestException('Subject does not have default variable symbol configured');
+    throw new BadRequestException(
+      'Subject does not have default variable symbol configured',
+    );
   }
 
-  private resolveVariableSymbol(subject: Subject, dto: UpsertInvoiceDto): string {
+  private resolveVariableSymbol(
+    subject: Subject,
+    dto: UpsertInvoiceDto,
+  ): string {
     const explicit = this.normalizeOptionalText(dto.variableSymbol);
     const candidate = explicit ?? this.resolveDefaultVariableSymbol(subject);
 
@@ -190,14 +203,18 @@ export class InvoiceService {
       const unitPrice = new Decimal(item.unitPrice);
 
       if (quantity.lte(0)) {
-        throw new BadRequestException('Item quantity must be greater than zero');
+        throw new BadRequestException(
+          'Item quantity must be greater than zero',
+        );
       }
 
       if (unitPrice.lt(0)) {
         throw new BadRequestException('Item unit price cannot be negative');
       }
 
-      const lineTotalWithoutVat = quantity.mul(unitPrice).toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN);
+      const lineTotalWithoutVat = quantity
+        .mul(unitPrice)
+        .toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN);
       const lineVatAmount = lineTotalWithoutVat
         .mul(new Decimal(item.vatRate).div(100))
         .toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN);
@@ -208,9 +225,13 @@ export class InvoiceService {
       return {
         position: index + 1,
         description: item.description.trim(),
-        quantity: quantity.toDecimalPlaces(3, Decimal.ROUND_HALF_EVEN).toFixed(3),
+        quantity: quantity
+          .toDecimalPlaces(3, Decimal.ROUND_HALF_EVEN)
+          .toFixed(3),
         unit: item.unit.trim(),
-        unitPrice: unitPrice.toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN).toFixed(2),
+        unitPrice: unitPrice
+          .toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN)
+          .toFixed(2),
         vatRate: item.vatRate,
         lineTotalWithoutVat: lineTotalWithoutVat.toFixed(2),
         lineVatAmount: lineVatAmount.toFixed(2),
@@ -224,7 +245,9 @@ export class InvoiceService {
     const totalVat = computedItems
       .reduce((sum, item) => sum.add(item.lineVatAmount), new Decimal(0))
       .toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN);
-    const totalWithVat = totalWithoutVat.add(totalVat).toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN);
+    const totalWithVat = totalWithoutVat
+      .add(totalVat)
+      .toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN);
 
     return {
       items: computedItems,
@@ -324,7 +347,10 @@ export class InvoiceService {
     return subject;
   }
 
-  private async getInvoiceBySubjectOrThrow(subjectId: string, invoiceId: string) {
+  private async getInvoiceBySubjectOrThrow(
+    subjectId: string,
+    invoiceId: string,
+  ) {
     const invoice = await this.prisma.invoice.findFirst({
       where: {
         id: invoiceId,
@@ -346,8 +372,11 @@ export class InvoiceService {
 
   private resolveInvoiceDates(subject: Subject, dto: UpsertInvoiceDto) {
     const issueDate = this.parseDateOnly(dto.issueDate) ?? this.startOfToday();
-    const taxableSupplyDate = this.parseDateOnly(dto.taxableSupplyDate) ?? issueDate;
-    const dueDate = this.parseDateOnly(dto.dueDate) ?? this.addDays(issueDate, subject.defaultDueDays);
+    const taxableSupplyDate =
+      this.parseDateOnly(dto.taxableSupplyDate) ?? issueDate;
+    const dueDate =
+      this.parseDateOnly(dto.dueDate) ??
+      this.addDays(issueDate, subject.defaultDueDays);
 
     if (dueDate < issueDate) {
       throw new BadRequestException('Due date cannot be before issue date');
@@ -509,9 +538,7 @@ export class InvoiceService {
       spdPayload: input.spdPayload,
     };
 
-    return createHash('sha256')
-      .update(JSON.stringify(payload))
-      .digest('hex');
+    return createHash('sha256').update(JSON.stringify(payload)).digest('hex');
   }
 
   private formatMoney(value: string): string {
@@ -551,12 +578,18 @@ export class InvoiceService {
 
       doc.fontSize(18).text('FAKTURA - daňový doklad', { align: 'left' });
       doc.moveDown(0.5);
-      doc.fontSize(11).text(`Číslo dokladu: ${input.invoice.invoiceNumber ?? '-'}`);
-      doc.text(`Datum vystavení: ${input.invoice.issueDate.toLocaleDateString('cs-CZ')}`);
+      doc
+        .fontSize(11)
+        .text(`Číslo dokladu: ${input.invoice.invoiceNumber ?? '-'}`);
+      doc.text(
+        `Datum vystavení: ${input.invoice.issueDate.toLocaleDateString('cs-CZ')}`,
+      );
       doc.text(
         `Datum zdanitelného plnění: ${input.invoice.taxableSupplyDate.toLocaleDateString('cs-CZ')}`,
       );
-      doc.text(`Datum splatnosti: ${input.invoice.dueDate.toLocaleDateString('cs-CZ')}`);
+      doc.text(
+        `Datum splatnosti: ${input.invoice.dueDate.toLocaleDateString('cs-CZ')}`,
+      );
       doc.text(`Variabilní symbol: ${input.invoice.variableSymbol}`);
       doc.moveDown();
 
@@ -584,7 +617,9 @@ export class InvoiceService {
       if (input.invoice.customerDic) {
         doc.text(`DIČ: ${input.invoice.customerDic}`);
       }
-      doc.text(`${input.invoice.customerStreet}, ${input.invoice.customerCity}`);
+      doc.text(
+        `${input.invoice.customerStreet}, ${input.invoice.customerCity}`,
+      );
       doc.text(
         `${input.invoice.customerPostalCode}, ${input.invoice.customerCountryCode}`,
       );
@@ -593,16 +628,26 @@ export class InvoiceService {
       doc.fontSize(13).text('Položky');
       doc.moveDown(0.3);
       doc.fontSize(10);
-      for (const item of input.invoice.items.sort((a, b) => a.position - b.position)) {
+      for (const item of input.invoice.items.sort(
+        (a, b) => a.position - b.position,
+      )) {
         doc.text(
           `${item.position}. ${item.description} | ${item.quantity.toString()} ${item.unit} | ${item.vatRate}% | ${this.formatMoney(item.lineTotalWithVat.toString())}`,
         );
       }
       doc.moveDown();
 
-      doc.fontSize(11).text(`Celkem bez DPH: ${this.formatMoney(input.invoice.totalWithoutVat.toString())}`);
+      doc
+        .fontSize(11)
+        .text(
+          `Celkem bez DPH: ${this.formatMoney(input.invoice.totalWithoutVat.toString())}`,
+        );
       doc.text(`DPH: ${this.formatMoney(input.invoice.totalVat.toString())}`);
-      doc.fontSize(12).text(`Celkem k úhradě: ${this.formatMoney(input.invoice.totalWithVat.toString())}`);
+      doc
+        .fontSize(12)
+        .text(
+          `Celkem k úhradě: ${this.formatMoney(input.invoice.totalWithVat.toString())}`,
+        );
       doc.moveDown();
 
       doc.fontSize(11).text('Platba');
@@ -679,16 +724,28 @@ export class InvoiceService {
     };
   }
 
-  async getInvoiceDetail(userId: string, invoiceId: string): Promise<InvoiceDetail> {
+  async getInvoiceDetail(
+    userId: string,
+    invoiceId: string,
+  ): Promise<InvoiceDetail> {
     const subject = await this.getSubjectByUserOrThrow(userId);
-    const invoice = await this.getInvoiceBySubjectOrThrow(subject.id, invoiceId);
+    const invoice = await this.getInvoiceBySubjectOrThrow(
+      subject.id,
+      invoiceId,
+    );
     return this.mapDetail(invoice);
   }
 
-  async createDraft(userId: string, dto: UpsertInvoiceDto): Promise<InvoiceDetail> {
+  async createDraft(
+    userId: string,
+    dto: UpsertInvoiceDto,
+  ): Promise<InvoiceDetail> {
     const subject = await this.getSubjectByUserOrThrow(userId);
     const computed = this.computeInvoiceTotals(dto.items);
-    const { issueDate, taxableSupplyDate, dueDate } = this.resolveInvoiceDates(subject, dto);
+    const { issueDate, taxableSupplyDate, dueDate } = this.resolveInvoiceDates(
+      subject,
+      dto,
+    );
     const variableSymbol = this.resolveVariableSymbol(subject, dto);
 
     const created = await this.prisma.invoice.create({
@@ -703,7 +760,7 @@ export class InvoiceService {
         paymentMethod: dto.paymentMethod ?? 'bank_transfer',
         taxClassification: dto.taxClassification,
         customerName: dto.customerName.trim(),
-        customerIco: this.normalizeOptionalText(dto.customerIco),
+        customerIco: this.normalizeIco(dto.customerIco),
         customerDic: this.normalizeOptionalText(dto.customerDic),
         customerStreet: dto.customerStreet.trim(),
         customerCity: dto.customerCity.trim(),
@@ -723,16 +780,26 @@ export class InvoiceService {
     return this.getInvoiceDetail(userId, created.id);
   }
 
-  async updateInvoice(userId: string, invoiceId: string, dto: UpsertInvoiceDto): Promise<InvoiceDetail> {
+  async updateInvoice(
+    userId: string,
+    invoiceId: string,
+    dto: UpsertInvoiceDto,
+  ): Promise<InvoiceDetail> {
     const subject = await this.getSubjectByUserOrThrow(userId);
-    const current = await this.getInvoiceBySubjectOrThrow(subject.id, invoiceId);
+    const current = await this.getInvoiceBySubjectOrThrow(
+      subject.id,
+      invoiceId,
+    );
 
     if (current.status === 'paid' || current.status === 'cancelled') {
       throw new ConflictException('Paid or cancelled invoice cannot be edited');
     }
 
     const computed = this.computeInvoiceTotals(dto.items);
-    const { issueDate, taxableSupplyDate, dueDate } = this.resolveInvoiceDates(subject, dto);
+    const { issueDate, taxableSupplyDate, dueDate } = this.resolveInvoiceDates(
+      subject,
+      dto,
+    );
     const variableSymbol = this.resolveVariableSymbol(subject, dto);
 
     const updated = await this.prisma.invoice.update({
@@ -745,7 +812,7 @@ export class InvoiceService {
         paymentMethod: dto.paymentMethod ?? 'bank_transfer',
         taxClassification: dto.taxClassification,
         customerName: dto.customerName.trim(),
-        customerIco: this.normalizeOptionalText(dto.customerIco),
+        customerIco: this.normalizeIco(dto.customerIco),
         customerDic: this.normalizeOptionalText(dto.customerDic),
         customerStreet: dto.customerStreet.trim(),
         customerCity: dto.customerCity.trim(),
@@ -765,9 +832,15 @@ export class InvoiceService {
     return this.getInvoiceDetail(userId, updated.id);
   }
 
-  async copyInvoice(userId: string, sourceInvoiceId: string): Promise<InvoiceDetail> {
+  async copyInvoice(
+    userId: string,
+    sourceInvoiceId: string,
+  ): Promise<InvoiceDetail> {
     const subject = await this.getSubjectByUserOrThrow(userId);
-    const source = await this.getInvoiceBySubjectOrThrow(subject.id, sourceInvoiceId);
+    const source = await this.getInvoiceBySubjectOrThrow(
+      subject.id,
+      sourceInvoiceId,
+    );
 
     const issueDate = this.startOfToday();
     const dueDate = this.addDays(issueDate, subject.defaultDueDays);
@@ -816,26 +889,41 @@ export class InvoiceService {
     return this.getInvoiceDetail(userId, copied.id);
   }
 
-  private validateReadyToIssue(invoice: Invoice & { items: InvoiceItem[] }): void {
+  private validateReadyToIssue(
+    invoice: Invoice & { items: InvoiceItem[] },
+  ): void {
     if (invoice.items.length === 0) {
-      throw new BadRequestException('Invoice must have at least one item before issue');
+      throw new BadRequestException(
+        'Invoice must have at least one item before issue',
+      );
     }
 
     if (!invoice.taxClassification) {
-      throw new BadRequestException('Tax classification is required before issue');
+      throw new BadRequestException(
+        'Tax classification is required before issue',
+      );
     }
 
     if (
-      (invoice.taxClassification === 'eu_service' || invoice.taxClassification === 'eu_goods') &&
+      (invoice.taxClassification === 'eu_service' ||
+        invoice.taxClassification === 'eu_goods') &&
       !invoice.customerDic
     ) {
-      throw new BadRequestException('Customer DIC is required for EU tax classification');
+      throw new BadRequestException(
+        'Customer DIC is required for EU tax classification',
+      );
     }
   }
 
-  async issueInvoice(userId: string, invoiceId: string): Promise<InvoiceDetail> {
+  async issueInvoice(
+    userId: string,
+    invoiceId: string,
+  ): Promise<InvoiceDetail> {
     const subject = await this.getSubjectByUserOrThrow(userId);
-    const current = await this.getInvoiceBySubjectOrThrow(subject.id, invoiceId);
+    const current = await this.getInvoiceBySubjectOrThrow(
+      subject.id,
+      invoiceId,
+    );
 
     if (current.status === 'paid' || current.status === 'cancelled') {
       throw new ConflictException('Invoice cannot be issued in current status');
@@ -877,7 +965,10 @@ export class InvoiceService {
           },
         });
 
-        invoiceNumber = this.formatInvoiceNumber(issueYear, sequence.currentValue);
+        invoiceNumber = this.formatInvoiceNumber(
+          issueYear,
+          sequence.currentValue,
+        );
       }
 
       await tx.invoice.update({
@@ -895,9 +986,16 @@ export class InvoiceService {
     return this.getInvoiceDetail(userId, invoiceId);
   }
 
-  async markInvoicePaid(userId: string, invoiceId: string, paidAt?: string): Promise<InvoiceDetail> {
+  async markInvoicePaid(
+    userId: string,
+    invoiceId: string,
+    paidAt?: string,
+  ): Promise<InvoiceDetail> {
     const subject = await this.getSubjectByUserOrThrow(userId);
-    const current = await this.getInvoiceBySubjectOrThrow(subject.id, invoiceId);
+    const current = await this.getInvoiceBySubjectOrThrow(
+      subject.id,
+      invoiceId,
+    );
 
     if (current.status === 'draft' || current.status === 'cancelled') {
       throw new ConflictException('Only issued invoice can be marked as paid');
@@ -940,9 +1038,14 @@ export class InvoiceService {
       throw new NotFoundException('Invoice not found');
     }
 
-    const effectiveStatus = this.toEffectiveStatus(invoice.status, invoice.dueDate);
+    const effectiveStatus = this.toEffectiveStatus(
+      invoice.status,
+      invoice.dueDate,
+    );
     if (invoice.status === 'draft' || invoice.status === 'cancelled') {
-      throw new ConflictException('PDF export is allowed only for issued or paid invoices');
+      throw new ConflictException(
+        'PDF export is allowed only for issued or paid invoices',
+      );
     }
 
     const supplier = this.getSupplierSnapshotForPdf(invoice);
@@ -982,7 +1085,9 @@ export class InvoiceService {
       }
 
       const hasChanged = current.pdfPayloadHash !== payloadHash;
-      const nextVersion = hasChanged ? current.pdfVersion + 1 : current.pdfVersion;
+      const nextVersion = hasChanged
+        ? current.pdfVersion + 1
+        : current.pdfVersion;
 
       if (hasChanged) {
         await tx.invoice.update({
@@ -1022,7 +1127,10 @@ export class InvoiceService {
 
   async deleteInvoice(userId: string, invoiceId: string): Promise<void> {
     const subject = await this.getSubjectByUserOrThrow(userId);
-    const current = await this.getInvoiceBySubjectOrThrow(subject.id, invoiceId);
+    const current = await this.getInvoiceBySubjectOrThrow(
+      subject.id,
+      invoiceId,
+    );
 
     if (current.status !== 'draft') {
       throw new ConflictException('Only draft invoice can be deleted');

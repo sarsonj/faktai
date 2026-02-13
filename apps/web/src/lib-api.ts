@@ -31,7 +31,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     const maybeJson = await response
       .json()
       .catch(() => ({ message: `Request failed with ${response.status}` }));
-    throw new ApiError(response.status, maybeJson.message ?? `Request failed with ${response.status}`);
+    const message = Array.isArray(maybeJson.message)
+      ? maybeJson.message.join(' ')
+      : (maybeJson.message ?? `Request failed with ${response.status}`);
+    throw new ApiError(response.status, message);
   }
 
   if (response.status === 204) {

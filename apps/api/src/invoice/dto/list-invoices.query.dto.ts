@@ -3,22 +3,26 @@ import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class ListInvoicesQueryDto {
   @IsOptional()
-  @IsIn(['all', 'paid', 'unpaid', 'overdue'])
+  @IsIn(['all', 'paid', 'unpaid', 'overdue'], {
+    message: 'Filtr stavu má neplatnou hodnotu.',
+  })
   status?: 'all' | 'paid' | 'unpaid' | 'overdue';
 
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Vyhledávací dotaz musí být text.' })
   q?: string;
 
   @IsOptional()
   @Transform(({ value }) => Number(value))
-  @IsInt()
-  @Min(1)
+  @IsInt({ message: 'Stránka musí být celé číslo.' })
+  @Min(1, { message: 'Stránka musí být alespoň 1.' })
   page?: number;
 
   @IsOptional()
   @Transform(({ value }) => Number(value))
-  @IsInt()
-  @IsIn([10, 20, 50])
+  @IsInt({ message: 'Počet položek na stránce musí být celé číslo.' })
+  @IsIn([10, 20, 50], {
+    message: 'Počet položek na stránce musí být 10, 20 nebo 50.',
+  })
   pageSize?: number;
 }

@@ -41,6 +41,7 @@ export function RegisterPage() {
           type="password"
           required
         />
+        <small>Minimálně 8 znaků (může být i heslová fráze).</small>
       </label>
       <label>
         Potvrzení hesla

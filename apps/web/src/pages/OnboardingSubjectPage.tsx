@@ -34,9 +34,14 @@ export function OnboardingSubjectPage() {
 
   const onSubmit = async (payload: SubjectInput) => {
     setSaving(true);
-    await createSubject(payload);
-    await refreshMe();
-    navigate('/invoices', { replace: true });
+    setError(null);
+    try {
+      await createSubject(payload);
+      await refreshMe();
+      navigate('/invoices', { replace: true });
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {

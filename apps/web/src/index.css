@@ -94,6 +94,10 @@ button:disabled {
   gap: 10px;
 }
 
+small {
+  color: #475569;
+}
+
 .error {
   color: #b91c1c;
 }
@@ -113,6 +117,40 @@ hr {
   align-items: center;
   flex-wrap: wrap;
   margin-bottom: 12px;
+}
+
+.lookup-box {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  background: #f8fafc;
+  margin-bottom: 8px;
+}
+
+.lookup-box h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.lookup-controls {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr auto;
+}
+
+.lookup-results {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: grid;
+  gap: 8px;
+}
+
+.lookup-results li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: center;
 }
 
 .chip {
@@ -202,5 +240,13 @@ hr {
 @media (max-width: 980px) {
   .invoice-item-row {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .lookup-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .lookup-results li {
+    grid-template-columns: 1fr;
   }
 }

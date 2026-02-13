@@ -26,12 +26,18 @@ export class InvoiceController {
   constructor(private readonly invoiceService: InvoiceService) {}
 
   @Get()
-  async listInvoices(@Req() request: RequestWithUser, @Query() query: ListInvoicesQueryDto) {
+  async listInvoices(
+    @Req() request: RequestWithUser,
+    @Query() query: ListInvoicesQueryDto,
+  ) {
     return this.invoiceService.listInvoices(request.user!.id, query);
   }
 
   @Post()
-  async createInvoice(@Req() request: RequestWithUser, @Body() dto: UpsertInvoiceDto) {
+  async createInvoice(
+    @Req() request: RequestWithUser,
+    @Body() dto: UpsertInvoiceDto,
+  ) {
     return this.invoiceService.createDraft(request.user!.id, dto);
   }
 
@@ -60,7 +66,11 @@ export class InvoiceController {
     @Param('id') id: string,
     @Body() dto: MarkInvoicePaidDto,
   ) {
-    return this.invoiceService.markInvoicePaid(request.user!.id, id, dto.paidAt);
+    return this.invoiceService.markInvoicePaid(
+      request.user!.id,
+      id,
+      dto.paidAt,
+    );
   }
 
   @Get(':id/pdf')
@@ -69,7 +79,10 @@ export class InvoiceController {
     @Param('id') id: string,
     @Res() response: Response,
   ) {
-    const pdf = await this.invoiceService.exportInvoicePdf(request.user!.id, id);
+    const pdf = await this.invoiceService.exportInvoicePdf(
+      request.user!.id,
+      id,
+    );
     response.setHeader('Content-Type', 'application/pdf');
     response.setHeader(
       'Content-Disposition',
@@ -85,7 +98,10 @@ export class InvoiceController {
 
   @Delete(':id')
   @HttpCode(204)
-  async deleteInvoice(@Req() request: RequestWithUser, @Param('id') id: string): Promise<void> {
+  async deleteInvoice(
+    @Req() request: RequestWithUser,
+    @Param('id') id: string,
+  ): Promise<void> {
     return this.invoiceService.deleteInvoice(request.user!.id, id);
   }
 }

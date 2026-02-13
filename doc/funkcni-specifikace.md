@@ -1,8 +1,8 @@
 # Funkční specifikace projektu TappyFaktur
 
 ## 0. Stav dokumentu
-- Verze: `1.2`
-- Datum: `2026-02-12`
+- Verze: `1.4`
+- Datum: `2026-02-13`
 - Stav: `Rozpracováno`
 - Aktuálně zpracovaný rozsah: `Scope 1-7`
 
@@ -17,6 +17,9 @@ Umožnit založení a správu profilu živnostníka (fakturačního subjektu), b
 - Zobrazení detailu profilu.
 - Editace profilu.
 - Validace vstupních údajů podle CZ fakturační praxe.
+- Vyhledání subjektu z registru ARES podle IČO nebo názvu firmy.
+- Vyhledání adresy z veřejné databáze a předvyplnění adresních polí.
+- Automatická normalizace vstupů (např. IČO bez mezer, PSČ bez mezer).
 - Blokace tvorby faktury do doby, než je profil kompletní.
 - Uložení výchozích fakturačních parametrů (bankovní účet, výchozí VS, splatnost).
 
@@ -44,6 +47,14 @@ Prvky obrazovky:
 - Nadpis: `Nastavení fakturačního subjektu`.
 - Stručné vysvětlení: bez vyplnění údajů nelze vystavit fakturu.
 - Jednostránkový formulář.
+- Blok `Načíst firmu z ARES`:
+  - vstup `IČO nebo název firmy`,
+  - akce `Vyhledat`,
+  - seznam výsledků s akcí `Použít`.
+- Blok `Načíst adresu`:
+  - vstup `Ulice a číslo`,
+  - akce `Vyhledat adresu`,
+  - seznam výsledků s akcí `Použít`.
 - Primární akce: `Uložit a pokračovat`.
 - Sekundární akce: žádná (uživatel nesmí onboarding obejít).
 
@@ -51,6 +62,8 @@ Pravidla:
 - Tlačítko `Uložit a pokračovat` je aktivní až po validaci povinných polí.
 - Po úspěchu toast/hláška `Profil byl uložen`.
 - Po chybě API se zobrazí obecná chyba a formulář zůstane vyplněný.
+- Po validační/API chybě se tlačítko vrací ze stavu `Ukládám...` zpět do aktivního stavu, aby šlo formulář znovu odeslat.
+- Ruční editace polí je možná i po použití předvyplnění z registru.
 
 #### 1.4.2 Detail profilu
 Účel: rychlý přehled všech uložených údajů.
@@ -85,7 +98,7 @@ Pravidla:
 | `firstName` | Ano | 1-100 znaků | Jméno podnikatele |
 | `lastName` | Ano | 1-100 znaků | Příjmení podnikatele |
 | `businessName` | Ne | max 150 znaků | Obchodní označení |
-| `ico` | Ano | přesně 8 číslic, kontrola formátu IČO | Pro identifikaci na faktuře |
+| `ico` | Ano | přesně 8 číslic, kontrola formátu IČO; při vstupu se automaticky odstraňují mezery | Pro identifikaci na faktuře |
 | `dic` | Podmíněně | pokud `isVatPayer=true`, pole je povinné | DIČ včetně prefixu země, např. `CZ...` |
 | `isVatPayer` | Ano | boolean | Plátce / neplátce DPH |
 | `vatRegistrationDate` | Podmíněně | povinné pokud `isVatPayer=true`, nesmí být v budoucnu | Datum registrace k DPH |
@@ -103,6 +116,7 @@ Pravidla:
 Poznámky:
 - Ukládají se pouze číslice pro číselná pole, formátování se řeší až při zobrazení.
 - Pro faktury se používá snapshot údajů v čase vystavení faktury (pozdější změna profilu nemění historické faktury).
+- Registry lookup je asistivní funkce; při výpadku registru zůstává plně dostupné ruční vyplnění formuláře.
 
 ### 1.6 Funkční pravidla
 1. Bez existujícího a validního profilu není dostupná akce `Nová faktura`.
@@ -124,6 +138,8 @@ Poznámky:
 3. Povinná a podmíněně povinná pole se validují před odesláním.
 4. Editace profilu se projeví při předvyplnění nové faktury.
 5. Historická faktura zůstane beze změny i po úpravě profilu.
+6. Uživatel může načíst subjekt z ARES podle IČO i názvu firmy a předvyplnit pole.
+7. Po neúspěšném odeslání onboarding formuláře lze formulář okamžitě znovu odeslat.
 
 ### 1.9 Potvrzená rozhodnutí
 1. V první verzi je povolen pouze 1 subjekt na 1 účet.
@@ -286,6 +302,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 - Výpočet částek (bez DPH, DPH, s DPH).
 - Práce se stavy faktury `draft`, `issued`, `paid`, `overdue`.
 - Automatické předvyplnění údajů z profilu živnostníka (Scope 1).
+- Vyhledání odběratele z registru ARES podle IČO nebo názvu a předvyplnění odběratele.
 
 #### Out of scope (pro další iterace)
 - Dobropisy / opravné daňové doklady.
@@ -305,7 +322,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 #### 3.4.1 Sekce formuláře
 - `Hlavička dokladu`
 - `Dodavatel` (snapshot z profilu subjektu)
-- `Odběratel`
+- `Odběratel` (včetně asistenta vyhledání podle IČO/názvu)
 - `Položky faktury`
 - `Součty`
 - `Poznámka`
@@ -376,6 +393,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 5. Smazání `issued/paid/overdue` ve v1 není povoleno (kvůli návaznosti na účetní evidenci).
 6. Po vystavení se uloží snapshot dodavatele i odběratele pro historickou konzistenci.
 7. Faktura ve stavu `issued` je ve v1 plně editovatelná.
+8. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
 
 ### 3.8 Stavy a chování UI
 - `Loading`: načítání editoru / faktury.
@@ -391,6 +409,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 3. Vystavení faktury vytvoří číslo dokladu; faktura ve stavu `issued` zůstává editovatelná.
 4. Výpočty součtů odpovídají položkám a sazbám DPH.
 5. Smazat lze pouze koncept faktury; pokus o smazání jiného stavu je zamítnut.
+6. Uživatel může vyhledat odběratele podle IČO i názvu a jedním klikem předvyplnit pole odběratele.
 
 ### 3.10 Potvrzená rozhodnutí
 1. Faktura ve stavu `issued` je plně editovatelná.
@@ -843,7 +862,7 @@ Prvky:
 
 Pravidla:
 - E-mail musí být unikátní.
-- Heslo musí splnit minimální bezpečnostní pravidla.
+- Heslo musí splnit minimální bezpečnostní pravidla (viz 7.5).
 - Po úspěšné registraci se vytvoří účet a session.
 
 #### 7.4.3 Zapomenuté heslo
@@ -871,12 +890,11 @@ Pravidla:
    - max délka 254 znaků,
    - porovnání case-insensitive.
 2. `Heslo`:
-   - min. 10 znaků,
-   - aspoň 1 malé písmeno,
-   - aspoň 1 velké písmeno,
-   - aspoň 1 číslice,
-   - aspoň 1 speciální znak.
+   - min. 8 znaků,
+   - povinný speciální znak se nevyžaduje,
+   - heslová fráze (12+ znaků) je povolená.
 3. `Potvrzení hesla` musí přesně odpovídat poli `Heslo`.
+4. Validační zprávy auth a onboarding formulářů jsou v češtině.
 
 ### 7.6 Session a přístup k aplikaci
 1. Všechny aplikační routy mimo auth sekci jsou chráněné.
@@ -903,8 +921,60 @@ Pravidla:
 3. Nepřihlášený uživatel se nedostane na chráněné routy.
 4. Uživatel dokáže projít flow `zapomenuté heslo -> nové heslo`.
 5. Po odhlášení už nelze volat chráněná API bez nové autentizace.
+6. Registrace i reset hesla přijmou heslo délky 8+ znaků bez povinného speciálního znaku.
 
 ### 7.10 Potvrzená rozhodnutí
 1. Registrace ve v1 nevyžaduje ověření e-mailu před prvním přihlášením.
 2. Ve v1 je povolena samoregistrace bez pozvánky.
 3. Odhlášení ukončí pouze aktuální session.
+
+## 8. Řízení změn (Change Request)
+
+### 8.1 Cíl
+Zajistit, že každá změna požadavků je:
+1. Jednoznačně popsána.
+2. Odsouhlasena před implementací.
+3. Dohledatelná od zadání až po commit.
+
+### 8.2 Povinné artefakty změny
+Každý Change Request (`CR`) musí mít:
+1. Záznam v `doc/change-requesty/CR-XXXX-*.md`.
+2. Aktualizaci funkční specifikace (`doc/funkcni-specifikace.md`), pokud mění chování aplikace.
+3. Aktualizaci technické specifikace (`doc/tecnicka-specifikace.md`), pokud mění API, DB, bezpečnost, výkon nebo provoz.
+4. Odkaz na implementační commit(y).
+
+### 8.3 Životní cyklus CR
+Stavy:
+1. `Navrženo` - požadavek je zapsaný, čeká na analýzu.
+2. `Analyzováno` - dopad na scope/specifikaci je popsán.
+3. `Ke schválení` - scope je připravený k potvrzení zadavatelem.
+4. `Schváleno` - lze implementovat.
+5. `Implementováno` - kód je hotový.
+6. `Ověřeno` - test/UAT hotové.
+7. `Uzavřeno` - změna je finálně převzatá.
+
+### 8.4 Pravidlo „Spec First“
+1. Nejprve se aktualizuje funkční specifikace.
+2. Poté technická specifikace (pokud je potřeba).
+3. Až po odsouhlasení scope se zahájí implementace.
+
+### 8.5 Minimální obsah zadání CR
+Každý požadavek musí obsahovat:
+1. `Název změny`.
+2. `Business důvod`.
+3. `Aktuální stav` vs. `Požadovaný stav`.
+4. `Dotčené obrazovky/routy`.
+5. `Akceptační kritéria`.
+6. `Prioritu` (`Must/Should/Could`).
+
+### 8.6 Číslování a dávkování
+1. CR se číslují sekvenčně: `CR-0001`, `CR-0002`, ...
+2. Jeden CR = jedna logicky konzistentní změna.
+3. V jedné dávce může být více CR, každý má samostatný záznam.
+
+### 8.7 Potvrzený proces spolupráce
+1. Zadavatel pošle dávku připomínek.
+2. Asistent vytvoří/aktualizuje CR záznamy se stavem `Navrženo`.
+3. Asistent připraví návrh změn ve specifikacích a změní stav na `Ke schválení`.
+4. Po potvrzení zadavatelem přepne CR na `Schváleno` a teprve pak implementuje.
+5. Po nasazení a ověření uzavře CR stavem `Uzavřeno`.

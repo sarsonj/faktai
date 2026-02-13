@@ -1,10 +1,10 @@
 # Technická specifikace projektu TappyFaktur
 
 ## 0. Stav dokumentu
-- Verze: `0.4`
-- Datum: `2026-02-12`
+- Verze: `0.6`
+- Datum: `2026-02-13`
 - Stav: `Rozpracováno`
-- Vazba na funkční specifikaci: `doc/funkcni-specifikace.md` (verze `1.2`)
+- Vazba na funkční specifikaci: `doc/funkcni-specifikace.md` (verze `1.3`)
 
 ## 1. Technologický stack
 
@@ -87,6 +87,8 @@ V1 běží synchronně přes REST API; samostatný worker/queue není povinný.
 - `SMTP_USER`
 - `SMTP_PASS`
 - `SMTP_FROM`
+- `REGISTRY_TIMEOUT_MS`
+- `REGISTRY_USER_AGENT`
 
 ## 4. Datový model (PostgreSQL)
 
@@ -261,7 +263,8 @@ Pravidla:
 - `register`:
   - vytvoří uživatele,
   - založí session,
-  - vrací profil `me`.
+  - vrací profil `me`,
+  - validuje heslo minimálně na 8 znaků.
 - `login`:
   - validuje credentials,
   - zakládá novou session pro aktuální zařízení.
@@ -274,6 +277,7 @@ Pravidla:
   - uloží nové heslo,
   - revokuje všechny aktivní session uživatele.
 - session je přenášena přes `httpOnly` cookie.
+- validační zprávy jsou v češtině.
 
 ### 5.2 Subject (Scope 1)
 1. `GET /subject`
@@ -284,6 +288,11 @@ Backend validace:
 - IČO checksum.
 - DIČ povinné jen když `isVatPayer=true`.
 - Bankovní účet validace délky/povolených znaků.
+- normalizace vstupů (IČO/PSČ bez mezer, země uppercase).
+- lookup endpointy pro ARES a adresy:
+  1. `GET /registry/company/:ico`
+  2. `GET /registry/company-search?q=...`
+  3. `GET /registry/address-search?q=...`
 
 ### 5.3 Invoices (Scope 2 + 3)
 1. `GET /invoices`
@@ -305,6 +314,8 @@ Pravidla:
 - `DELETE` povoleno jen pro `draft`; jinak `409 Conflict`.
 - `issue` běží transakčně včetně přidělení čísla faktury.
 - `mark-paid` nastaví `status=paid` + `paid_at`.
+- `customerIco` se před uložením normalizuje bez mezer.
+- FE může využít `GET /registry/company-search` pro předvyplnění odběratele.
 
 ### 5.4 PDF export (Scope 4)
 1. `GET /invoices/:id/pdf`
@@ -340,6 +351,9 @@ Pravidla:
    - vytvoření uživatele s `password_hash`,
    - vytvoření session.
 3. Nastavení auth cookie.
+
+Poznámka:
+- Heslo: min. 8 znaků, speciální znak není povinný.
 
 ### 6.2 Přihlášení uživatele
 1. Ověření credentials.
@@ -394,6 +408,15 @@ Pravidla:
 6. Uložit `tax_report_runs` + `tax_report_run_entries`.
 7. Vrátit XML stream.
 
+### 6.9 Registry lookup (ARES + adresa)
+1. FE odešle dotaz na interní `registry` endpoint.
+2. API validuje vstup a zavolá externí službu:
+   - ARES pro firmy,
+   - Nominatim/OpenStreetMap pro adresy.
+3. API odpověď normalizuje na interní datový model.
+4. FE použije výsledek pro předvyplnění formuláře; uživatel může hodnoty ručně upravit.
+5. Při výpadku externí služby API vrátí kontrolovanou chybu, ruční vstup zůstává dostupný.
+
 ## 7. Frontend technický návrh
 
 ### 7.1 Routing
@@ -416,6 +439,7 @@ Pravidla:
 - Form state: `React Hook Form`.
 - Validace formulářů: `Zod` schema shodná s backend DTO.
 - Kontext seznamu faktur držený v URL query parametrech.
+- Asistované vyhledávání subjektu/odběratele přes `registry-api.ts`.
 - Auth guard:
   - veřejné routy pouze `/auth/*`,
   - ostatní routy vyžadují validní session (`/auth/me`).
@@ -511,7 +535,9 @@ Pravidla:
 - Auth lifecycle: register -> login -> me -> logout.
 - Forgot/reset password včetně revokace session.
 - CRUD Subject.
+- Subject onboarding včetně lookupu přes interní `registry` API.
 - Invoice lifecycle: create -> issue -> paid.
+- Invoice editor: lookup odběratele + ruční editace po předvyplnění.
 - Delete draft vs. zákaz delete issued.
 - PDF export a verze.
 - Tax report export + run versioning.
@@ -550,3 +576,32 @@ Pravidla:
 1. XML schémata jsou konfigurovatelná přes env.
 2. Aplikace povolí pouze whitelist podporovaných verzí.
 3. V kódu je definována výchozí pinned verze pro každý typ podání.
+
+## 16. Technický proces Change Request
+
+### 16.1 Vazba CR -> kód
+1. Každý CR má vlastní záznam v `doc/change-requesty/`.
+2. V commitu implementace se uvádí odkaz na CR ID v textu commit message nebo v popisu PR.
+3. Pokud CR mění API/DB, musí obsahovat explicitní seznam dotčených endpointů/migrací.
+
+### 16.2 Implementační pravidla
+1. Změny datového modelu jsou pouze forward přes Prisma migrace.
+2. Breaking změny kontraktu se řeší verzováním endpointu nebo kompatibilní přechodovou vrstvou.
+3. Každý CR musí mít minimálně:
+   - build zelený,
+   - unit/integration testy zelené,
+   - smoke ověření dotčeného flow.
+
+### 16.3 Klasifikace dopadu CR
+Technický dopad CR se značí:
+1. `T0` - pouze textace/UI copy, bez dopadu na API/DB.
+2. `T1` - změna FE/BE logiky bez migrace DB.
+3. `T2` - změna API nebo DB migrace.
+4. `T3` - architektonická změna (security/performance/provoz).
+
+### 16.4 Povinná technická část CR
+Každý CR musí obsahovat:
+1. Dotčené soubory/moduly.
+2. Rizika a fallback plán.
+3. Test plan (co přesně ověřit).
+4. Rollout poznámku (nutnost migrace, env změn, restartu služeb).

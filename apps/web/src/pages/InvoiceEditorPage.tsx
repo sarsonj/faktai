@@ -9,8 +9,15 @@ import {
   updateInvoice,
   deleteInvoice,
 } from '../invoice-api';
+import { searchRegistryCompanies } from '../registry-api';
 import { getSubject } from '../subject-api';
-import type { InvoiceDetail, InvoiceItemInput, InvoiceUpsertInput, TaxClassification } from '../types';
+import type {
+  InvoiceDetail,
+  InvoiceItemInput,
+  InvoiceUpsertInput,
+  RegistryCompanyResult,
+  TaxClassification,
+} from '../types';
 
 type InvoiceEditorMode = 'create' | 'edit';
 
@@ -68,6 +75,10 @@ function createEmptyItem(): EditorItemState {
     unitPrice: '0.00',
     vatRate: 21,
   };
+}
+
+function normalizeIco(value: string): string {
+  return value.replace(/\s+/g, '');
 }
 
 function createDefaultState(defaultDueDays = 14, variableSymbol = ''): EditorState {
@@ -184,6 +195,10 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [customerLookupQuery, setCustomerLookupQuery] = useState('');
+  const [customerLookupLoading, setCustomerLookupLoading] = useState(false);
+  const [customerLookupError, setCustomerLookupError] = useState<string | null>(null);
+  const [customerLookupResults, setCustomerLookupResults] = useState<RegistryCompanyResult[]>([]);
 
   useEffect(() => {
     if (mode !== 'create') {
@@ -358,6 +373,45 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
     }
   };
 
+  const applyCustomerLookup = (item: RegistryCompanyResult) => {
+    setState((current) => ({
+      ...current,
+      customerName: item.name || current.customerName,
+      customerIco: item.ico || current.customerIco,
+      customerDic: item.dic ?? '',
+      customerStreet: item.street || current.customerStreet,
+      customerCity: item.city || current.customerCity,
+      customerPostalCode: item.postalCode || current.customerPostalCode,
+      customerCountryCode: item.countryCode || current.customerCountryCode,
+    }));
+    setCustomerLookupResults([]);
+    setCustomerLookupError(null);
+  };
+
+  const onCustomerLookup = async () => {
+    const query = customerLookupQuery.trim() || state.customerIco || state.customerName;
+    if (!query) {
+      setCustomerLookupError('Zadejte IČO nebo název odběratele.');
+      return;
+    }
+
+    setCustomerLookupLoading(true);
+    setCustomerLookupError(null);
+    setCustomerLookupResults([]);
+
+    try {
+      const items = await searchRegistryCompanies(query);
+      setCustomerLookupResults(items);
+      if (items.length === 0) {
+        setCustomerLookupError('Žádný záznam nebyl nalezen.');
+      }
+    } catch (err) {
+      setCustomerLookupError(err instanceof Error ? err.message : 'Vyhledání odběratele selhalo.');
+    } finally {
+      setCustomerLookupLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <main className="app-shell">
@@ -456,6 +510,47 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
         </div>
 
         <h2>Odběratel</h2>
+        <div className="lookup-box">
+          <h3>Vyhledat odběratele v ARES</h3>
+          <div className="lookup-controls">
+            <input
+              disabled={readOnly}
+              placeholder="IČO nebo název firmy"
+              value={customerLookupQuery}
+              onChange={(event) => setCustomerLookupQuery(event.target.value)}
+            />
+            <button
+              type="button"
+              className="secondary"
+              disabled={readOnly || customerLookupLoading}
+              onClick={onCustomerLookup}
+            >
+              {customerLookupLoading ? 'Načítám...' : 'Vyhledat'}
+            </button>
+          </div>
+          {customerLookupError && <p className="error">{customerLookupError}</p>}
+          {customerLookupResults.length > 0 && (
+            <ul className="lookup-results">
+              {customerLookupResults.map((item) => (
+                <li key={`${item.ico}-${item.name}`}>
+                  <button
+                    type="button"
+                    className="secondary"
+                    disabled={readOnly}
+                    onClick={() => applyCustomerLookup(item)}
+                  >
+                    Použít
+                  </button>
+                  <span>
+                    {[item.name, `IČO ${item.ico}`, item.city, item.postalCode]
+                      .filter(Boolean)
+                      .join(' | ')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <div className="form-grid invoice-form-grid">
           <label>
             Název / jméno
@@ -471,7 +566,9 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
             <input
               disabled={readOnly}
               value={state.customerIco}
-              onChange={(event) => setState((current) => ({ ...current, customerIco: event.target.value }))}
+              onChange={(event) =>
+                setState((current) => ({ ...current, customerIco: normalizeIco(event.target.value) }))
+              }
             />
           </label>
           <label>
@@ -509,7 +606,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
               onChange={(event) =>
                 setState((current) => ({
                   ...current,
-                  customerPostalCode: event.target.value,
+                  customerPostalCode: event.target.value.replace(/\s+/g, ''),
                 }))
               }
             />
@@ -523,7 +620,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
               onChange={(event) =>
                 setState((current) => ({
                   ...current,
-                  customerCountryCode: event.target.value.toUpperCase(),
+                  customerCountryCode: event.target.value.replace(/\s+/g, '').toUpperCase(),
                 }))
               }
             />

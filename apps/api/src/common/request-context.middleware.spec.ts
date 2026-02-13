@@ -4,7 +4,7 @@ describe('RequestContextMiddleware', () => {
   it('adds request id header and logs request on finish', () => {
     const middleware = new RequestContextMiddleware();
     const headers = new Map<string, string>();
-    let finishCallback: (() => void) | null = null;
+    let finishCallback: () => void = () => undefined;
 
     const request = {
       method: 'GET',
@@ -32,8 +32,7 @@ describe('RequestContextMiddleware', () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect(headers.get('x-request-id')).toBeTruthy();
 
-    expect(finishCallback).toBeTruthy();
-    finishCallback?.();
+    finishCallback();
 
     expect(logSpy).toHaveBeenCalledTimes(1);
     logSpy.mockRestore();

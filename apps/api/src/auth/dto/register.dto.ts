@@ -1,17 +1,16 @@
-import { IsEmail, IsString, MinLength, Matches } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class RegisterDto {
-  @IsEmail()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsEmail({}, { message: 'E-mail musí být ve správném formátu.' })
   email!: string;
 
-  @IsString()
-  @MinLength(10)
-  @Matches(/[a-z]/, { message: 'Password must contain lowercase letter' })
-  @Matches(/[A-Z]/, { message: 'Password must contain uppercase letter' })
-  @Matches(/[0-9]/, { message: 'Password must contain number' })
-  @Matches(/[^A-Za-z0-9]/, { message: 'Password must contain special character' })
+  @IsString({ message: 'Heslo musí být text.' })
+  @MinLength(8, { message: 'Heslo musí mít alespoň 8 znaků.' })
+  @MaxLength(256, { message: 'Heslo může mít maximálně 256 znaků.' })
   password!: string;
 
-  @IsString()
+  @IsString({ message: 'Potvrzení hesla musí být text.' })
   passwordConfirm!: string;
 }

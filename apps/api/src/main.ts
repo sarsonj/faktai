@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/http-exception.filter';
+import { createValidationException } from './common/validation';
 import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap() {
@@ -15,6 +16,7 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      exceptionFactory: createValidationException,
     }),
   );
   app.useGlobalFilters(new HttpExceptionFilter());

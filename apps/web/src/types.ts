@@ -50,6 +50,25 @@ export type SubjectInput = {
   defaultDueDays: number;
 };
 
+export type RegistryCompanyResult = {
+  name: string;
+  ico: string;
+  dic: string | null;
+  street: string;
+  city: string;
+  postalCode: string;
+  countryCode: string;
+};
+
+export type RegistryAddressResult = {
+  id: string;
+  displayName: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  countryCode: string;
+};
+
 export type InvoiceListStatus = 'draft' | 'issued' | 'paid' | 'cancelled' | 'overdue';
 export type PaymentMethod = 'bank_transfer';
 export type TaxClassification =
