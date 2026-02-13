@@ -38,17 +38,6 @@ function currentMonth(): number {
   return new Date().getMonth() + 1;
 }
 
-function currentPeriod(periodType: TaxPeriodType): { year: number; value: number } {
-  const now = new Date();
-  const year = now.getFullYear();
-
-  if (periodType === 'month') {
-    return { year, value: now.getMonth() + 1 };
-  }
-
-  return { year, value: Math.floor(now.getMonth() / 3) + 1 };
-}
-
 function previousPeriod(periodType: TaxPeriodType): { year: number; value: number } {
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -71,7 +60,6 @@ function previousPeriod(periodType: TaxPeriodType): { year: number; value: numbe
 export function TaxReportsPage() {
   const [subjectLoading, setSubjectLoading] = useState(true);
   const [isVatPayer, setIsVatPayer] = useState(false);
-  const [subjectMeta, setSubjectMeta] = useState<{ ico: string; vatPeriodType: TaxPeriodType } | null>(null);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -87,23 +75,6 @@ export function TaxReportsPage() {
     () => (form.periodType === 'month' ? MONTH_OPTIONS : QUARTER_OPTIONS),
     [form.periodType],
   );
-  const reportTypeLabel = useMemo(
-    () => REPORT_OPTIONS.find((option) => option.value === form.reportType)?.label ?? '',
-    [form.reportType],
-  );
-  const exportFileName = useMemo(() => {
-    if (!subjectMeta) {
-      return null;
-    }
-
-    const reportTypePart = form.reportType === 'vat_return' ? 'DPH' : 'DPHKH';
-    const periodValue = form.periodType === 'month'
-      ? String(form.value).padStart(2, '0')
-      : String(form.value);
-    const periodPart = `${periodValue}${form.periodType === 'month' ? 'M' : 'Q'}`;
-
-    return `${subjectMeta.ico.replace(/\s+/g, '')}_${reportTypePart}_${form.year}${periodPart}.xml`;
-  }, [form.periodType, form.reportType, form.value, form.year, subjectMeta]);
 
   useEffect(() => {
     const run = async () => {
@@ -114,10 +85,6 @@ export function TaxReportsPage() {
         const subject = await getSubject();
         setIsVatPayer(subject.isVatPayer);
         const subjectPeriodType = subject.vatPeriodType ?? 'quarter';
-        setSubjectMeta({
-          ico: subject.ico,
-          vatPeriodType: subjectPeriodType,
-        });
         const previous = previousPeriod(subjectPeriodType);
         setForm((current) => ({
           ...current,
@@ -188,25 +155,6 @@ export function TaxReportsPage() {
       {isVatPayer && (
         <section className="ui-section">
           <h2>Nastavení exportu</h2>
-          <div className="kpi-grid">
-            <article className="kpi-card">
-              <p>IČO subjektu</p>
-              <strong>{subjectMeta?.ico ?? '-'}</strong>
-            </article>
-            <article className="kpi-card">
-              <p>Typ podání</p>
-              <strong>{reportTypeLabel}</strong>
-            </article>
-            <article className="kpi-card">
-              <p>Výchozí perioda</p>
-              <strong>{subjectMeta?.vatPeriodType === 'month' ? 'Měsíční' : 'Čtvrtletní'}</strong>
-            </article>
-            <article className="kpi-card">
-              <p>Exportovaný soubor</p>
-              <strong>{exportFileName ?? '-'}</strong>
-            </article>
-          </div>
-
           <div className="form-grid invoice-form-grid">
             <label>
               Typ podání
@@ -272,37 +220,6 @@ export function TaxReportsPage() {
                 ))}
               </select>
             </label>
-          </div>
-
-          <div className="button-row wrap">
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => {
-                const previous = previousPeriod(form.periodType);
-                setForm((current) => ({
-                  ...current,
-                  year: previous.year,
-                  value: previous.value,
-                }));
-              }}
-            >
-              Předchozí období
-            </button>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => {
-                const currentPeriodValue = currentPeriod(form.periodType);
-                setForm((current) => ({
-                  ...current,
-                  year: currentPeriodValue.year,
-                  value: currentPeriodValue.value,
-                }));
-              }}
-            >
-              Aktuální období
-            </button>
           </div>
 
           <div className="button-row">

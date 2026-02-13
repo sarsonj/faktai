@@ -487,7 +487,6 @@ Poznámka:
 - Editor položek s průběžným výpočtem řádkového součtu.
 - Sticky action bar v editoru faktury (akce dostupné i při delším scrollu).
 - Auth layout (`auth-layout`) se dvěma zónami: informační panel + formulářový panel.
-- DPH export panel se souhrnnými kartami a výpočtem očekávaného názvu XML souboru.
 - Subject summary karty v onboardingu a nastavení subjektu.
 
 ### 7.4 Design foundation (UI)
@@ -519,8 +518,7 @@ Poznámka:
   - `editor-action-bar` je sticky panel s primárními workflow akcemi.
 - Podpůrné moduly polish (Fáze 4):
   - `auth-card`, `auth-layout`, `auth-aside`, `auth-panel` sjednocují vzhled auth sekce,
-  - `kpi-grid`/`kpi-card` jsou znovupoužité i v DPH podkladech a správě subjektu,
-  - karty se chovají responzivně a podporují zalamování delších hodnot (např. název XML souboru).
+  - `kpi-grid`/`kpi-card` jsou znovupoužité v onboardingu a správě subjektu.
 
 ## 8. Výpočty a formátování
 
