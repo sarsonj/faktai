@@ -12,6 +12,17 @@ enum DefaultVariableSymbolType {
   custom
 }
 
+enum InvoiceStatus {
+  draft
+  issued
+  paid
+  cancelled
+}
+
+enum PaymentMethod {
+  bank_transfer
+}
+
 model User {
   id                  String               @id @default(uuid())
   email               String               @unique
@@ -70,4 +81,56 @@ model Subject {
   createdAt                  DateTime                  @default(now())
   updatedAt                  DateTime                  @updatedAt
   user                       User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices                   Invoice[]
+}
+
+model Invoice {
+  id                  String        @id @default(uuid())
+  subjectId           String
+  status              InvoiceStatus @default(draft)
+  invoiceNumber       String?
+  variableSymbol      String
+  issueDate           DateTime
+  taxableSupplyDate   DateTime
+  dueDate             DateTime
+  paymentMethod       PaymentMethod @default(bank_transfer)
+  customerName        String
+  customerIco         String?
+  customerDic         String?
+  customerStreet      String
+  customerCity        String
+  customerPostalCode  String
+  customerCountryCode String        @default("CZ") @db.VarChar(2)
+  supplierSnapshot    Json?
+  note                String?
+  totalWithoutVat     Decimal       @db.Decimal(15, 2)
+  totalVat            Decimal       @db.Decimal(15, 2)
+  totalWithVat        Decimal       @db.Decimal(15, 2)
+  paidAt              DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  subject             Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  items               InvoiceItem[]
+
+  @@unique([subjectId, invoiceNumber])
+  @@index([subjectId, issueDate(sort: Desc)])
+  @@index([subjectId, dueDate])
+  @@index([subjectId, status])
+}
+
+model InvoiceItem {
+  id                  String   @id @default(uuid())
+  invoiceId           String
+  position            Int
+  description         String
+  quantity            Decimal  @db.Decimal(15, 3)
+  unit                String   @db.VarChar(20)
+  unitPrice           Decimal  @db.Decimal(15, 2)
+  vatRate             Int
+  lineTotalWithoutVat Decimal  @db.Decimal(15, 2)
+  lineVatAmount       Decimal  @db.Decimal(15, 2)
+  lineTotalWithVat    Decimal  @db.Decimal(15, 2)
+  invoice             Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId, position])
 }

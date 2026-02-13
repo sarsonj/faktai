@@ -49,3 +49,25 @@ export type SubjectInput = {
   defaultVariableSymbolValue?: string;
   defaultDueDays: number;
 };
+
+export type InvoiceListStatus = 'draft' | 'issued' | 'paid' | 'cancelled' | 'overdue';
+
+export type InvoiceListItem = {
+  id: string;
+  invoiceNumber: string | null;
+  status: InvoiceListStatus;
+  customerName: string;
+  issueDate: string;
+  dueDate: string;
+  totalWithoutVat: string;
+  totalWithVat: string;
+  paidAt: string | null;
+  description: string;
+};
+
+export type InvoiceListResponse = {
+  items: InvoiceListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
