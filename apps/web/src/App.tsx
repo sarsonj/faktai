@@ -1,52 +1,61 @@
-import { useEffect, useState } from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { useAuth } from './auth/AuthContext';
+import { AuthLayout } from './components/AuthLayout';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { InvoicesPage } from './pages/InvoicesPage';
+import { LoginPage } from './pages/LoginPage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { OnboardingSubjectPage } from './pages/OnboardingSubjectPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 
-type HealthResponse = {
-  service: 'api';
-  status: 'ok';
-  timestamp: string;
-};
+function RootRedirect() {
+  const { me, loading } = useAuth();
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ??
-  `${window.location.protocol}//${window.location.hostname}:4000/api/v1`;
+  if (loading) {
+    return (
+      <main className="app-shell">
+        <section className="card">Načítání...</section>
+      </main>
+    );
+  }
+
+  if (!me) {
+    return <Navigate to="/auth/login" replace />;
+  }
+
+  return <Navigate to={me.hasSubject ? '/invoices' : '/onboarding/subject'} replace />;
+}
 
 function App() {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/health`);
-        if (!response.ok) {
-          throw new Error(`Health check failed (${response.status})`);
-        }
-        const payload = (await response.json()) as HealthResponse;
-        setHealth(payload);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown health error');
-      }
-    };
-
-    void run();
-  }, []);
-
   return (
-    <main className="app-shell">
-      <section className="card">
-        <h1>TappyFaktur</h1>
-        <p>Foundation iterace je připravená. API dostupnost:</p>
-        {health ? (
-          <ul>
-            <li>service: {health.service}</li>
-            <li>status: {health.status}</li>
-            <li>timestamp: {new Date(health.timestamp).toLocaleString('cs-CZ')}</li>
-          </ul>
-        ) : (
-          <p>{error ? `Chyba: ${error}` : 'Načítám health...'}</p>
-        )}
-      </section>
-    </main>
+    <Routes>
+      <Route path="/" element={<RootRedirect />} />
+      <Route path="/auth" element={<AuthLayout />}>
+        <Route path="login" element={<LoginPage />} />
+        <Route path="register" element={<RegisterPage />} />
+        <Route path="forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="reset-password" element={<ResetPasswordPage />} />
+      </Route>
+      <Route
+        path="/onboarding/subject"
+        element={
+          <ProtectedRoute>
+            <OnboardingSubjectPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/invoices"
+        element={
+          <ProtectedRoute>
+            <InvoicesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
   );
 }
 

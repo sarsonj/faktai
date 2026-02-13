@@ -34,3 +34,46 @@ h1 {
 ul {
   padding-left: 20px;
 }
+
+label {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+input {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #94a3b8;
+  cursor: default;
+}
+
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+.button-row {
+  display: flex;
+  gap: 8px;
+}
