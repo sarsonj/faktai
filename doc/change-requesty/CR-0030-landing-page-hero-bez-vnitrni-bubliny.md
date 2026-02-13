@@ -41,3 +41,10 @@ Po integraci grafiky landing page (`CR-0029`) je hero obrázek vizuálně příl
   - `docker compose up -d --build web`
 - Výsledek:
   - implementováno dle zadání.
+
+## 7. Iterace (doplnění)
+- Iterace 2:
+  - hero vizuál byl upraven z „karty“ do režimu background vrstvy,
+  - přidáno barevné tónování (`hue/saturation/brightness`) a maska pro plynulý přechod do pozadí,
+  - čitelnost textu je jištěna overlay gradientem,
+  - mobilní varianta zachovává obrázek pod textem bez tvrdého oddělení.
