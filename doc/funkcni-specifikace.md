@@ -181,9 +181,10 @@ Poskytnout přehledný seznam vydaných faktur s rychlým vyhledáním, filtrov�
 ### 2.4 Obrazovka `Vydané faktury`
 
 #### 2.4.1 Hlavní layout
-- Nadpis obrazovky: `Faktury vydané`.
+- Nadpis obrazovky: `Vydané faktury`.
 - Primární CTA: `Nová faktura`.
-- Blok rychlých filtrů (tabs/chips): `Všechny`, `Uhrazené`, `Neuhrazené`, `Po splatnosti`.
+- Blok rychlého filtru stavu (dropdown): `Všechny`, `Uhrazené`, `Neuhrazené`, `Po splatnosti`.
+- Rychlý statusový souhrn (pilulky): `Celkem`, `Koncepty`, `Neuhrazené`, `Po splatnosti`, `Uhrazené`.
 - Tabulka výsledků.
 - Patička tabulky: `počet výsledků`, `stránkování`, `počet položek na stránku`.
 
@@ -196,7 +197,8 @@ Poskytnout přehledný seznam vydaných faktur s rychlým vyhledáním, filtrov�
 6. `Splatnost`
 7. `Cena bez DPH`
 8. `Cena s DPH`
-9. `Akce`
+9. `Uhrazena dne`
+10. `Akce`
 
 Poznámky:
 - `Číslo dokladu` je klikací odkaz na detail faktury.
@@ -318,12 +320,15 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 ### 3.4 Obrazovka editoru faktury
 
 #### 3.4.1 Sekce formuláře
+- `Breadcrumb` (`Vydané faktury / Nová faktura` nebo `Vydané faktury / Editace dokladu`)
 - `Hlavička dokladu`
 - `Dodavatel` (snapshot z profilu subjektu)
 - `Odběratel` (včetně asistenta vyhledání podle IČO/názvu)
 - `Položky faktury`
+  - každá položka zobrazuje průběžný řádkový součet `Celkem`.
 - `Součty`
 - `Poznámka`
+- `Sticky akční lišta` s hlavními akcemi (`Uložit`, `Vystavit`, `Smazat`, `Zrušit`) dostupná i při scrollu.
 
 #### 3.4.2 Akce editoru
 - Režim `create`:
@@ -774,6 +779,7 @@ Sekundární obrazovky:
    - `q`,
    - `page`,
    - `pageSize`.
+4. Detail a editor faktury zobrazují breadcrumb s návratem na seznam faktur.
 
 ### 6.8 Globální UX pravidla
 1. Primární akce stránky je vždy vizuálně dominantní (např. `Nová faktura`, `Export XML`).

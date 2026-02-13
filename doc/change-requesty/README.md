@@ -30,3 +30,4 @@
 | `CR-0011` | Seznam faktur: tooltipy, PDF ikona, mazání feedback a kompaktní paginace | `Implementováno` | `Should` |
 | `CR-0012` | Seznam faktur: dropdown filtr a mazání bez omezení stavu | `Implementováno` | `Must` |
 | `CR-0013` | UI redesign Fáze 2: informační hierarchie hlavních obrazovek | `Implementováno` | `Should` |
+| `CR-0014` | UI redesign Fáze 3: fakturační workflow polish (seznam/detail/editor) | `Implementováno` | `Should` |

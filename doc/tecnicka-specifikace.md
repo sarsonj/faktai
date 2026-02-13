@@ -482,6 +482,10 @@ Poznámka:
 - Formulář položek: dynamické řádky.
 - Globální toast provider.
 - Confirm modal pro destruktivní akce.
+- Breadcrumb navigace na detailu a editoru faktury.
+- KPI karty v detailu faktury (`celkem`, `základ daně`, `DPH`).
+- Editor položek s průběžným výpočtem řádkového součtu.
+- Sticky action bar v editoru faktury (akce dostupné i při delším scrollu).
 
 ### 7.4 Design foundation (UI)
 - Design tokens jsou definované centrálně v `apps/web/src/index.css`:
@@ -505,6 +509,11 @@ Poznámka:
   - `ui-section-head`: lokální hlavička sekce pro kombinaci nadpisu a ovládacích prvků (filtry/sekční akce),
   - `action-link`: link-styled CTA odpovídající vizuální logice tlačítek,
   - `subject-form` a editor faktury používají sekční členění (`Základní údaje`, `Adresa`, `Položky`, ...).
+- Fakturační polish (Fáze 3):
+  - `breadcrumb` je samostatný prvek nad page headerem na detailu/editoru,
+  - `invoice-stats` poskytuje rychlý vizuální souhrn stavů v seznamu faktur,
+  - `invoice-item-total` zobrazuje per-item částku s DPH v editoru,
+  - `editor-action-bar` je sticky panel s primárními workflow akcemi.
 
 ## 8. Výpočty a formátování
 

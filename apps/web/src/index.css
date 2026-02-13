@@ -410,6 +410,29 @@ body {
   overflow-x: auto;
 }
 
+.breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 12px;
+  color: #5d7087;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.breadcrumb a {
+  color: #205079;
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb-sep {
+  color: #8fa1b4;
+}
+
 h1,
 h2,
 h3 {
@@ -724,6 +747,10 @@ button:disabled {
   background: #fbfdff;
 }
 
+.invoice-table tbody tr:hover {
+  background: #f1f7ff;
+}
+
 .invoice-table tbody tr:last-child td {
   border-bottom: none;
 }
@@ -739,13 +766,24 @@ button:disabled {
 
 .invoice-item-row {
   display: grid;
-  grid-template-columns: 2.5fr 1fr 1fr 1fr 1fr auto;
+  grid-template-columns: 2.2fr 0.9fr 0.9fr 1fr 0.8fr 1.35fr auto;
   gap: 8px;
   align-items: center;
   padding: 10px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: #fcfeff;
+}
+
+.invoice-item-total {
+  border: 1px solid #d3e1ee;
+  border-radius: 10px;
+  background: #f5f9fd;
+  color: #2c4863;
+  padding: 9px 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .status-badge {
@@ -797,6 +835,32 @@ button:disabled {
   border-radius: 12px;
   background: #f8fbff;
   padding: 10px 12px;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.kpi-card {
+  margin: 0;
+  border: 1px solid #d5e2ef;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f8fcff 0%, #f0f7ff 100%);
+  padding: 10px 12px;
+}
+
+.kpi-card p {
+  margin: 0 0 4px;
+  color: #5b7288;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.kpi-card strong {
+  color: #163a57;
+  font-size: 1rem;
 }
 
 .totals-box {
@@ -914,6 +978,45 @@ button:disabled {
   gap: 10px;
 }
 
+.invoice-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.summary-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid #d6e4f1;
+  background: #f4f9ff;
+  color: #37516b;
+  padding: 4px 10px;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.summary-pill-draft {
+  background: #eef3f8;
+  color: #3e5368;
+}
+
+.summary-pill-issued {
+  background: #ebf7ff;
+  color: #0f4f75;
+}
+
+.summary-pill-overdue {
+  background: #fff3f5;
+  color: #9f1239;
+}
+
+.summary-pill-paid {
+  background: #e8fbe9;
+  color: #166534;
+}
+
 .pagination-meta {
   margin: 0;
   color: #5e7289;
@@ -962,6 +1065,17 @@ button:disabled {
   gap: 9px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.editor-action-bar {
+  position: sticky;
+  bottom: 10px;
+  z-index: 8;
+  border: 1px solid #d4e1ef;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.12);
+  padding: 10px 12px;
 }
 
 .wrap {

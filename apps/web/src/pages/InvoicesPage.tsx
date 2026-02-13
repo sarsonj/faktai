@@ -144,6 +144,22 @@ export function InvoicesPage() {
     return Math.ceil(data.total / data.pageSize);
   }, [data]);
 
+  const visibleStatusCounts = useMemo(() => {
+    const counts = {
+      draft: 0,
+      issued: 0,
+      overdue: 0,
+      paid: 0,
+      cancelled: 0,
+    };
+
+    for (const row of data?.items ?? []) {
+      counts[row.status] += 1;
+    }
+
+    return counts;
+  }, [data]);
+
   const setQuery = (patch: Partial<{ status: UiStatus; page: number; pageSize: 10 | 20 | 50 }>) => {
     const next = new URLSearchParams(searchParams);
 
@@ -229,6 +245,16 @@ export function InvoicesPage() {
         </div>
 
         {loading && <p>Načítám faktury...</p>}
+
+        {!loading && !error && data && (
+          <div className="invoice-stats">
+            <span className="summary-pill">Celkem: {data.total}</span>
+            <span className="summary-pill summary-pill-draft">Koncepty: {visibleStatusCounts.draft}</span>
+            <span className="summary-pill summary-pill-issued">Neuhrazené: {visibleStatusCounts.issued}</span>
+            <span className="summary-pill summary-pill-overdue">Po splatnosti: {visibleStatusCounts.overdue}</span>
+            <span className="summary-pill summary-pill-paid">Uhrazené: {visibleStatusCounts.paid}</span>
+          </div>
+        )}
 
         {!loading && !error && data && data.items.length === 0 && (
           <div className="empty-state">

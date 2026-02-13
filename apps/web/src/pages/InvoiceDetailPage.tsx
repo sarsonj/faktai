@@ -126,6 +126,12 @@ export function InvoiceDetailPage() {
 
   return (
     <section className="card card-wide">
+      <nav className="breadcrumb" aria-label="Drobečková navigace">
+        <Link to={backHref}>Vydané faktury</Link>
+        <span className="breadcrumb-sep">/</span>
+        <span>Detail dokladu</span>
+      </nav>
+
       <header className="page-head">
         <div>
           <p className="page-kicker">Fakturace</p>
@@ -141,6 +147,23 @@ export function InvoiceDetailPage() {
           </Link>
         </div>
       </header>
+
+      <section className="ui-section">
+        <div className="kpi-grid">
+          <article className="kpi-card">
+            <p>Celkem k úhradě</p>
+            <strong>{formatMoney(invoice.totalWithVat)}</strong>
+          </article>
+          <article className="kpi-card">
+            <p>Základ daně</p>
+            <strong>{formatMoney(invoice.totalWithoutVat)}</strong>
+          </article>
+          <article className="kpi-card">
+            <p>DPH</p>
+            <strong>{formatMoney(invoice.totalVat)}</strong>
+          </article>
+        </div>
+      </section>
 
       <section className="ui-section">
         <div className="button-row wrap">

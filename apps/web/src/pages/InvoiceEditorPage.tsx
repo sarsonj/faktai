@@ -181,6 +181,16 @@ function calculateTotals(items: EditorItemState[]) {
   };
 }
 
+function calculateItemTotalWithVat(item: EditorItemState): number {
+  const quantity = Number(item.quantity || 0);
+  const unitPrice = Number(item.unitPrice || 0);
+  const vatRate = Number(item.vatRate || 0);
+  const lineWithoutVat = quantity * unitPrice;
+  const lineVat = lineWithoutVat * (vatRate / 100);
+  const total = lineWithoutVat + lineVat;
+  return Number.isFinite(total) ? total : 0;
+}
+
 function formatMoney(value: number): string {
   return `${value.toLocaleString('cs-CZ', {
     minimumFractionDigits: 2,
@@ -425,6 +435,12 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
 
   return (
     <section className="card card-wide">
+      <nav className="breadcrumb" aria-label="Drobečková navigace">
+        <Link to={backHref}>Vydané faktury</Link>
+        <span className="breadcrumb-sep">/</span>
+        <span>{mode === 'create' ? 'Nová faktura' : 'Editace dokladu'}</span>
+      </nav>
+
       <header className="page-head">
         <div>
           <p className="page-kicker">Fakturace</p>
@@ -656,6 +672,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
             </button>
           )}
         </div>
+        <p className="helper-text">Počet položek: {state.items.length}</p>
         <div className="invoice-items-list">
           {state.items.map((item, index) => (
             <div className="invoice-item-row" key={index}>
@@ -697,6 +714,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
                 <option value="12">12 %</option>
                 <option value="21">21 %</option>
               </select>
+              <div className="invoice-item-total">Celkem: {formatMoney(calculateItemTotalWithVat(item))}</div>
               {!readOnly && state.items.length > 1 && (
                 <button type="button" className="danger" onClick={() => removeItem(index)}>
                   Odebrat
@@ -725,7 +743,9 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
             <strong>Celkem: {formatMoney(totals.withVat)}</strong>
           </p>
         </div>
+      </section>
 
+      <section className="editor-action-bar">
         <div className="button-row wrap">
           {!readOnly && (
             <>
