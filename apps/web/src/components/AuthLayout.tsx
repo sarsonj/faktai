@@ -23,7 +23,7 @@ export function AuthLayout() {
             <Outlet />
             <hr />
             <p className="auth-switch">
-              <Link to="/auth/login">Přihlášení</Link> | <Link to="/auth/register">Registrace</Link>
+              <Link to="/auth/login">Přihlášení</Link> | <Link to="/onboarding/start">Začít onboarding</Link>
             </p>
           </div>
         </div>

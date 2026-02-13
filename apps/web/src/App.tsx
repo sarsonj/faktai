@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/AppLayout';
 import { AuthLayout } from './components/AuthLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -10,8 +10,8 @@ import { InvoicesPage } from './pages/InvoicesPage';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { OnboardingStartPage } from './pages/OnboardingStartPage';
 import { OnboardingSubjectPage } from './pages/OnboardingSubjectPage';
-import { RegisterPage } from './pages/RegisterPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { SettingsSubjectPage } from './pages/SettingsSubjectPage';
 import { TaxReportsPage } from './pages/TaxReportsPage';
@@ -20,9 +20,10 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/onboarding/start" element={<OnboardingStartPage />} />
       <Route path="/auth" element={<AuthLayout />}>
         <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegisterPage />} />
+        <Route path="register" element={<Navigate to="/onboarding/start" replace />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
       </Route>
@@ -36,7 +37,7 @@ function App() {
       />
       <Route
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireSubject>
             <AppLayout />
           </ProtectedRoute>
         }

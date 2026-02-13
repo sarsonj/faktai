@@ -40,7 +40,7 @@ export function LandingPage() {
           )}
           {!loading && !me && (
             <>
-              <Link className="action-link" to="/auth/register">
+              <Link className="action-link" to="/onboarding/start">
                 Začít zdarma
               </Link>
               <Link className="action-link secondary-link" to="/auth/login">

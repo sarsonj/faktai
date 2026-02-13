@@ -1,7 +1,12 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+type ProtectedRouteProps = {
+  children: React.ReactNode;
+  requireSubject?: boolean;
+};
+
+export function ProtectedRoute({ children, requireSubject = false }: ProtectedRouteProps) {
   const { me, loading } = useAuth();
   const location = useLocation();
 
@@ -15,6 +20,10 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!me) {
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
+  }
+
+  if (requireSubject && !me.hasSubject) {
+    return <Navigate to="/onboarding/subject" replace />;
   }
 
   return <>{children}</>;

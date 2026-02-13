@@ -1,7 +1,7 @@
 # Funkční specifikace projektu FakturAI
 
 ## 0. Stav dokumentu
-- Verze: `1.8`
+- Verze: `1.9`
 - Datum: `2026-02-13`
 - Stav: `Rozpracováno`
 - Aktuálně zpracovaný rozsah: `Scope 1-7`
@@ -29,8 +29,8 @@ Umožnit založení a správu profilu živnostníka (fakturačního subjektu), b
 - Historie změn profilu (audit log s diffem změn).
 
 ### 1.3 Navigace a tok uživatele
-1. Uživatel se přihlásí poprvé a nemá profil živnostníka.
-2. Systém jej přesměruje na obrazovku `Onboarding živnostníka`.
+1. Nový uživatel otevře onboarding start (`/onboarding/start`) a vytvoří účet.
+2. Po registraci systém naváže na obrazovku `Onboarding živnostníka`.
 3. Po úspěšném uložení je uživatel přesměrován na `Vydané faktury`.
 4. Z hlavní navigace je trvale dostupná položka `Nastavení subjektu`.
 5. V `Nastavení subjektu` může uživatel:
@@ -731,22 +731,24 @@ Sekundární obrazovky:
 
 ### 6.4 Routy a URL mapování
 1. `/` -> veřejná landing page projektu.
-2. `/onboarding/subject` -> onboarding subjektu (Scope 1).
-3. `/invoices` -> seznam vydaných faktur (Scope 2).
-4. `/invoices/new` -> editor nová faktura (Scope 3).
-5. `/invoices/:invoiceId` -> detail faktury.
-6. `/invoices/:invoiceId/edit` -> editor faktury v režimu edit.
-7. `/invoices/:invoiceId/copy` -> editor faktury v režimu copy.
-8. `/tax-reports` -> DPH podklady (Scope 5).
-9. `/settings/subject` -> detail/editace subjektu (Scope 1).
-10. `/auth/login`, `/auth/register`, `/auth/forgot-password`, `/auth/reset-password`.
-11. `*` -> stránka `404`.
+2. `/onboarding/start` -> onboarding start (registrace + navázání na onboarding subjektu).
+3. `/onboarding/subject` -> onboarding subjektu (Scope 1).
+4. `/invoices` -> seznam vydaných faktur (Scope 2).
+5. `/invoices/new` -> editor nová faktura (Scope 3).
+6. `/invoices/:invoiceId` -> detail faktury.
+7. `/invoices/:invoiceId/edit` -> editor faktury v režimu edit.
+8. `/invoices/:invoiceId/copy` -> editor faktury v režimu copy.
+9. `/tax-reports` -> DPH podklady (Scope 5).
+10. `/settings/subject` -> detail/editace subjektu (Scope 1).
+11. `/auth/login`, `/auth/register` (redirect na `/onboarding/start`), `/auth/forgot-password`, `/auth/reset-password`.
+12. `*` -> stránka `404`.
 
 ### 6.5 Guardy a podmínky vstupu
-1. Bez autentizace jsou dostupné veřejné routy (`/`, `/auth/*`); ostatní routy vyžadují přihlášení.
+1. Bez autentizace jsou dostupné veřejné routy (`/`, `/auth/*`, `/onboarding/start`); ostatní routy vyžadují přihlášení.
 2. `/tax-reports` je dostupná jen pro `isVatPayer=true`; neplátce vidí informační stav bez možnosti exportu.
-3. `/invoices/:invoiceId/*` vrací `404`, pokud faktura neexistuje (např. byla smazána).
-4. Přímý vstup na chráněnou URL řeší guard před vykreslením stránky.
+3. Pokud je uživatel přihlášen, ale nemá dokončený onboarding subjektu, všechny aplikační routy (`/invoices`, `/tax-reports`, `/settings/*`) jej přesměrují zpět na `/onboarding/subject`.
+4. `/invoices/:invoiceId/*` vrací `404`, pokud faktura neexistuje (např. byla smazána).
+5. Přímý vstup na chráněnou URL řeší guard před vykreslením stránky.
 
 ### 6.6 App shell a layout
 
@@ -850,7 +852,7 @@ Sekundární obrazovky:
 ### 6.13 Potvrzená rozhodnutí
 1. Breadcrumb se ve v1 používá pouze na detailních stránkách.
 2. Mobil používá hamburger menu (ne bottom navigation).
-3. Výchozí landing page po přihlášení je `/invoices`.
+3. Veřejná vstupní stránka projektu je `/`; po přihlášení systém směruje uživatele dle stavu onboardingu.
 
 ## 7. Scope 7 - Autentizace, registrace účtu a správa session
 
@@ -873,12 +875,13 @@ Zajistit bezpečný vstup do aplikace, vytvoření uživatelského účtu a nav�
 - Správa týmů/rolí (více uživatelů na jeden subjekt).
 
 ### 7.3 Navigace a tok uživatele
-1. Nepřihlášený uživatel otevře aplikaci -> přesměrování na `Přihlášení`.
-2. Uživatel bez účtu přejde na `Registrace`.
+1. Nepřihlášený uživatel otevře aplikaci a může pokračovat přes onboarding start (`/onboarding/start`) nebo přihlášení.
+2. Uživatel bez účtu vytvoří účet na onboarding startu (ve stejném UX jako onboarding).
 3. Po úspěšné registraci je automaticky přihlášen.
 4. Pokud nemá založený subjekt, systém jej přesměruje na `Onboarding živnostníka` (Scope 1).
 5. Po dokončení onboardingu je přesměrován na `Vydané faktury`.
-6. Pokud už subjekt existuje, po přihlášení jde rovnou na `Vydané faktury`.
+6. Pokud onboarding nedokončí, po dalším přihlášení je vždy vrácen na `Onboarding živnostníka`.
+7. Pokud už subjekt existuje, po přihlášení jde rovnou na `Vydané faktury`.
 
 ### 7.4 Obrazovky
 
@@ -891,25 +894,27 @@ Prvky:
 - Pole `Heslo`.
 - Akce `Přihlásit se`.
 - Odkazy:
-  - `Registrace`,
+  - `Začít onboarding`,
   - `Zapomenuté heslo`.
 
 Pravidla:
 - Nevalidní kombinace e-mail/heslo vrací obecnou chybu bez upřesnění pole.
 - Po úspěchu vzniká session a dojde k redirectu dle 7.3.
 
-#### 7.4.2 Registrace
+#### 7.4.2 Onboarding start (registrace)
 Prvky:
-- Stejný auth layout jako u přihlášení (informační blok + formulářový panel).
+- Stejný vizuální jazyk jako onboarding subjektu.
+- Krok `Vytvoření účtu` jako první krok onboarding flow.
 - Pole `E-mail`.
 - Pole `Heslo`.
 - Pole `Potvrzení hesla`.
-- Akce `Vytvořit účet`.
+- Akce `Pokračovat na nastavení subjektu`.
 
 Pravidla:
 - E-mail musí být unikátní.
 - Heslo musí splnit minimální bezpečnostní pravidla (viz 7.5).
 - Po úspěšné registraci se vytvoří účet a session.
+- Route `/auth/register` je alias, který přesměruje na `/onboarding/start`.
 
 #### 7.4.3 Zapomenuté heslo
 Prvky:

@@ -1,10 +1,10 @@
 # Technická specifikace projektu FakturAI
 
 ## 0. Stav dokumentu
-- Verze: `1.1`
+- Verze: `1.2`
 - Datum: `2026-02-13`
 - Stav: `Rozpracováno`
-- Vazba na funkční specifikaci: `doc/funkcni-specifikace.md` (verze `1.8`)
+- Vazba na funkční specifikaci: `doc/funkcni-specifikace.md` (verze `1.9`)
 
 ## 1. Technologický stack
 
@@ -454,6 +454,7 @@ Poznámka:
 ### 7.1 Routing
 - React Router routes odpovídají funkční mapě:
   - `/`
+  - `/onboarding/start`
   - `/auth/login`
   - `/auth/register`
   - `/auth/forgot-password`
@@ -475,8 +476,9 @@ Poznámka:
 - Kontext seznamu faktur držený v URL query parametrech.
 - Asistované vyhledávání subjektu/odběratele přes `registry-api.ts`.
 - Auth guard:
-  - veřejné routy: `/` a `/auth/*`,
+  - veřejné routy: `/`, `/auth/*`, `/onboarding/start`,
   - ostatní routy vyžadují validní session (`/auth/me`).
+  - aplikační routy pod `AppLayout` vyžadují navíc existující subjekt (`me.hasSubject=true`), jinak redirect na `/onboarding/subject`.
 
 ### 7.3 UI komponenty
 - Tabulka faktur: server-side pagination.
@@ -488,6 +490,7 @@ Poznámka:
 - Editor položek s průběžným výpočtem řádkového součtu.
 - Sticky action bar v editoru faktury (akce dostupné i při delším scrollu).
 - Landing page (`LandingPage`) jako veřejný vstup do produktu.
+- Onboarding start stránka (`OnboardingStartPage`) pro registraci ve stejném UX toku jako onboarding subjektu.
 - Auth layout (`auth-layout`) se dvěma zónami: informační panel + formulářový panel.
 - Subject summary karty v onboardingu a nastavení subjektu.
 - Onboarding (`OnboardingSubjectWizard`) jako 3-krokový průvodce.
