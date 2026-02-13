@@ -4,6 +4,21 @@ import { APP_NAME, APP_SHORT_NAME } from '../brand';
 import { SiteHeader } from '../components/SiteHeader';
 import { LANDING_HIGHLIGHTS } from '../landing-copy';
 
+const LANDING_FEATURE_IMAGES = [
+  {
+    src: '/graphics/landing-feature-1.webp',
+    alt: 'Ilustrace rychlého vystavení faktury s PDF a QR platbou',
+  },
+  {
+    src: '/graphics/landing-feature-2.webp',
+    alt: 'Ilustrace XML exportu pro DPH a kontrolní hlášení',
+  },
+  {
+    src: '/graphics/landing-feature-3.webp',
+    alt: 'Ilustrace profesionálního PDF výstupu připraveného k odeslání klientovi',
+  },
+] as const;
+
 export function LandingPage() {
   const { me, loading } = useAuth();
   const appTarget = me?.hasSubject ? '/invoices' : '/onboarding/subject';
@@ -13,32 +28,41 @@ export function LandingPage() {
       <div className="page-stack">
         <SiteHeader showGuestActions={false} />
         <section className="landing-hero">
-          <p className="landing-kicker">{APP_SHORT_NAME}</p>
-          <h1>{APP_NAME} - fakturační systém, který kompletně naprogramovala AI</h1>
-          <p className="landing-subtitle">
-            Vystavíš fakturu, pohlídáš DPH a stáhneš XML pro finanční úřad bez zbytečného dramatu.
-          </p>
-          <p className="landing-description">
-            Primárně pro OSVČ, kteří jsou plátci DPH a daní procentem z příjmu.
-            Méně administrativy, víc času na práci, která tě živí.
-          </p>
+          <div className="landing-hero-copy">
+            <p className="landing-kicker">{APP_SHORT_NAME}</p>
+            <h1>{APP_NAME} - fakturační systém, který kompletně naprogramovala AI</h1>
+            <p className="landing-subtitle">
+              Vystavíš fakturu, pohlídáš DPH a stáhneš XML pro finanční úřad bez zbytečného dramatu.
+            </p>
+            <p className="landing-description">
+              Primárně pro OSVČ, kteří jsou plátci DPH a daní procentem z příjmu.
+              Méně administrativy, víc času na práci, která tě živí.
+            </p>
 
-          <div className="landing-actions">
-            {!loading && !me && (
-              <>
-                <Link className="action-link" to="/onboarding/start">
-                  Vytvořit účet
+            <div className="landing-actions">
+              {!loading && !me && (
+                <>
+                  <Link className="action-link" to="/onboarding/start">
+                    Vytvořit účet
+                  </Link>
+                  <Link className="action-link secondary-link" to="/auth/login">
+                    Přihlášení
+                  </Link>
+                </>
+              )}
+              {!loading && me && (
+                <Link className="action-link" to={appTarget}>
+                  Pokračovat do aplikace
                 </Link>
-                <Link className="action-link secondary-link" to="/auth/login">
-                  Přihlášení
-                </Link>
-              </>
-            )}
-            {!loading && me && (
-              <Link className="action-link" to={appTarget}>
-                Pokračovat do aplikace
-              </Link>
-            )}
+              )}
+            </div>
+          </div>
+
+          <div className="landing-hero-visual">
+            <img
+              src="/graphics/landing-hero.webp"
+              alt="Náhled hlavních funkcí FakturAI: fakturace, DPH a XML export"
+            />
           </div>
         </section>
 
@@ -52,8 +76,14 @@ export function LandingPage() {
         <section className="landing-section">
           <h2>Co už dnes umí</h2>
           <div className="landing-grid">
-            {LANDING_HIGHLIGHTS.map((item) => (
+            {LANDING_HIGHLIGHTS.map((item, index) => (
               <article key={item.title} className="landing-card">
+                <img
+                  className="landing-card-image"
+                  src={LANDING_FEATURE_IMAGES[index]?.src}
+                  alt={LANDING_FEATURE_IMAGES[index]?.alt || item.title}
+                  loading="lazy"
+                />
                 <h3>{item.title}</h3>
                 <p>{item.text}</p>
               </article>

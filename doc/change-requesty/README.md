@@ -45,3 +45,4 @@
 | `CR-0026` | Detail faktury: akce, pokročilé volby a konzistence layoutu | `Implementováno` | `Must` |
 | `CR-0027` | Zjednodušení akcí editoru faktury | `Implementováno` | `Must` |
 | `CR-0028` | Seznam faktur: dvouřádkový layout a filtr roku | `Implementováno` | `Must` |
+| `CR-0029` | Landing page: integrace grafiky hero a feature sekcí | `Implementováno` | `Should` |

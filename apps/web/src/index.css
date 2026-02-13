@@ -118,6 +118,10 @@ body {
 }
 
 .landing-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.9fr);
+  align-items: center;
+  gap: 20px;
   border: 1px solid #cfe0f2;
   border-radius: 24px;
   background:
@@ -126,6 +130,10 @@ body {
   color: #f0f7ff;
   padding: 28px;
   box-shadow: 0 22px 44px rgba(15, 23, 42, 0.2);
+}
+
+.landing-hero-copy {
+  min-width: 0;
 }
 
 .landing-kicker {
@@ -168,6 +176,22 @@ body {
   min-height: 42px;
 }
 
+.landing-hero-visual {
+  align-self: stretch;
+  border: 1px solid rgba(148, 199, 236, 0.45);
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(10, 30, 49, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.landing-hero-visual img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
 .landing-section {
   border: 1px solid #d6e4f2;
   border-radius: 16px;
@@ -191,10 +215,22 @@ body {
 }
 
 .landing-card {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 10px;
   border: 1px solid #dce8f5;
   border-radius: 12px;
   background: linear-gradient(180deg, #f9fcff 0%, #f3f8fe 100%);
   padding: 12px;
+}
+
+.landing-card-image {
+  width: 100%;
+  aspect-ratio: 13 / 8;
+  border: 1px solid #dce8f5;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #f8fcff;
 }
 
 .landing-card h3 {
@@ -1769,6 +1805,10 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 
+  .landing-hero {
+    grid-template-columns: 1fr;
+  }
+
   .page-head {
     flex-direction: column;
     align-items: flex-start;
@@ -1805,6 +1845,11 @@ button:disabled {
   .landing-hero {
     padding: 18px 14px;
     border-radius: 18px;
+    gap: 12px;
+  }
+
+  .landing-hero-visual {
+    border-radius: 14px;
   }
 
   .invoice-table {
