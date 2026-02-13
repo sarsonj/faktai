@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum DefaultVariableSymbolType {
+  ico
+  custom
+}
+
 model User {
   id                  String               @id @default(uuid())
   email               String               @unique
@@ -43,9 +48,26 @@ model PasswordResetToken {
 }
 
 model Subject {
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                         String                    @id @default(uuid())
+  userId                     String                    @unique
+  firstName                  String
+  lastName                   String
+  businessName               String?
+  ico                        String                    @db.VarChar(8)
+  dic                        String?
+  isVatPayer                 Boolean
+  vatRegistrationDate        DateTime?
+  street                     String
+  city                       String
+  postalCode                 String
+  countryCode                String                    @default("CZ") @db.VarChar(2)
+  bankAccountPrefix          String?
+  bankAccountNumber          String
+  bankCode                   String                    @db.VarChar(4)
+  defaultVariableSymbolType  DefaultVariableSymbolType
+  defaultVariableSymbolValue String?
+  defaultDueDays             Int                       @default(14)
+  createdAt                  DateTime                  @default(now())
+  updatedAt                  DateTime                  @updatedAt
+  user                       User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

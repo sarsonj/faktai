@@ -48,6 +48,13 @@ input {
   font-size: 14px;
 }
 
+select {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
 button {
   border: none;
   border-radius: 8px;
@@ -69,6 +76,12 @@ button:disabled {
   gap: 8px;
 }
 
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
 .error {
   color: #b91c1c;
 }
@@ -76,4 +89,8 @@ button:disabled {
 .button-row {
   display: flex;
   gap: 8px;
+}
+
+hr {
+  margin: 20px 0;
 }

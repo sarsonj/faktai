@@ -2,6 +2,16 @@ export const API_BASE_URL =
   import.meta.env.VITE_API_URL ??
   `${window.location.protocol}//${window.location.hostname}:4000/api/v1`;
 
+export class ApiError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   body?: unknown;
@@ -21,7 +31,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     const maybeJson = await response
       .json()
       .catch(() => ({ message: `Request failed with ${response.status}` }));
-    throw new Error(maybeJson.message ?? `Request failed with ${response.status}`);
+    throw new ApiError(response.status, maybeJson.message ?? `Request failed with ${response.status}`);
   }
 
   return (await response.json()) as T;

@@ -9,6 +9,7 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { OnboardingSubjectPage } from './pages/OnboardingSubjectPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { SettingsSubjectPage } from './pages/SettingsSubjectPage';
 
 function RootRedirect() {
   const { me, loading } = useAuth();
@@ -51,6 +52,14 @@ function App() {
         element={
           <ProtectedRoute>
             <InvoicesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/subject"
+        element={
+          <ProtectedRoute>
+            <SettingsSubjectPage />
           </ProtectedRoute>
         }
       />
