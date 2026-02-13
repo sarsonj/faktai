@@ -24,6 +24,7 @@
   --shadow-soft: 0 10px 32px rgba(15, 23, 42, 0.08);
   --shadow-card: 0 16px 56px rgba(15, 23, 42, 0.1);
   --ring: rgba(13, 148, 136, 0.3);
+  --header-offset: 10px;
 }
 
 * {
@@ -51,7 +52,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 0 28px 24px;
+  padding: var(--header-offset) 28px 24px;
 }
 
 .page-stack {
@@ -291,7 +292,7 @@ body {
 
 .app-topbar {
   position: sticky;
-  top: 0;
+  top: var(--header-offset);
   z-index: 10;
   display: flex;
   justify-content: space-between;
@@ -1721,7 +1722,7 @@ button:disabled {
 
 @media (max-width: 1024px) {
   .app-shell {
-    padding: 0 14px 14px;
+    padding: 8px 14px 14px;
   }
 
   .page-stack {
@@ -1798,7 +1799,7 @@ button:disabled {
 
 @media (max-width: 780px) {
   .app-shell {
-    padding: 0 10px 14px;
+    padding: 6px 10px 14px;
   }
 
   .landing-hero {
