@@ -50,6 +50,7 @@ describe('InvoiceService', () => {
         totalWithVat: 121,
         paidAt: null,
         note: 'Test',
+        items: [{ description: 'Servisní balíček' }],
       },
     ]);
 
@@ -60,6 +61,7 @@ describe('InvoiceService', () => {
     });
 
     expect(result.items[0].status).toBe('overdue');
+    expect(result.items[0].description).toBe('Servisní balíček');
     expect(result.availableYears).toEqual([2026, 2025]);
   });
 
@@ -82,6 +84,17 @@ describe('InvoiceService', () => {
           issueDate: expect.objectContaining({
             gte: new Date(Date.UTC(2025, 0, 1)),
             lt: new Date(Date.UTC(2026, 0, 1)),
+          }),
+        }),
+      }),
+    );
+    expect(prisma.invoice.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: expect.objectContaining({
+          items: expect.objectContaining({
+            select: { description: true },
+            orderBy: { position: 'asc' },
+            take: 1,
           }),
         }),
       }),

@@ -39,6 +39,10 @@ export type InvoiceListItem = {
   description: string;
 };
 
+type InvoiceListRow = Invoice & {
+  items: Array<Pick<InvoiceItem, 'description'>>;
+};
+
 export type InvoiceDetailItem = {
   id: string;
   position: number;
@@ -408,7 +412,7 @@ export class InvoiceService {
     return `${year}${String(currentValue).padStart(2, '0')}`;
   }
 
-  private mapListItem(row: Invoice): InvoiceListItem {
+  private mapListItem(row: InvoiceListRow): InvoiceListItem {
     return {
       id: row.id,
       invoiceNumber: row.invoiceNumber,
@@ -419,7 +423,7 @@ export class InvoiceService {
       totalWithoutVat: row.totalWithoutVat.toString(),
       totalWithVat: row.totalWithVat.toString(),
       paidAt: row.paidAt?.toISOString() ?? null,
-      description: row.note?.slice(0, 120) ?? '',
+      description: row.items[0]?.description?.slice(0, 120) ?? '',
     };
   }
 
@@ -1270,6 +1274,13 @@ export class InvoiceService {
       this.prisma.invoice.count({ where }),
       this.prisma.invoice.findMany({
         where,
+        include: {
+          items: {
+            select: { description: true },
+            orderBy: { position: 'asc' },
+            take: 1,
+          },
+        },
         orderBy: [{ issueDate: 'desc' }, { invoiceNumber: 'desc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
