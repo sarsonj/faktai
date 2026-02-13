@@ -692,6 +692,14 @@ export class InvoiceService {
       : `${supplier.bankAccountNumber}/${supplier.bankCode}`;
   }
 
+  private sanitizeFileToken(value: string): string {
+    return value
+      .trim()
+      .replace(/\s+/g, '')
+      .replace(/[^0-9A-Za-z_-]/g, '-')
+      .replace(/-+/g, '-');
+  }
+
   private buildVatRows(items: InvoiceItem[]) {
     const grouped = new Map<number, { base: Decimal; vat: Decimal; total: Decimal }>();
     for (const item of items) {
@@ -714,25 +722,6 @@ export class InvoiceService {
         vat: values.vat.toFixed(2),
         total: values.total.toFixed(2),
       }));
-  }
-
-  private drawPseudoBarcode(doc: PDFKit.PDFDocument, x: number, y: number, width: number, value: string) {
-    const bars = value.replace(/\D/g, '');
-    if (!bars) {
-      return;
-    }
-
-    const barWidth = Math.max(1, Math.floor(width / (bars.length * 2)));
-    let currentX = x;
-    for (let i = 0; i < bars.length; i += 1) {
-      const digit = Number(bars[i]);
-      const height = 16 + (digit % 4) * 3;
-      doc.rect(currentX, y, barWidth, height).fill('#111111');
-      currentX += barWidth * 2;
-      if (currentX > x + width) {
-        break;
-      }
-    }
   }
 
   private resolvePdfFontNames(doc: PDFKit.PDFDocument): PdfFontNames {
@@ -859,7 +848,6 @@ export class InvoiceService {
       this.drawSingleLine(doc, 'Faktura - daňový doklad', rightColX, top + 4, colWidth - 104, fonts.bold, 16);
       doc.rect(right - 94, top, 94, 28).fill('#eeeeee');
       this.drawSingleLine(doc, invoiceNumber, right - 90, top + 8, 86, fonts.bold, 12, 'center');
-      this.drawPseudoBarcode(doc, right - 90, top + 34, 86, invoiceNumber);
 
       this.drawSingleLine(doc, 'Odběratel', rightColX, top + 98, colWidth, fonts.bold, 10);
       this.drawSingleLine(doc, input.invoice.customerName, rightColX, top + 114, colWidth, fonts.regular);
@@ -1196,7 +1184,7 @@ export class InvoiceService {
       );
       this.drawSingleLine(
         doc,
-        'Vystaveno v online fakturační službě iDoklad',
+        'Vystaveno v aplikaci FakturAI',
         left + 200,
         footerY,
         220,
@@ -1722,10 +1710,6 @@ export class InvoiceService {
       throw new NotFoundException('Invoice not found');
     }
 
-    const effectiveStatus = this.toEffectiveStatus(
-      invoice.status,
-      invoice.dueDate,
-    );
     if (invoice.status === 'draft' || invoice.status === 'cancelled') {
       throw new ConflictException(
         'PDF export is allowed only for issued or paid invoices',
@@ -1755,7 +1739,7 @@ export class InvoiceService {
       spdPayload,
     });
 
-    const exportData = await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx) => {
       const current = await tx.invoice.findUnique({
         where: { id: invoice.id },
         select: {
@@ -1791,8 +1775,6 @@ export class InvoiceService {
           payloadHash,
         },
       });
-
-      return { nextVersion };
     });
 
     const pdfBuffer = await this.renderPdf({
@@ -1802,10 +1784,10 @@ export class InvoiceService {
       iban,
     });
 
-    const filePrefix = invoice.invoiceNumber ?? invoice.id;
-    const statusSuffix = effectiveStatus === 'overdue' ? '-overdue' : '';
+    const safeIco = this.sanitizeFileToken(supplier.ico || 'ICO');
+    const safeInvoiceNumber = this.sanitizeFileToken(invoice.invoiceNumber ?? invoice.id);
     return {
-      fileName: `faktura-${filePrefix}${statusSuffix}-v${exportData.nextVersion}.pdf`,
+      fileName: `${safeIco}_${safeInvoiceNumber}.pdf`,
       content: pdfBuffer,
     };
   }

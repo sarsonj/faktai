@@ -107,7 +107,16 @@ export async function downloadInvoicePdf(invoiceId: string): Promise<void> {
   }
 
   const blob = await response.blob();
+  const disposition = response.headers.get('content-disposition') ?? '';
+  const matchedName = disposition.match(/filename="([^"]+)"/);
+  const fileName = matchedName?.[1] ?? 'invoice.pdf';
+
   const url = URL.createObjectURL(blob);
-  window.open(url, '_blank', 'noopener,noreferrer');
-  window.setTimeout(() => URL.revokeObjectURL(url), 5000);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
