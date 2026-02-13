@@ -66,6 +66,10 @@ export function SettingsSubjectPage() {
     <main className="app-shell">
       <section className="card">
         <h1>Nastavení subjektu</h1>
+        <div className="toolbar-row">
+          <Link to="/invoices">Vydané faktury</Link>
+          <Link to="/tax-reports">DPH podklady</Link>
+        </div>
         {error && <p className="error">{error}</p>}
         {success && <p>{success}</p>}
         <SubjectForm

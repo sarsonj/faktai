@@ -189,6 +189,16 @@ hr {
   flex-wrap: wrap;
 }
 
+.json-preview {
+  overflow: auto;
+  max-height: 260px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 12px;
+}
+
 @media (max-width: 980px) {
   .invoice-item-row {
     grid-template-columns: 1fr 1fr;

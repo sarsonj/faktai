@@ -32,6 +32,17 @@ enum TaxClassification {
   exempt_without_credit
 }
 
+enum TaxReportType {
+  vat_return
+  summary_statement
+  control_statement
+}
+
+enum TaxPeriodType {
+  month
+  quarter
+}
+
 model User {
   id                  String               @id @default(uuid())
   email               String               @unique
@@ -44,6 +55,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   subject             Subject?
   pdfExports          PdfExportMetadata[]
+  taxReportRuns       TaxReportRun[]
 }
 
 model UserSession {
@@ -93,6 +105,7 @@ model Subject {
   user                       User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   invoices                   Invoice[]
   numberSequences            InvoiceNumberSequence[]
+  taxReportRuns              TaxReportRun[]
 }
 
 model Invoice {
@@ -126,6 +139,7 @@ model Invoice {
   subject             Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   items               InvoiceItem[]
   pdfExports          PdfExportMetadata[]
+  taxReportEntries    TaxReportRunEntry[]
 
   @@unique([subjectId, invoiceNumber])
   @@index([subjectId, issueDate(sort: Desc)])
@@ -172,4 +186,33 @@ model PdfExportMetadata {
   user             User     @relation(fields: [exportedByUserId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId, exportedAt])
+}
+
+model TaxReportRun {
+  id                String          @id @default(uuid())
+  subjectId         String
+  reportType        TaxReportType
+  periodType        TaxPeriodType
+  periodYear        Int
+  periodValue       Int
+  runVersion        Int
+  datasetHash       String
+  generatedByUserId String
+  generatedAt       DateTime        @default(now())
+  subject           Subject         @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  generatedByUser   User            @relation(fields: [generatedByUserId], references: [id], onDelete: Cascade)
+  entries           TaxReportRunEntry[]
+
+  @@index([subjectId, reportType, periodType, periodYear, periodValue, generatedAt(sort: Desc)])
+}
+
+model TaxReportRunEntry {
+  id                     String      @id @default(uuid())
+  runId                  String
+  invoiceId              String
+  invoiceUpdatedAtSnapshot DateTime
+  run                    TaxReportRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  invoice                Invoice     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([runId, invoiceId])
 }

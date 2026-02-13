@@ -144,3 +144,36 @@ export type InvoiceUpsertInput = {
   note?: string;
   items: InvoiceItemInput[];
 };
+
+export type TaxReportType = 'vat_return' | 'summary_statement' | 'control_statement';
+export type TaxPeriodType = 'month' | 'quarter';
+
+export type TaxReportRequest = {
+  reportType: TaxReportType;
+  periodType: TaxPeriodType;
+  year: number;
+  value: number;
+};
+
+export type TaxReportPreview = {
+  reportType: TaxReportType;
+  periodType: TaxPeriodType;
+  year: number;
+  value: number;
+  schemaVersion: string;
+  invoiceCount: number;
+  datasetHash: string;
+  summary: Record<string, unknown>;
+};
+
+export type TaxReportRun = {
+  id: string;
+  reportType: TaxReportType;
+  periodType: TaxPeriodType;
+  periodYear: number;
+  periodValue: number;
+  runVersion: number;
+  datasetHash: string;
+  generatedAt: string;
+  invoiceCount: number;
+};

@@ -36,6 +36,7 @@
     "class-validator": "^0.14.2",
     "cookie-parser": "^1.4.7",
     "decimal.js": "^10.6.0",
+    "fast-xml-parser": "^5.3.5",
     "nodemailer": "^7.0.10",
     "pdfkit": "^0.17.2",
     "qrcode": "^1.5.4",

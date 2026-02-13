@@ -13,6 +13,7 @@ import { OnboardingSubjectPage } from './pages/OnboardingSubjectPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { SettingsSubjectPage } from './pages/SettingsSubjectPage';
+import { TaxReportsPage } from './pages/TaxReportsPage';
 
 function RootRedirect() {
   const { me, loading } = useAuth();
@@ -95,6 +96,14 @@ function App() {
         element={
           <ProtectedRoute>
             <SettingsSubjectPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tax-reports"
+        element={
+          <ProtectedRoute>
+            <TaxReportsPage />
           </ProtectedRoute>
         }
       />

@@ -149,6 +149,7 @@ export function InvoicesPage() {
 
         <div className="toolbar-row">
           <Link to={`/invoices/new${listContext ? `?${listContext}` : ''}`}>Nová faktura</Link>
+          <Link to="/tax-reports">DPH podklady</Link>
           <Link to="/settings/subject">Nastavení subjektu</Link>
           <button onClick={onLogout} type="button">
             Odhlásit
