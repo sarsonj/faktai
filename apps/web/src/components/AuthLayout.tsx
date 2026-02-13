@@ -1,8 +1,11 @@
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { APP_SHORT_NAME, APP_TAGLINE } from '../brand';
 import { SiteHeader } from './SiteHeader';
 
 export function AuthLayout() {
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/auth/login';
+
   return (
     <main className="app-shell auth-shell">
       <div className="page-stack auth-page-stack">
@@ -26,7 +29,9 @@ export function AuthLayout() {
               <Outlet />
               <hr />
               <p className="auth-switch">
-                <Link to="/auth/login">Přihlášení</Link> | <Link to="/onboarding/start">Začít onboarding</Link>
+                {!isLoginPage && <Link to="/auth/login">Přihlášení</Link>}
+                {!isLoginPage && ' | '}
+                <Link to="/onboarding/start">Vytvořit účet</Link>
               </p>
             </div>
           </div>
