@@ -56,6 +56,34 @@ function statusClassName(status: InvoiceDetail['status']): string {
   }
 }
 
+function EditIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 20h4l10-10-4-4L4 16v4Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="m12.5 7.5 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="9" y="9" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M7 15H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PdfIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 4v10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="m8 10 4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 20h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function InvoiceDetailPage() {
   const navigate = useNavigate();
   const { invoiceId } = useParams<{ invoiceId: string }>();
@@ -225,95 +253,59 @@ export function InvoiceDetailPage() {
             <span className="summary-pill">Doklad #{invoice.invoiceNumber ?? '-'}</span>
           </div>
           <div className="invoice-detail-hero-actions">
-            <Link
-              className="action-link"
-              to={`/invoices/${invoice.id}/edit${listQuery ? `?${listQuery}` : ''}`}
-            >
-              Upravit
-            </Link>
-            <Link
-              className="action-link secondary-link"
-              to={`/invoices/${invoice.id}/copy${listQuery ? `?${listQuery}` : ''}`}
-            >
-              Kopie
-            </Link>
-            <button
-              type="button"
-              className="secondary"
-              disabled={invoice.status === 'draft' || invoice.status === 'cancelled'}
-              onClick={() => {
-                void downloadInvoicePdf(invoice.id).catch((err: unknown) => {
-                  setError(err instanceof Error ? err.message : 'Export PDF selhal');
-                });
-              }}
-            >
-              PDF
-            </button>
+            <div className="invoice-quick-actions">
+              <Link
+                className="icon-link"
+                to={`/invoices/${invoice.id}/edit${listQuery ? `?${listQuery}` : ''}`}
+                aria-label="Upravit fakturu"
+                title="Upravit"
+                data-tooltip="Upravit"
+              >
+                <EditIcon />
+              </Link>
+              <Link
+                className="icon-link"
+                to={`/invoices/${invoice.id}/copy${listQuery ? `?${listQuery}` : ''}`}
+                aria-label="Vytvořit kopii faktury"
+                title="Kopie"
+                data-tooltip="Kopie"
+              >
+                <CopyIcon />
+              </Link>
+              <button
+                type="button"
+                className={`icon-button secondary${invoice.status === 'draft' || invoice.status === 'cancelled' ? ' muted' : ''}`}
+                aria-label="Stáhnout PDF"
+                title="PDF"
+                data-tooltip={
+                  invoice.status === 'draft' || invoice.status === 'cancelled'
+                    ? 'PDF jen pro vystavené/uhrazené'
+                    : 'Export PDF'
+                }
+                onClick={() => {
+                  if (invoice.status === 'draft' || invoice.status === 'cancelled') {
+                    setError('PDF lze exportovat jen u vystavené nebo uhrazené faktury.');
+                    return;
+                  }
+                  void downloadInvoicePdf(invoice.id).catch((err: unknown) => {
+                    setError(err instanceof Error ? err.message : 'Export PDF selhal');
+                  });
+                }}
+              >
+                <PdfIcon />
+              </button>
+            </div>
 
             {invoice.status === 'draft' && (
-              <button type="button" onClick={onIssue}>
+              <button type="button" className="invoice-primary-action" onClick={onIssue}>
                 Vystavit fakturu
               </button>
             )}
             {(invoice.status === 'issued' || invoice.status === 'overdue') && (
-              <button type="button" className="secondary" onClick={onMarkPaid}>
+              <button type="button" className="invoice-primary-action secondary" onClick={onMarkPaid}>
                 Označit jako uhrazené
               </button>
             )}
-
-            <details className="advanced-tools advanced-tools-inline">
-              <summary className="advanced-tools-summary">Další možnosti</summary>
-              <p className="helper-text">
-                Pokročilé akce pro výjimečné situace.
-              </p>
-
-              <div className="form-grid form-grid-two">
-                <label>
-                  Změnit číslo dokladu
-                  <input
-                    value={advancedInvoiceNumber}
-                    onChange={(event) => setAdvancedInvoiceNumber(event.target.value)}
-                    disabled={advancedBusy}
-                  />
-                </label>
-                <label className="checkbox-row">
-                  <span>Synchronizovat i variabilní symbol</span>
-                  <input
-                    type="checkbox"
-                    checked={syncVariableSymbol}
-                    onChange={(event) => setSyncVariableSymbol(event.target.checked)}
-                    disabled={advancedBusy}
-                  />
-                </label>
-              </div>
-
-              <div className="button-row wrap">
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={onChangeInvoiceNumber}
-                  disabled={advancedBusy}
-                >
-                  Uložit číslo dokladu
-                </button>
-
-                {invoice.status === 'paid' && (
-                  <>
-                    <button
-                      type="button"
-                      className="secondary"
-                      onClick={onMarkUnpaid}
-                      disabled={advancedBusy}
-                    >
-                      Označit jako neuhrazené
-                    </button>
-                    <Link className="action-link secondary-link" to={advancedEditHref}>
-                      Odemknout editaci uhrazené
-                    </Link>
-                  </>
-                )}
-              </div>
-            </details>
           </div>
         </div>
 
@@ -435,6 +427,62 @@ export function InvoiceDetailPage() {
             <strong>{formatMoney(invoice.totalWithVat)}</strong>
           </div>
         </div>
+      </section>
+
+      <section className="ui-section invoice-advanced-section">
+        <details className="advanced-tools">
+          <summary className="advanced-tools-summary">Další možnosti (pokročilé)</summary>
+          <p className="helper-text">
+            Tyto akce použijte jen ve výjimečných situacích.
+          </p>
+
+          <div className="form-grid form-grid-two">
+            <label>
+              Změnit číslo dokladu
+              <input
+                value={advancedInvoiceNumber}
+                onChange={(event) => setAdvancedInvoiceNumber(event.target.value)}
+                disabled={advancedBusy}
+              />
+            </label>
+            <label className="checkbox-row">
+              <span>Synchronizovat i variabilní symbol</span>
+              <input
+                type="checkbox"
+                checked={syncVariableSymbol}
+                onChange={(event) => setSyncVariableSymbol(event.target.checked)}
+                disabled={advancedBusy}
+              />
+            </label>
+          </div>
+
+          <div className="button-row wrap">
+            <button
+              type="button"
+              className="secondary"
+              onClick={onChangeInvoiceNumber}
+              disabled={advancedBusy}
+            >
+              Uložit číslo dokladu
+            </button>
+
+            {invoice.status === 'paid' && (
+              <>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={onMarkUnpaid}
+                  disabled={advancedBusy}
+                >
+                  Označit jako neuhrazené
+                </button>
+                <Link className="action-link secondary-link" to={advancedEditHref}>
+                  Odemknout editaci uhrazené
+                </Link>
+              </>
+            )}
+          </div>
+        </details>
       </section>
     </section>
   );

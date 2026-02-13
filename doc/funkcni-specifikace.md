@@ -348,8 +348,8 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
   - po úspěšném uložení návrat na seznam faktur se zachováním aktivních filtrů
 - `Zrušit` (návrat na seznam)
 - `Smazat` (hard delete, dostupné ze seznamu faktur)
-- V detailu faktury jsou běžné akce (`Upravit`, `Kopie`, `PDF`, stavové akce) v jedné akční liště.
-- Pokročilé zásahy jsou zanořené pod volbou `Další možnosti`:
+- V detailu faktury jsou běžné akce (`Upravit`, `Kopie`, `PDF`) prezentované jako kompaktní ikonová lišta + jedna hlavní stavová akce (`Vystavit` / `Označit jako uhrazené`).
+- Pokročilé zásahy jsou zanořené pod volbou `Další možnosti (pokročilé)` v samostatné sekci na konci stránky:
   - změna čísla dokladu,
   - přepnutí stavu `uhrazená -> neuhrazená`,
   - odemknutí editace uhrazené faktury.

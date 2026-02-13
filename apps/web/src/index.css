@@ -301,6 +301,9 @@ body {
   background: rgba(255, 255, 255, 0.88);
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(6px);
+  width: min(1180px, 100%);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .site-header {
@@ -432,6 +435,8 @@ body {
 
 .app-content {
   min-width: 0;
+  width: min(1180px, 100%);
+  margin: 0 auto;
 }
 
 .card {
@@ -1149,6 +1154,20 @@ button:disabled {
   margin-left: auto;
 }
 
+.invoice-quick-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid #d5e2ef;
+  border-radius: 12px;
+  background: #f5f9fd;
+}
+
+.invoice-primary-action {
+  min-height: 38px;
+}
+
 .invoice-detail-hero .kpi-card strong {
   display: block;
   text-align: right;
@@ -1170,22 +1189,16 @@ button:disabled {
   border-style: solid;
 }
 
-.advanced-tools-inline {
-  width: 100%;
-  margin-top: 6px;
-}
-
-.advanced-tools-inline .advanced-tools-summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .advanced-tools-summary {
   cursor: pointer;
   color: #244763;
   font-weight: 700;
   user-select: none;
+}
+
+.invoice-advanced-section {
+  border-style: dashed;
+  background: #fafcfe;
 }
 
 .invoice-meta-grid {
@@ -1597,6 +1610,11 @@ button:disabled {
     padding: 14px;
   }
 
+  .app-topbar,
+  .app-content {
+    width: 100%;
+  }
+
   .app-user-label {
     display: none;
   }
@@ -1618,6 +1636,11 @@ button:disabled {
   .page-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .invoice-detail-hero-actions {
+    justify-content: flex-start;
+    margin-left: 0;
   }
 
   .invoice-item-row {
