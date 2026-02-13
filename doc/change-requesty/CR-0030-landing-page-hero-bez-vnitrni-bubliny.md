@@ -21,6 +21,8 @@ Po integraci grafiky landing page (`CR-0029`) je hero obrázek vizuálně příl
 ## 3. Scope změny
 - Frontend:
   - `apps/web/src/index.css`
+- Assety:
+  - `apps/web/public/graphics/landing-hero.webp`
 - Dokumentace:
   - `doc/change-requesty/README.md`
 
@@ -48,3 +50,7 @@ Po integraci grafiky landing page (`CR-0029`) je hero obrázek vizuálně příl
   - přidáno barevné tónování (`hue/saturation/brightness`) a maska pro plynulý přechod do pozadí,
   - čitelnost textu je jištěna overlay gradientem,
   - mobilní varianta zachovává obrázek pod textem bez tvrdého oddělení.
+- Iterace 3:
+  - upraven samotný hero asset (`landing-hero.webp`) pro lepší barevné sladění s pozadím sekce,
+  - zeslaben překryv gradientů a zvýrazněna čitelnost ilustrace, aby se vizuál neztrácel,
+  - zachován plynulý přechod bez efektu samostatného obrázku.
