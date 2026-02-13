@@ -206,14 +206,11 @@ export function InvoiceDetailPage() {
         <div>
           <p className="page-kicker">Fakturace</p>
           <h1 className="page-title">Detail faktury {invoice.invoiceNumber ?? '(koncept)'}</h1>
-          <p className="page-subtitle">Přehled stavu, metadat a položek dokladu.</p>
+          <p className="page-subtitle">Přehled dokladu, platebních údajů a položek faktury.</p>
         </div>
         <div className="page-actions">
-          <Link className="action-link" to={backHref}>
+          <Link className="action-link secondary-link" to={backHref}>
             Zpět na seznam
-          </Link>
-          <Link className="action-link secondary-link" to={`/invoices/${invoice.id}/edit${listQuery ? `?${listQuery}` : ''}`}>
-            Upravit
           </Link>
         </div>
       </header>
@@ -221,7 +218,105 @@ export function InvoiceDetailPage() {
       {error && <p className="error">{error}</p>}
       {success && <p>{success}</p>}
 
-      <section className="ui-section">
+      <section className="ui-section invoice-detail-hero">
+        <div className="invoice-detail-hero-top">
+          <div className="invoice-detail-hero-badges">
+            <span className={statusClassName(invoice.status)}>{statusLabel(invoice.status)}</span>
+            <span className="summary-pill">Doklad #{invoice.invoiceNumber ?? '-'}</span>
+          </div>
+          <div className="invoice-detail-hero-actions">
+            <Link
+              className="action-link"
+              to={`/invoices/${invoice.id}/edit${listQuery ? `?${listQuery}` : ''}`}
+            >
+              Upravit
+            </Link>
+            <Link
+              className="action-link secondary-link"
+              to={`/invoices/${invoice.id}/copy${listQuery ? `?${listQuery}` : ''}`}
+            >
+              Kopie
+            </Link>
+            <button
+              type="button"
+              className="secondary"
+              disabled={invoice.status === 'draft' || invoice.status === 'cancelled'}
+              onClick={() => {
+                void downloadInvoicePdf(invoice.id).catch((err: unknown) => {
+                  setError(err instanceof Error ? err.message : 'Export PDF selhal');
+                });
+              }}
+            >
+              PDF
+            </button>
+
+            {invoice.status === 'draft' && (
+              <button type="button" onClick={onIssue}>
+                Vystavit fakturu
+              </button>
+            )}
+            {(invoice.status === 'issued' || invoice.status === 'overdue') && (
+              <button type="button" className="secondary" onClick={onMarkPaid}>
+                Označit jako uhrazené
+              </button>
+            )}
+
+            <details className="advanced-tools advanced-tools-inline">
+              <summary className="advanced-tools-summary">Další možnosti</summary>
+              <p className="helper-text">
+                Pokročilé akce pro výjimečné situace.
+              </p>
+
+              <div className="form-grid form-grid-two">
+                <label>
+                  Změnit číslo dokladu
+                  <input
+                    value={advancedInvoiceNumber}
+                    onChange={(event) => setAdvancedInvoiceNumber(event.target.value)}
+                    disabled={advancedBusy}
+                  />
+                </label>
+                <label className="checkbox-row">
+                  <span>Synchronizovat i variabilní symbol</span>
+                  <input
+                    type="checkbox"
+                    checked={syncVariableSymbol}
+                    onChange={(event) => setSyncVariableSymbol(event.target.checked)}
+                    disabled={advancedBusy}
+                  />
+                </label>
+              </div>
+
+              <div className="button-row wrap">
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={onChangeInvoiceNumber}
+                  disabled={advancedBusy}
+                >
+                  Uložit číslo dokladu
+                </button>
+
+                {invoice.status === 'paid' && (
+                  <>
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={onMarkUnpaid}
+                      disabled={advancedBusy}
+                    >
+                      Označit jako neuhrazené
+                    </button>
+                    <Link className="action-link secondary-link" to={advancedEditHref}>
+                      Odemknout editaci uhrazené
+                    </Link>
+                  </>
+                )}
+              </div>
+            </details>
+          </div>
+        </div>
+
         <div className="kpi-grid">
           <article className="kpi-card">
             <p>Celkem k úhradě</p>
@@ -239,115 +334,48 @@ export function InvoiceDetailPage() {
       </section>
 
       <section className="ui-section">
-        <div className="button-row wrap">
-          <Link className="action-link secondary-link" to={`/invoices/${invoice.id}/copy${listQuery ? `?${listQuery}` : ''}`}>
-            Kopie
-          </Link>
-          <button
-            type="button"
-            className="secondary"
-            disabled={invoice.status === 'draft' || invoice.status === 'cancelled'}
-            onClick={() => {
-              void downloadInvoicePdf(invoice.id).catch((err: unknown) => {
-                setError(err instanceof Error ? err.message : 'Export PDF selhal');
-              });
-            }}
-          >
-            PDF
-          </button>
-          {invoice.status === 'draft' && (
-            <button type="button" onClick={onIssue}>
-              Vystavit fakturu
-            </button>
-          )}
-          {(invoice.status === 'issued' || invoice.status === 'overdue') && (
-            <button type="button" className="secondary" onClick={onMarkPaid}>
-              Označit jako uhrazené
-            </button>
-          )}
-        </div>
-      </section>
-
-      <section className="ui-section">
-        <details className="advanced-tools">
-          <summary className="advanced-tools-summary">Více / Pokročilé zásahy</summary>
-          <p className="helper-text">
-            Pokročilé akce pro výjimečné situace. Změny mohou ovlivnit navazující výstupy (PDF/XML).
-          </p>
-
-          <div className="form-grid form-grid-two">
-            <label>
-              Změnit číslo dokladu
-              <input
-                value={advancedInvoiceNumber}
-                onChange={(event) => setAdvancedInvoiceNumber(event.target.value)}
-                disabled={advancedBusy}
-              />
-            </label>
-            <label className="checkbox-row">
-              <span>Synchronizovat i variabilní symbol</span>
-              <input
-                type="checkbox"
-                checked={syncVariableSymbol}
-                onChange={(event) => setSyncVariableSymbol(event.target.checked)}
-                disabled={advancedBusy}
-              />
-            </label>
-          </div>
-
-          <div className="button-row wrap">
-            <button
-              type="button"
-              className="secondary"
-              onClick={onChangeInvoiceNumber}
-              disabled={advancedBusy}
-            >
-              Uložit číslo dokladu
-            </button>
-
-            {invoice.status === 'paid' && (
-              <>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={onMarkUnpaid}
-                  disabled={advancedBusy}
-                >
-                  Označit jako neuhrazené
-                </button>
-                <Link className="action-link secondary-link" to={advancedEditHref}>
-                  Odemknout editaci uhrazené
-                </Link>
-              </>
-            )}
-          </div>
-        </details>
-      </section>
-
-      <section className="ui-section">
-        <h2>Metadata faktury</h2>
-        <div className="summary-grid">
-          <p>
-            <strong>Stav:</strong> <span className={statusClassName(invoice.status)}>{statusLabel(invoice.status)}</span>
-          </p>
-          <p>
-            <strong>Číslo dokladu:</strong> {invoice.invoiceNumber ?? '-'}
-          </p>
-          <p>
-            <strong>Variabilní symbol:</strong> {invoice.variableSymbol}
-          </p>
-          <p>
-            <strong>Vystaveno:</strong> {formatDate(invoice.issueDate)}
-          </p>
-          <p>
-            <strong>Splatnost:</strong> {formatDate(invoice.dueDate)}
-          </p>
-          <p>
-            <strong>DUZP:</strong> {formatDate(invoice.taxableSupplyDate)}
-          </p>
-          <p>
-            <strong>Uhrazena dne:</strong> {invoice.paidAt ? formatDate(invoice.paidAt) : '-'}
-          </p>
+        <h2>Informace o dokladu</h2>
+        <div className="invoice-meta-grid">
+          <article className="invoice-meta-card">
+            <h3>Doklad a platba</h3>
+            <dl className="invoice-meta-list">
+              <div>
+                <dt>Číslo dokladu</dt>
+                <dd>{invoice.invoiceNumber ?? '-'}</dd>
+              </div>
+              <div>
+                <dt>Stav</dt>
+                <dd>
+                  <span className={statusClassName(invoice.status)}>{statusLabel(invoice.status)}</span>
+                </dd>
+              </div>
+              <div>
+                <dt>Variabilní symbol</dt>
+                <dd>{invoice.variableSymbol}</dd>
+              </div>
+            </dl>
+          </article>
+          <article className="invoice-meta-card">
+            <h3>Termíny</h3>
+            <dl className="invoice-meta-list">
+              <div>
+                <dt>Vystaveno</dt>
+                <dd>{formatDate(invoice.issueDate)}</dd>
+              </div>
+              <div>
+                <dt>Splatnost</dt>
+                <dd>{formatDate(invoice.dueDate)}</dd>
+              </div>
+              <div>
+                <dt>Datum zdanitelného plnění (DUZP)</dt>
+                <dd>{formatDate(invoice.taxableSupplyDate)}</dd>
+              </div>
+              <div>
+                <dt>Uhrazena dne</dt>
+                <dd>{invoice.paidAt ? formatDate(invoice.paidAt) : '-'}</dd>
+              </div>
+            </dl>
+          </article>
         </div>
       </section>
 
@@ -368,12 +396,12 @@ export function InvoiceDetailPage() {
               <tr>
                 <th>#</th>
                 <th>Popis</th>
-                <th>Množství</th>
+                <th className="align-right">Množství</th>
                 <th>Jednotka</th>
-                <th>Jedn. cena</th>
-                <th>DPH</th>
-                <th>Bez DPH</th>
-                <th>S DPH</th>
+                <th className="align-right">Jedn. cena</th>
+                <th className="align-right">DPH</th>
+                <th className="align-right">Bez DPH</th>
+                <th className="align-right">S DPH</th>
               </tr>
             </thead>
             <tbody>
@@ -381,12 +409,12 @@ export function InvoiceDetailPage() {
                 <tr key={item.id}>
                   <td>{item.position}</td>
                   <td>{item.description}</td>
-                  <td>{item.quantity}</td>
+                  <td className="align-right">{item.quantity}</td>
                   <td>{item.unit}</td>
-                  <td>{formatMoney(item.unitPrice)}</td>
-                  <td>{item.vatRate} %</td>
-                  <td>{formatMoney(item.lineTotalWithoutVat)}</td>
-                  <td>{formatMoney(item.lineTotalWithVat)}</td>
+                  <td className="align-right">{formatMoney(item.unitPrice)}</td>
+                  <td className="align-right">{item.vatRate} %</td>
+                  <td className="align-right">{formatMoney(item.lineTotalWithoutVat)}</td>
+                  <td className="align-right">{formatMoney(item.lineTotalWithVat)}</td>
                 </tr>
               ))}
             </tbody>
@@ -394,11 +422,18 @@ export function InvoiceDetailPage() {
         </div>
 
         <div className="totals-box">
-          <p>Bez DPH: {formatMoney(invoice.totalWithoutVat)}</p>
-          <p>DPH: {formatMoney(invoice.totalVat)}</p>
-          <p>
-            <strong>Celkem: {formatMoney(invoice.totalWithVat)}</strong>
-          </p>
+          <div className="totals-row">
+            <span>Bez DPH</span>
+            <strong>{formatMoney(invoice.totalWithoutVat)}</strong>
+          </div>
+          <div className="totals-row">
+            <span>DPH</span>
+            <strong>{formatMoney(invoice.totalVat)}</strong>
+          </div>
+          <div className="totals-row totals-row-final">
+            <span>Celkem</span>
+            <strong>{formatMoney(invoice.totalWithVat)}</strong>
+          </div>
         </div>
       </section>
     </section>

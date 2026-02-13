@@ -348,7 +348,8 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
   - po úspěšném uložení návrat na seznam faktur se zachováním aktivních filtrů
 - `Zrušit` (návrat na seznam)
 - `Smazat` (hard delete, dostupné ze seznamu faktur)
-- V detailu faktury je zanořená sekce `Více / Pokročilé zásahy`:
+- V detailu faktury jsou běžné akce (`Upravit`, `Kopie`, `PDF`, stavové akce) v jedné akční liště.
+- Pokročilé zásahy jsou zanořené pod volbou `Další možnosti`:
   - změna čísla dokladu,
   - přepnutí stavu `uhrazená -> neuhrazená`,
   - odemknutí editace uhrazené faktury.
@@ -407,6 +408,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 5. `invoiceTotalVat = suma lineVatAmount`
 6. `invoiceTotalWithVat = invoiceTotalWithoutVat + invoiceTotalVat`
 7. Zaokrouhlení na 2 desetinná místa (bankovní zaokrouhlení).
+8. V tabulce položek a v souhrnu částek jsou číselné hodnoty zarovnány doprava.
 
 ### 3.7 Funkční pravidla
 1. Fakturu lze vystavit jen pokud má všechny povinné údaje a alespoň 1 položku.

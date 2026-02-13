@@ -41,3 +41,4 @@
 | `CR-0022` | Číslování dokladů a zjednodušení VS | `Implementováno` | `Must` |
 | `CR-0023` | Fix regrese čísla faktury a UX nové faktury | `Implementováno` | `Must` |
 | `CR-0024` | Pokročilé zásahy do faktury (zanořený režim) | `Implementováno` | `Must` |
+| `CR-0025` | Refaktor vzhledu detailu faktury | `Implementováno` | `Should` |
