@@ -1,20 +1,20 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { APP_NAME, APP_SHORT_NAME, APP_TAGLINE } from '../brand';
+import { APP_NAME, APP_SHORT_NAME } from '../brand';
 import { SiteHeader } from '../components/SiteHeader';
 
 const HIGHLIGHTS = [
   {
-    title: 'Faktury během minut',
-    text: 'Roční číselná řada, průběžné výpočty DPH, PDF s QR platbou a rychlá editace dokladů.',
+    title: 'Faktura za minutu, ne za půl dne',
+    text: 'Automatické číslování, variabilní symbol i QR platba. Ty řešíš práci, ne formátování.',
   },
   {
-    title: 'Daňové exporty pro FU',
-    text: 'Export XML pro Přiznání k DPH i Kontrolní hlášení včetně správného názvu souboru.',
+    title: 'DPH bez tabulkového maratonu',
+    text: 'Přiznání k DPH i kontrolní hlášení exportuješ do XML připraveného pro finanční úřad.',
   },
   {
-    title: 'Onboarding s pomocí registrů',
-    text: 'Načtení firmy přes ARES a asistované doplnění adresy pro rychlé založení profilu.',
+    title: 'Výstupy, které vypadají dospěle',
+    text: 'PDF faktury působí profesionálně, takže se nemusíš stydět je poslat klientovi.',
   },
 ];
 
@@ -28,11 +28,13 @@ export function LandingPage() {
         <SiteHeader />
         <section className="landing-hero">
           <p className="landing-kicker">{APP_SHORT_NAME}</p>
-          <h1>{APP_NAME}</h1>
-          <p className="landing-subtitle">{APP_TAGLINE}</p>
+          <h1>{APP_NAME}. Fakturace pro OSVČ, co chtějí mít rychle hotovo.</h1>
+          <p className="landing-subtitle">
+            Vystavíš fakturu, pohlídáš DPH a stáhneš XML pro finanční úřad bez zbytečného dramatu.
+          </p>
           <p className="landing-description">
-            Praktická webová aplikace pro OSVČ, kteří jsou plátci DPH a daní procentem z příjmu.
-            Pomůže pokrýt fakturaci, PDF doklady i podklady pro daňová podání bez zbytečných kroků.
+            Primárně pro OSVČ, kteří jsou plátci DPH a daní procentem z příjmu.
+            Méně administrativy, víc času na práci, která tě živí.
           </p>
 
           <div className="landing-actions">
@@ -57,7 +59,7 @@ export function LandingPage() {
         <section className="landing-section">
           <h2>Co je to za projekt</h2>
           <p>
-            Projekt je vytvořený a průběžně spravovaný pomocí AI asistenta Codex. Je poskytován zdarma a bez záruky.
+            Postaveno pomocí AI. Zdarma, bez záruky, ale s dobrými úmysly.
           </p>
         </section>
 
