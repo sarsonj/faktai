@@ -15,6 +15,7 @@ import {
 import type { Response } from 'express';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import type { RequestWithUser } from '../auth/session-auth.guard';
+import { ChangeInvoiceNumberDto } from './dto/change-invoice-number.dto';
 import { ListInvoicesQueryDto } from './dto/list-invoices.query.dto';
 import { MarkInvoicePaidDto } from './dto/invoice-item.dto';
 import { ReserveInvoiceNumberDto } from './dto/reserve-invoice-number.dto';
@@ -80,6 +81,23 @@ export class InvoiceController {
       id,
       dto.paidAt,
     );
+  }
+
+  @Post(':id/mark-unpaid')
+  async markInvoiceUnpaid(
+    @Req() request: RequestWithUser,
+    @Param('id') id: string,
+  ) {
+    return this.invoiceService.markInvoiceUnpaid(request.user!.id, id);
+  }
+
+  @Patch(':id/number')
+  async changeInvoiceNumber(
+    @Req() request: RequestWithUser,
+    @Param('id') id: string,
+    @Body() dto: ChangeInvoiceNumberDto,
+  ) {
+    return this.invoiceService.changeInvoiceNumber(request.user!.id, id, dto);
   }
 
   @Get(':id/pdf')

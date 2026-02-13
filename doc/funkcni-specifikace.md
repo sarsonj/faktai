@@ -348,6 +348,10 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
   - po úspěšném uložení návrat na seznam faktur se zachováním aktivních filtrů
 - `Zrušit` (návrat na seznam)
 - `Smazat` (hard delete, dostupné ze seznamu faktur)
+- V detailu faktury je zanořená sekce `Více / Pokročilé zásahy`:
+  - změna čísla dokladu,
+  - přepnutí stavu `uhrazená -> neuhrazená`,
+  - odemknutí editace uhrazené faktury.
 
 #### 3.4.3 Chování dle režimu
 - Režim `create`:
@@ -366,7 +370,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 - Režim `edit`:
   - `draft`: plná editace všech polí,
   - `issued`: plná editace všech polí,
-  - `paid`: editace zakázána, povolen pouze náhled.
+  - `paid`: ve standardním režimu jen náhled, plná editace je dostupná pouze přes zanořenou sekci `Pokročilé zásahy`.
 
 ### 3.5 Datový model faktury a validace
 
@@ -413,9 +417,12 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 6. Hard delete je ve v1 povolen i pro vystavené a uhrazené faktury.
 7. Po vystavení se uloží snapshot dodavatele i odběratele pro historickou konzistenci.
 8. Faktura ve stavu `issued` je ve v1 plně editovatelná.
-9. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
-10. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
-11. Po `Uložit` v režimu `edit` se uživatel vrací na seznam faktur (`/invoices`) ve stejném kontextu filtrů/stránkování.
+9. Faktura ve stavu `paid` je standardně zamknutá pro editaci; odemknutí je možné jen přes pokročilé zásahy.
+10. Změna čísla dokladu je pokročilá akce (není v běžném editoru) a validuje unikátnost čísla.
+11. Přepnutí stavu `paid -> issued/overdue` je pokročilá akce a vynuluje datum úhrady.
+12. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
+13. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
+14. Po `Uložit` v režimu `edit` se uživatel vrací na seznam faktur (`/invoices`) ve stejném kontextu filtrů/stránkování.
 
 ### 3.8 Stavy a chování UI
 - `Loading`: načítání editoru / faktury.

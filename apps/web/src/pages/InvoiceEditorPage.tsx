@@ -303,11 +303,15 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
     void run();
   }, [mode, invoiceId]);
 
-  const listQuery = searchParams.toString();
+  const queryForList = new URLSearchParams(searchParams);
+  queryForList.delete('advanced');
+  const listQuery = queryForList.toString();
   const backHref = `/invoices${listQuery ? `?${listQuery}` : ''}`;
+  const advancedEdit = searchParams.get('advanced') === '1';
 
   const totals = useMemo(() => calculateTotals(state.items), [state.items]);
-  const readOnly = mode === 'edit' && invoice?.status === 'paid';
+  const readOnly =
+    mode === 'edit' && invoice?.status === 'paid' && !advancedEdit;
 
   const updateItem = (index: number, patch: Partial<EditorItemState>) => {
     setState((current) => ({
@@ -494,6 +498,11 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
           <p className="page-subtitle">Vyplňte parametry dokladu, odběratele a položky faktury.</p>
           {mode === 'create' && reservingNumber && (
             <small>Přiděluji číslo dokladu...</small>
+          )}
+          {mode === 'edit' && advancedEdit && invoice?.status === 'paid' && (
+            <small>
+              Pokročilý režim: upravujete uhrazenou fakturu.
+            </small>
           )}
         </div>
         <div className="page-actions">

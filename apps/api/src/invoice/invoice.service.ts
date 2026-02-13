@@ -21,6 +21,7 @@ import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { PrismaService } from '../prisma/prisma.service';
+import { ChangeInvoiceNumberDto } from './dto/change-invoice-number.dto';
 import { ListInvoicesQueryDto } from './dto/list-invoices.query.dto';
 import { InvoiceItemDto } from './dto/invoice-item.dto';
 import { UpsertInvoiceDto } from './dto/upsert-invoice.dto';
@@ -1355,8 +1356,8 @@ export class InvoiceService {
       invoiceId,
     );
 
-    if (current.status === 'paid' || current.status === 'cancelled') {
-      throw new ConflictException('Paid or cancelled invoice cannot be edited');
+    if (current.status === 'cancelled') {
+      throw new ConflictException('Cancelled invoice cannot be edited');
     }
 
     const computed = this.computeInvoiceTotals(dto.items);
@@ -1599,6 +1600,68 @@ export class InvoiceService {
           paidAt: paidAtDate,
         },
       });
+    }
+
+    return this.getInvoiceDetail(userId, invoiceId);
+  }
+
+  async markInvoiceUnpaid(
+    userId: string,
+    invoiceId: string,
+  ): Promise<InvoiceDetail> {
+    const subject = await this.getSubjectByUserOrThrow(userId);
+    const current = await this.getInvoiceBySubjectOrThrow(subject.id, invoiceId);
+
+    if (current.status !== 'paid') {
+      throw new ConflictException(
+        'Only paid invoice can be marked as unpaid',
+      );
+    }
+
+    await this.prisma.invoice.update({
+      where: { id: current.id },
+      data: {
+        status: 'issued',
+        paidAt: null,
+      },
+    });
+
+    return this.getInvoiceDetail(userId, invoiceId);
+  }
+
+  async changeInvoiceNumber(
+    userId: string,
+    invoiceId: string,
+    dto: ChangeInvoiceNumberDto,
+  ): Promise<InvoiceDetail> {
+    const subject = await this.getSubjectByUserOrThrow(userId);
+    const current = await this.getInvoiceBySubjectOrThrow(subject.id, invoiceId);
+
+    if (current.status === 'cancelled') {
+      throw new ConflictException('Cancelled invoice cannot be edited');
+    }
+
+    const invoiceNumber = this.normalizeInvoiceNumber(dto.invoiceNumber);
+    if (!invoiceNumber) {
+      throw new BadRequestException('Invoice number is required');
+    }
+    this.validateInvoiceNumber(invoiceNumber, current.issueDate);
+
+    const shouldSyncVs = dto.syncVariableSymbol ?? true;
+
+    try {
+      await this.prisma.invoice.update({
+        where: { id: current.id },
+        data: {
+          invoiceNumber,
+          variableSymbol: shouldSyncVs ? invoiceNumber : current.variableSymbol,
+        },
+      });
+    } catch (error) {
+      if (this.isInvoiceNumberUniqueViolation(error)) {
+        throw new ConflictException('Invoice number already exists.');
+      }
+      throw error;
     }
 
     return this.getInvoiceDetail(userId, invoiceId);

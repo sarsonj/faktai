@@ -51,13 +51,17 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 18px 28px 24px;
+  padding: 0 28px 24px;
 }
 
 .page-stack {
   width: min(1080px, 100%);
   display: grid;
   gap: 12px;
+}
+
+.page-stack > .card {
+  width: 100%;
 }
 
 .auth-page-stack {
@@ -1111,6 +1115,24 @@ button:disabled {
   padding: 10px 12px;
 }
 
+.advanced-tools {
+  border: 1px dashed #c8d7e8;
+  border-radius: 12px;
+  background: #fbfdff;
+  padding: 10px 12px;
+}
+
+.advanced-tools[open] {
+  border-style: solid;
+}
+
+.advanced-tools-summary {
+  cursor: pointer;
+  color: #244763;
+  font-weight: 700;
+  user-select: none;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -1412,7 +1434,7 @@ button:disabled {
 
 @media (max-width: 1024px) {
   .app-shell {
-    padding: 14px;
+    padding: 0 14px 14px;
   }
 
   .page-stack {
@@ -1479,7 +1501,7 @@ button:disabled {
 
 @media (max-width: 780px) {
   .app-shell {
-    padding: 10px 10px 14px;
+    padding: 0 10px 14px;
   }
 
   .landing-hero {

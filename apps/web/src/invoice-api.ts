@@ -63,6 +63,26 @@ export async function markInvoicePaid(invoiceId: string, paidAt?: string): Promi
   });
 }
 
+export async function markInvoiceUnpaid(invoiceId: string): Promise<InvoiceDetail> {
+  return apiRequest<InvoiceDetail>(`/invoices/${invoiceId}/mark-unpaid`, {
+    method: 'POST',
+  });
+}
+
+export async function changeInvoiceNumber(
+  invoiceId: string,
+  invoiceNumber: string,
+  syncVariableSymbol = true,
+): Promise<InvoiceDetail> {
+  return apiRequest<InvoiceDetail>(`/invoices/${invoiceId}/number`, {
+    method: 'PATCH',
+    body: {
+      invoiceNumber,
+      syncVariableSymbol,
+    },
+  });
+}
+
 export async function deleteInvoice(invoiceId: string): Promise<void> {
   await apiRequest(`/invoices/${invoiceId}`, {
     method: 'DELETE',

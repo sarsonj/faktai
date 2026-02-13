@@ -311,9 +311,11 @@ Backend validace:
 4. `POST /invoices/:id/copy`
 5. `GET /invoices/:id`
 6. `PATCH /invoices/:id`
-7. `POST /invoices/:id/issue`
-8. `POST /invoices/:id/mark-paid`
-9. `DELETE /invoices/:id`
+7. `PATCH /invoices/:id/number` (pokročilá změna čísla dokladu)
+8. `POST /invoices/:id/issue`
+9. `POST /invoices/:id/mark-paid`
+10. `POST /invoices/:id/mark-unpaid`
+11. `DELETE /invoices/:id`
 
 `GET /invoices` query:
 - `status=all|paid|unpaid|overdue`
@@ -326,6 +328,8 @@ Pravidla:
 - `reserve-number` atomicky přidělí další číslo v roční řadě podle `issueDate`.
 - `issue` běží transakčně; číslo faktury doplní jen pokud historický draft číslo nemá.
 - `mark-paid` nastaví `status=paid` + `paid_at`.
+- `mark-unpaid` přepne `paid -> issued` a nastaví `paid_at=NULL`.
+- `PATCH /invoices/:id/number` validuje formát + unikátnost čísla v rámci subjektu.
 - `customerIco` se před uložením normalizuje bez mezer.
 - FE může využít `GET /registry/company-search` pro předvyplnění odběratele.
 
@@ -405,6 +409,12 @@ Poznámka:
 2. `invoiceNumber` není určeno k editaci z UI; backend při update zachovává existující číslo dokladu.
 3. `variableSymbol` se defaultně bere z `invoiceNumber`, ale pokud je odeslán explicitně, backend ho respektuje.
 4. Frontend po úspěšném `PATCH` v režimu edit přesměruje uživatele zpět na `/invoices` se stejným query stringem.
+
+### 6.4.2 Pokročilé zásahy
+1. `PATCH /invoices/:id/number` mění číslo dokladu i u již uhrazené faktury.
+2. Volitelně lze synchronizovat variabilní symbol na novou hodnotu čísla dokladu.
+3. `POST /invoices/:id/mark-unpaid` vrací uhrazenou fakturu do stavu `issued`.
+4. Frontend zpřístupňuje pokročilé zásahy přes zanořenou sekci v detailu faktury.
 
 ### 6.5 Kopie faktury
 1. Načíst zdrojovou fakturu + položky.

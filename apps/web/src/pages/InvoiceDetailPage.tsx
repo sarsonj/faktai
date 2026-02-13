@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { downloadInvoicePdf, getInvoice, issueInvoice, markInvoicePaid } from '../invoice-api';
+import {
+  changeInvoiceNumber,
+  downloadInvoicePdf,
+  getInvoice,
+  issueInvoice,
+  markInvoicePaid,
+  markInvoiceUnpaid,
+} from '../invoice-api';
 import type { InvoiceDetail } from '../types';
 
 function formatDate(value: string): string {
@@ -56,7 +63,11 @@ export function InvoiceDetailPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
+  const [advancedInvoiceNumber, setAdvancedInvoiceNumber] = useState('');
+  const [syncVariableSymbol, setSyncVariableSymbol] = useState(true);
+  const [advancedBusy, setAdvancedBusy] = useState(false);
 
   useEffect(() => {
     if (!invoiceId) {
@@ -70,6 +81,7 @@ export function InvoiceDetailPage() {
       try {
         const payload = await getInvoice(invoiceId);
         setInvoice(payload);
+        setAdvancedInvoiceNumber(payload.invoiceNumber ?? '');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Načtení faktury selhalo');
       } finally {
@@ -82,6 +94,9 @@ export function InvoiceDetailPage() {
 
   const listQuery = searchParams.toString();
   const backHref = `/invoices${listQuery ? `?${listQuery}` : ''}`;
+  const advancedEditHref = invoice
+    ? `/invoices/${invoice.id}/edit${listQuery ? `?${listQuery}&advanced=1` : '?advanced=1'}`
+    : '#';
 
   const onMarkPaid = async () => {
     if (!invoice) {
@@ -89,10 +104,32 @@ export function InvoiceDetailPage() {
     }
 
     try {
+      setError(null);
+      setSuccess(null);
       const paid = await markInvoicePaid(invoice.id);
       setInvoice(paid);
+      setSuccess('Faktura byla označena jako uhrazená.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Označení úhrady selhalo');
+    }
+  };
+
+  const onMarkUnpaid = async () => {
+    if (!invoice) {
+      return;
+    }
+
+    try {
+      setAdvancedBusy(true);
+      setError(null);
+      setSuccess(null);
+      const unpaid = await markInvoiceUnpaid(invoice.id);
+      setInvoice(unpaid);
+      setSuccess('Faktura byla označena jako neuhrazená.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Změna stavu faktury selhala');
+    } finally {
+      setAdvancedBusy(false);
     }
   };
 
@@ -102,10 +139,43 @@ export function InvoiceDetailPage() {
     }
 
     try {
+      setError(null);
+      setSuccess(null);
       const issued = await issueInvoice(invoice.id);
       setInvoice(issued);
+      setSuccess('Faktura byla vystavena.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Vystavení faktury selhalo');
+    }
+  };
+
+  const onChangeInvoiceNumber = async () => {
+    if (!invoice) {
+      return;
+    }
+
+    const nextInvoiceNumber = advancedInvoiceNumber.replace(/\s+/g, '');
+    if (!nextInvoiceNumber) {
+      setError('Zadejte číslo faktury.');
+      return;
+    }
+
+    try {
+      setAdvancedBusy(true);
+      setError(null);
+      setSuccess(null);
+      const changed = await changeInvoiceNumber(
+        invoice.id,
+        nextInvoiceNumber,
+        syncVariableSymbol,
+      );
+      setInvoice(changed);
+      setAdvancedInvoiceNumber(changed.invoiceNumber ?? '');
+      setSuccess('Číslo faktury bylo změněno.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Změna čísla faktury selhala');
+    } finally {
+      setAdvancedBusy(false);
     }
   };
 
@@ -147,6 +217,9 @@ export function InvoiceDetailPage() {
           </Link>
         </div>
       </header>
+
+      {error && <p className="error">{error}</p>}
+      {success && <p>{success}</p>}
 
       <section className="ui-section">
         <div className="kpi-grid">
@@ -196,10 +269,69 @@ export function InvoiceDetailPage() {
       </section>
 
       <section className="ui-section">
+        <details className="advanced-tools">
+          <summary className="advanced-tools-summary">Více / Pokročilé zásahy</summary>
+          <p className="helper-text">
+            Pokročilé akce pro výjimečné situace. Změny mohou ovlivnit navazující výstupy (PDF/XML).
+          </p>
+
+          <div className="form-grid form-grid-two">
+            <label>
+              Změnit číslo dokladu
+              <input
+                value={advancedInvoiceNumber}
+                onChange={(event) => setAdvancedInvoiceNumber(event.target.value)}
+                disabled={advancedBusy}
+              />
+            </label>
+            <label className="checkbox-row">
+              <span>Synchronizovat i variabilní symbol</span>
+              <input
+                type="checkbox"
+                checked={syncVariableSymbol}
+                onChange={(event) => setSyncVariableSymbol(event.target.checked)}
+                disabled={advancedBusy}
+              />
+            </label>
+          </div>
+
+          <div className="button-row wrap">
+            <button
+              type="button"
+              className="secondary"
+              onClick={onChangeInvoiceNumber}
+              disabled={advancedBusy}
+            >
+              Uložit číslo dokladu
+            </button>
+
+            {invoice.status === 'paid' && (
+              <>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={onMarkUnpaid}
+                  disabled={advancedBusy}
+                >
+                  Označit jako neuhrazené
+                </button>
+                <Link className="action-link secondary-link" to={advancedEditHref}>
+                  Odemknout editaci uhrazené
+                </Link>
+              </>
+            )}
+          </div>
+        </details>
+      </section>
+
+      <section className="ui-section">
         <h2>Metadata faktury</h2>
         <div className="summary-grid">
           <p>
             <strong>Stav:</strong> <span className={statusClassName(invoice.status)}>{statusLabel(invoice.status)}</span>
+          </p>
+          <p>
+            <strong>Číslo dokladu:</strong> {invoice.invoiceNumber ?? '-'}
           </p>
           <p>
             <strong>Variabilní symbol:</strong> {invoice.variableSymbol}
