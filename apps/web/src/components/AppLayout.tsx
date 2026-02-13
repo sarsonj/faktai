@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { APP_SHORT_NAME } from '../brand';
 
 const NAV_ITEMS = [
   { to: '/invoices', label: 'Vydané faktury' },
@@ -49,7 +50,7 @@ export function AppLayout() {
   return (
     <div className="app-frame">
       <aside className="app-sidebar">
-        <div className="app-brand">TappyFaktur</div>
+        <div className="app-brand">{APP_SHORT_NAME}</div>
         <p className="app-sidebar-caption">Hlavní menu</p>
         <nav className="app-nav">
           {NAV_ITEMS.map((item) => (

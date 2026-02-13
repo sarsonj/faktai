@@ -1,10 +1,10 @@
-# Technická specifikace projektu TappyFaktur
+# Technická specifikace projektu SoloFaktura AI
 
 ## 0. Stav dokumentu
-- Verze: `0.9`
+- Verze: `1.0`
 - Datum: `2026-02-13`
 - Stav: `Rozpracováno`
-- Vazba na funkční specifikaci: `doc/funkcni-specifikace.md` (verze `1.6`)
+- Vazba na funkční specifikaci: `doc/funkcni-specifikace.md` (verze `1.7`)
 
 ## 1. Technologický stack
 
@@ -453,6 +453,7 @@ Poznámka:
 
 ### 7.1 Routing
 - React Router routes odpovídají funkční mapě:
+  - `/`
   - `/auth/login`
   - `/auth/register`
   - `/auth/forgot-password`
@@ -474,7 +475,7 @@ Poznámka:
 - Kontext seznamu faktur držený v URL query parametrech.
 - Asistované vyhledávání subjektu/odběratele přes `registry-api.ts`.
 - Auth guard:
-  - veřejné routy pouze `/auth/*`,
+  - veřejné routy: `/` a `/auth/*`,
   - ostatní routy vyžadují validní session (`/auth/me`).
 
 ### 7.3 UI komponenty
@@ -486,8 +487,10 @@ Poznámka:
 - KPI karty v detailu faktury (`celkem`, `základ daně`, `DPH`).
 - Editor položek s průběžným výpočtem řádkového součtu.
 - Sticky action bar v editoru faktury (akce dostupné i při delším scrollu).
+- Landing page (`LandingPage`) jako veřejný vstup do produktu.
 - Auth layout (`auth-layout`) se dvěma zónami: informační panel + formulářový panel.
 - Subject summary karty v onboardingu a nastavení subjektu.
+- Onboarding (`OnboardingSubjectWizard`) jako 3-krokový průvodce.
 
 ### 7.4 Design foundation (UI)
 - Design tokens jsou definované centrálně v `apps/web/src/index.css`:
@@ -519,6 +522,9 @@ Poznámka:
 - Podpůrné moduly polish (Fáze 4):
   - `auth-card`, `auth-layout`, `auth-aside`, `auth-panel` sjednocují vzhled auth sekce,
   - `kpi-grid`/`kpi-card` jsou znovupoužité v onboardingu a správě subjektu.
+- Onboarding UX refresh:
+  - kroková navigace (`onboarding-steps`, `onboarding-step`) s lokální validací po krocích,
+  - registry lookup je dostupný v onboardingu, ale není součástí editace subjektu.
 
 ## 8. Výpočty a formátování
 

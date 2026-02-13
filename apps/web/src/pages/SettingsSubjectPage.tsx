@@ -65,7 +65,7 @@ export function SettingsSubjectPage() {
         <div>
           <p className="page-kicker">Nastavení</p>
           <h1 className="page-title">Nastavení subjektu</h1>
-          <p className="page-subtitle">Správa identifikačních, bankovních a daňových údajů pro fakturaci.</p>
+          <p className="page-subtitle">Úprava identifikačních, bankovních a daňových údajů pro fakturaci.</p>
         </div>
       </header>
       {error && <p className="error">{error}</p>}
@@ -93,6 +93,7 @@ export function SettingsSubjectPage() {
       <SubjectForm
         initial={subject}
         loading={saving}
+        showRegistryLookup={false}
         onSubmit={onSubmit}
         submitLabel="Uložit změny"
       />

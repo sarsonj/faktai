@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { SubjectForm } from '../components/SubjectForm';
+import { APP_SHORT_NAME } from '../brand';
+import { OnboardingSubjectWizard } from '../components/OnboardingSubjectWizard';
 import { ApiError } from '../lib-api';
 import { createSubject, getSubject } from '../subject-api';
 import type { SubjectInput } from '../types';
@@ -58,28 +59,14 @@ export function OnboardingSubjectPage() {
         <header className="page-head">
           <div>
             <p className="page-kicker">Onboarding</p>
-            <h1 className="page-title">Onboarding živnostníka</h1>
-            <p className="page-subtitle">Vyplňte profil subjektu, aby šlo začít vystavovat faktury.</p>
+            <h1 className="page-title">Pojďme nastavit váš profil</h1>
+            <p className="page-subtitle">
+              Projdeme to spolu ve 3 krocích. Jakmile profil uložíte, můžete v {APP_SHORT_NAME} začít vystavovat faktury.
+            </p>
           </div>
         </header>
-        <section className="ui-section">
-          <div className="kpi-grid">
-            <article className="kpi-card">
-              <p>Krok 1</p>
-              <strong>Identifikace subjektu</strong>
-            </article>
-            <article className="kpi-card">
-              <p>Krok 2</p>
-              <strong>Adresa a bankovní účet</strong>
-            </article>
-            <article className="kpi-card">
-              <p>Krok 3</p>
-              <strong>Daňové nastavení</strong>
-            </article>
-          </div>
-        </section>
         {error && <p className="error">{error}</p>}
-        <SubjectForm loading={saving} onSubmit={onSubmit} submitLabel="Uložit a pokračovat" />
+        <OnboardingSubjectWizard loading={saving} onSubmit={onSubmit} submitLabel="Dokončit onboarding" />
         <hr />
         <div className="button-row">
           <button

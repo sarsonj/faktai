@@ -1,7 +1,7 @@
-# Funkční specifikace projektu TappyFaktur
+# Funkční specifikace projektu SoloFaktura AI
 
 ## 0. Stav dokumentu
-- Verze: `1.6`
+- Verze: `1.7`
 - Datum: `2026-02-13`
 - Stav: `Rozpracováno`
 - Aktuálně zpracovaný rozsah: `Scope 1-7`
@@ -46,8 +46,10 @@ Umožnit založení a správu profilu živnostníka (fakturačního subjektu), b
 Prvky obrazovky:
 - Nadpis: `Nastavení fakturačního subjektu`.
 - Stručné vysvětlení: bez vyplnění údajů nelze vystavit fakturu.
-- Přehledový blok kroků onboardingu (`Identifikace`, `Adresa a účet`, `Daňové nastavení`).
-- Jednostránkový formulář.
+- Krokový průvodce o 3 krocích:
+  - `Krok 1: Subjekt` (ARES + základní identifikace),
+  - `Krok 2: Adresa` (lookup adresy + ruční doplnění),
+  - `Krok 3: DPH a platby`.
 - Blok `Načíst firmu z ARES`:
   - vstup `IČO nebo název firmy`,
   - akce `Vyhledat`,
@@ -56,11 +58,15 @@ Prvky obrazovky:
   - vstup `Ulice a číslo`,
   - akce `Vyhledat adresu`,
   - seznam výsledků s akcí `Použít`.
-- Primární akce: `Uložit a pokračovat`.
-- Sekundární akce: žádná (uživatel nesmí onboarding obejít).
+- Navigační akce průvodce:
+  - `Pokračovat`,
+  - `Zpět`.
+- Primární akce v posledním kroku: `Dokončit onboarding`.
+- Sekundární akce mimo průvodce: `Odhlásit`.
 
 Pravidla:
-- Tlačítko `Uložit a pokračovat` je aktivní až po validaci povinných polí.
+- V každém kroku se validují pouze relevantní pole pro daný krok.
+- Uživatel může pokračovat ručním vyplněním i bez výsledku z ARES/adresního registru.
 - Po úspěchu toast/hláška `Profil byl uložen`.
 - Po chybě API se zobrazí obecná chyba a formulář zůstane vyplněný.
 - Po validační/API chybě se tlačítko vrací ze stavu `Ukládám...` zpět do aktivního stavu, aby šlo formulář znovu odeslat.
@@ -85,6 +91,7 @@ Pravidla:
 
 Prvky obrazovky:
 - Stejná pole jako onboarding.
+- Bez bloků `Načíst firmu z ARES` a `Načíst adresu`.
 - Akce: `Uložit změny`, `Zrušit`.
 
 Pravidla:
@@ -141,6 +148,7 @@ Poznámky:
 5. Historická faktura zůstane beze změny i po úpravě profilu.
 6. Uživatel může načíst subjekt z ARES podle IČO i názvu firmy a předvyplnit pole.
 7. Po neúspěšném odeslání onboarding formuláře lze formulář okamžitě znovu odeslat.
+8. V `Nastavení subjektu` není lookup z ARES/adresy zobrazen; změny se provádějí přímou editací polí.
 
 ### 1.9 Potvrzená rozhodnutí
 1. V první verzi je povolen pouze 1 subjekt na 1 účet.
@@ -719,9 +727,10 @@ Sekundární obrazovky:
 1. `Detail faktury`
 2. `Editor faktury` (nová/kopie/editace)
 3. `Onboarding subjektu`
+4. `Landing page`
 
 ### 6.4 Routy a URL mapování
-1. `/` -> redirect na `/invoices` (pokud existuje profil subjektu), jinak `/onboarding/subject`.
+1. `/` -> veřejná landing page projektu.
 2. `/onboarding/subject` -> onboarding subjektu (Scope 1).
 3. `/invoices` -> seznam vydaných faktur (Scope 2).
 4. `/invoices/new` -> editor nová faktura (Scope 3).
@@ -730,10 +739,11 @@ Sekundární obrazovky:
 7. `/invoices/:invoiceId/copy` -> editor faktury v režimu copy.
 8. `/tax-reports` -> DPH podklady (Scope 5).
 9. `/settings/subject` -> detail/editace subjektu (Scope 1).
-10. `*` -> stránka `404`.
+10. `/auth/login`, `/auth/register`, `/auth/forgot-password`, `/auth/reset-password`.
+11. `*` -> stránka `404`.
 
 ### 6.5 Guardy a podmínky vstupu
-1. Bez vyplněného profilu subjektu (Scope 1) jsou všechny routy kromě `/onboarding/subject` blokované.
+1. Bez autentizace jsou dostupné veřejné routy (`/`, `/auth/*`); ostatní routy vyžadují přihlášení.
 2. `/tax-reports` je dostupná jen pro `isVatPayer=true`; neplátce vidí informační stav bez možnosti exportu.
 3. `/invoices/:invoiceId/*` vrací `404`, pokud faktura neexistuje (např. byla smazána).
 4. Přímý vstup na chráněnou URL řeší guard před vykreslením stránky.

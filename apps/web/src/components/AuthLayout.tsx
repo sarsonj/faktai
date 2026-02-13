@@ -1,4 +1,5 @@
 import { Link, Outlet } from 'react-router-dom';
+import { APP_SHORT_NAME, APP_TAGLINE } from '../brand';
 
 export function AuthLayout() {
   return (
@@ -6,8 +7,8 @@ export function AuthLayout() {
       <section className="card auth-card">
         <div className="auth-layout">
           <aside className="auth-aside">
-            <p className="page-kicker">TappyFaktur</p>
-            <h1 className="page-title">Online fakturace pro živnostníky</h1>
+            <p className="page-kicker">{APP_SHORT_NAME}</p>
+            <h1 className="page-title">{APP_TAGLINE}</h1>
             <p className="page-subtitle">
               Přihlaste se ke svému účtu a pokračujte ve správě faktur, DPH podkladů a nastavení podnikání.
             </p>

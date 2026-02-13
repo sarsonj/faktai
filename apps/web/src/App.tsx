@@ -1,5 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
-import { useAuth } from './auth/AuthContext';
+import { Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/AppLayout';
 import { AuthLayout } from './components/AuthLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -8,6 +7,7 @@ import { InvoiceCopyPage } from './pages/InvoiceCopyPage';
 import { InvoiceDetailPage } from './pages/InvoiceDetailPage';
 import { InvoiceEditorPage } from './pages/InvoiceEditorPage';
 import { InvoicesPage } from './pages/InvoicesPage';
+import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { OnboardingSubjectPage } from './pages/OnboardingSubjectPage';
@@ -16,28 +16,10 @@ import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { SettingsSubjectPage } from './pages/SettingsSubjectPage';
 import { TaxReportsPage } from './pages/TaxReportsPage';
 
-function RootRedirect() {
-  const { me, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <main className="app-shell">
-        <section className="card">Načítání...</section>
-      </main>
-    );
-  }
-
-  if (!me) {
-    return <Navigate to="/auth/login" replace />;
-  }
-
-  return <Navigate to={me.hasSubject ? '/invoices' : '/onboarding/subject'} replace />;
-}
-
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<RootRedirect />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/auth" element={<AuthLayout />}>
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />

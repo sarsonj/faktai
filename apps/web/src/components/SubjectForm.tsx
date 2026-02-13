@@ -12,6 +12,7 @@ type SubjectFormProps = {
   initial?: SubjectProfile;
   submitLabel: string;
   loading?: boolean;
+  showRegistryLookup?: boolean;
   onSubmit: (payload: SubjectInput) => Promise<void>;
 };
 
@@ -81,7 +82,13 @@ function formatAddressResult(item: RegistryAddressResult): string {
   return basic || item.displayName;
 }
 
-export function SubjectForm({ initial, submitLabel, loading = false, onSubmit }: SubjectFormProps) {
+export function SubjectForm({
+  initial,
+  submitLabel,
+  loading = false,
+  showRegistryLookup = true,
+  onSubmit,
+}: SubjectFormProps) {
   const [state, setState] = useState<FormState>(toInitialState(initial));
   const [error, setError] = useState<string | null>(null);
 
@@ -212,64 +219,66 @@ export function SubjectForm({ initial, submitLabel, loading = false, onSubmit }:
 
   return (
     <form className="subject-form" onSubmit={handleSubmit}>
-      <section className="ui-section">
-        <h2>Načtení dat z registrů</h2>
-        <div className="form-grid form-grid-two">
-          <section className="lookup-box">
-            <h3>Načíst firmu z ARES</h3>
-            <div className="lookup-controls">
-              <input
-                placeholder="IČO nebo název firmy"
-                value={companyQuery}
-                onChange={(event) => setCompanyQuery(event.target.value)}
-              />
-              <button type="button" className="secondary" disabled={companyLoading || loading} onClick={handleCompanySearch}>
-                {companyLoading ? 'Načítám...' : 'Vyhledat'}
-              </button>
-            </div>
-            {companyError && <p className="error">{companyError}</p>}
-            {companyResults.length > 0 && (
-              <ul className="lookup-results">
-                {companyResults.map((item) => (
-                  <li key={`${item.ico}-${item.name}`}>
-                    <button type="button" className="secondary" onClick={() => applyCompanyResult(item)}>
-                      Použít
-                    </button>
-                    <span>{formatCompanyResult(item)}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+      {showRegistryLookup && (
+        <section className="ui-section">
+          <h2>Načtení dat z registrů</h2>
+          <div className="form-grid form-grid-two">
+            <section className="lookup-box">
+              <h3>Načíst firmu z ARES</h3>
+              <div className="lookup-controls">
+                <input
+                  placeholder="IČO nebo název firmy"
+                  value={companyQuery}
+                  onChange={(event) => setCompanyQuery(event.target.value)}
+                />
+                <button type="button" className="secondary" disabled={companyLoading || loading} onClick={handleCompanySearch}>
+                  {companyLoading ? 'Načítám...' : 'Vyhledat'}
+                </button>
+              </div>
+              {companyError && <p className="error">{companyError}</p>}
+              {companyResults.length > 0 && (
+                <ul className="lookup-results">
+                  {companyResults.map((item) => (
+                    <li key={`${item.ico}-${item.name}`}>
+                      <button type="button" className="secondary" onClick={() => applyCompanyResult(item)}>
+                        Použít
+                      </button>
+                      <span>{formatCompanyResult(item)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
 
-          <section className="lookup-box">
-            <h3>Načíst adresu</h3>
-            <div className="lookup-controls">
-              <input
-                placeholder="Ulice a číslo"
-                value={addressQuery}
-                onChange={(event) => setAddressQuery(event.target.value)}
-              />
-              <button type="button" className="secondary" disabled={addressLoading || loading} onClick={handleAddressSearch}>
-                {addressLoading ? 'Načítám...' : 'Vyhledat adresu'}
-              </button>
-            </div>
-            {addressError && <p className="error">{addressError}</p>}
-            {addressResults.length > 0 && (
-              <ul className="lookup-results">
-                {addressResults.map((item) => (
-                  <li key={item.id}>
-                    <button type="button" className="secondary" onClick={() => applyAddressResult(item)}>
-                      Použít
-                    </button>
-                    <span>{formatAddressResult(item)}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </div>
-      </section>
+            <section className="lookup-box">
+              <h3>Načíst adresu</h3>
+              <div className="lookup-controls">
+                <input
+                  placeholder="Ulice a číslo"
+                  value={addressQuery}
+                  onChange={(event) => setAddressQuery(event.target.value)}
+                />
+                <button type="button" className="secondary" disabled={addressLoading || loading} onClick={handleAddressSearch}>
+                  {addressLoading ? 'Načítám...' : 'Vyhledat adresu'}
+                </button>
+              </div>
+              {addressError && <p className="error">{addressError}</p>}
+              {addressResults.length > 0 && (
+                <ul className="lookup-results">
+                  {addressResults.map((item) => (
+                    <li key={item.id}>
+                      <button type="button" className="secondary" onClick={() => applyAddressResult(item)}>
+                        Použít
+                      </button>
+                      <span>{formatAddressResult(item)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
+        </section>
+      )}
 
       <section className="ui-section">
         <h2>Základní údaje</h2>

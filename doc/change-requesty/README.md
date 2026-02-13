@@ -33,3 +33,4 @@
 | `CR-0014` | UI redesign Fáze 3: fakturační workflow polish (seznam/detail/editor) | `Implementováno` | `Should` |
 | `CR-0015` | UI redesign Fáze 4: DPH podklady, nastavení subjektu a auth obrazovky | `Implementováno` | `Should` |
 | `CR-0016` | DPH podklady: zjednodušení UI | `Implementováno` | `Should` |
+| `CR-0017` | Landing page, onboarding refresh a zjednodušení nastavení subjektu | `Implementováno` | `Should` |
