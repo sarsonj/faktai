@@ -54,6 +54,16 @@ body {
   padding: 36px 28px;
 }
 
+.page-stack {
+  width: min(1080px, 100%);
+  display: grid;
+  gap: 12px;
+}
+
+.auth-page-stack {
+  width: min(1160px, 100%);
+}
+
 .auth-shell {
   align-items: center;
 }
@@ -289,6 +299,50 @@ body {
   background: rgba(255, 255, 255, 0.88);
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(6px);
+}
+
+.site-header {
+  margin-bottom: 0;
+}
+
+.site-header-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.site-logo-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 7px 12px;
+  border: 1px solid #cddded;
+  border-radius: 999px;
+  background: #f7fbff;
+  color: #15324f;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.site-logo-link:hover {
+  background: #eef5fd;
+  color: #15324f;
+}
+
+.site-auth-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.site-auth-links .action-link {
+  min-height: 38px;
+  padding: 7px 12px;
 }
 
 .app-topbar-kicker {
@@ -801,6 +855,10 @@ button:disabled {
 
 .onboarding-wizard {
   gap: 10px;
+}
+
+.onboarding-account-form {
+  width: min(440px, 100%);
 }
 
 .onboarding-steps {
@@ -1354,6 +1412,10 @@ button:disabled {
     padding: 22px 14px;
   }
 
+  .page-stack {
+    gap: 10px;
+  }
+
   .landing-shell {
     padding: 22px 14px 26px;
   }
@@ -1434,6 +1496,10 @@ button:disabled {
 
   .app-topbar-kicker {
     display: none;
+  }
+
+  .site-header-left {
+    gap: 10px;
   }
 
   .app-sidebar {

@@ -36,3 +36,4 @@
 | `CR-0017` | Landing page, onboarding refresh a zjednodušení nastavení subjektu | `Implementováno` | `Should` |
 | `CR-0018` | Rebranding názvu aplikace na FakturAI | `Implementováno` | `Should` |
 | `CR-0019` | Onboarding start s registrací a guard na dokončení subjektu | `Implementováno` | `Must` |
+| `CR-0020` | Globální hlavička a vyladění onboardingu | `Implementováno` | `Should` |

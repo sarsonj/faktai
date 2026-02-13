@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { APP_NAME, APP_SHORT_NAME, APP_TAGLINE } from '../brand';
+import { SiteHeader } from '../components/SiteHeader';
 
 const HIGHLIGHTS = [
   {
@@ -23,6 +24,7 @@ export function LandingPage() {
 
   return (
     <main className="landing-shell">
+      <SiteHeader />
       <section className="landing-hero">
         <p className="landing-kicker">{APP_SHORT_NAME}</p>
         <h1>{APP_NAME}</h1>
@@ -33,15 +35,10 @@ export function LandingPage() {
         </p>
 
         <div className="landing-actions">
-          {loading && (
-            <button type="button" disabled>
-              Načítám účet...
-            </button>
-          )}
           {!loading && !me && (
             <>
               <Link className="action-link" to="/onboarding/start">
-                Začít zdarma
+                Vytvořit účet
               </Link>
               <Link className="action-link secondary-link" to="/auth/login">
                 Přihlášení

@@ -1,7 +1,7 @@
 # Funkční specifikace projektu FakturAI
 
 ## 0. Stav dokumentu
-- Verze: `1.9`
+- Verze: `1.10`
 - Datum: `2026-02-13`
 - Stav: `Rozpracováno`
 - Aktuálně zpracovaný rozsah: `Scope 1-7`
@@ -67,10 +67,12 @@ Prvky obrazovky:
 Pravidla:
 - V každém kroku se validují pouze relevantní pole pro daný krok.
 - Uživatel může pokračovat ručním vyplněním i bez výsledku z ARES/adresního registru.
+- Krok `Vytvoření účtu` je v onboarding startu řešen jednokolonovým formulářem (pole pod sebou).
 - Po úspěchu toast/hláška `Profil byl uložen`.
 - Po chybě API se zobrazí obecná chyba a formulář zůstane vyplněný.
 - Po validační/API chybě se tlačítko vrací ze stavu `Ukládám...` zpět do aktivního stavu, aby šlo formulář znovu odeslat.
 - Ruční editace polí je možná i po použití předvyplnění z registru.
+- V uživatelských titulcích se používají srozumitelné názvy (`První kroky`, `Nastavení profilu`) místo technického termínu `onboarding`.
 
 #### 1.4.2 Detail profilu
 Účel: rychlý přehled všech uložených údajů.
@@ -780,6 +782,16 @@ Sekundární obrazovky:
 - Vpravo v topbaru je avatar uživatele s dropdown menu `Odhlásit`.
 - Detailní stránky (`/invoices/:id`, editor) otevírané přes full-screen view s tlačítkem zpět.
 
+#### 6.6.3 Globální hlavička
+- Na veřejných i přihlášených obrazovkách je viditelná hlavička s logem `FakturAI`.
+- Kliknutí na logo:
+  - nepřihlášený uživatel -> `/`,
+  - přihlášený uživatel s dokončeným subjektem -> `/invoices`,
+  - přihlášený uživatel bez subjektu -> `/onboarding/subject`.
+- Vpravo v hlavičce:
+  - nepřihlášený uživatel -> `Přihlášení` + `Vytvořit účet`,
+  - přihlášený uživatel -> avatar s menu a akcí `Odhlásit`.
+
 ### 6.7 Pravidla navigace mezi seznamem, detailem a editací
 1. Při přechodu ze seznamu na detail/editaci se uloží kontext seznamu:
    - filtr,
@@ -915,6 +927,7 @@ Pravidla:
 - Heslo musí splnit minimální bezpečnostní pravidla (viz 7.5).
 - Po úspěšné registraci se vytvoří účet a session.
 - Route `/auth/register` je alias, který přesměruje na `/onboarding/start`.
+- Primární CTA na landing page i v hlavičce používá text `Vytvořit účet`.
 
 #### 7.4.3 Zapomenuté heslo
 Prvky:

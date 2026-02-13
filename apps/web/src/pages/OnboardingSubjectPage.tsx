@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { APP_SHORT_NAME } from '../brand';
 import { OnboardingSubjectWizard } from '../components/OnboardingSubjectWizard';
+import { SiteHeader } from '../components/SiteHeader';
 import { ApiError } from '../lib-api';
 import { createSubject, getSubject } from '../subject-api';
 import type { SubjectInput } from '../types';
 
 export function OnboardingSubjectPage() {
   const navigate = useNavigate();
-  const { refreshMe, logout } = useAuth();
+  const { refreshMe } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,32 +56,22 @@ export function OnboardingSubjectPage() {
 
   return (
     <main className="app-shell">
-      <section className="card">
-        <header className="page-head">
-          <div>
-            <p className="page-kicker">Onboarding</p>
-            <h1 className="page-title">Pojďme nastavit váš profil</h1>
-            <p className="page-subtitle">
-              Projdeme to spolu ve 3 krocích. Jakmile profil uložíte, můžete v {APP_SHORT_NAME} začít vystavovat faktury.
-            </p>
-          </div>
-        </header>
-        {error && <p className="error">{error}</p>}
-        <OnboardingSubjectWizard loading={saving} onSubmit={onSubmit} submitLabel="Dokončit onboarding" />
-        <hr />
-        <div className="button-row">
-          <button
-            onClick={async () => {
-              await logout();
-              navigate('/auth/login', { replace: true });
-            }}
-            type="button"
-            className="secondary"
-          >
-            Odhlásit
-          </button>
-        </div>
-      </section>
+      <div className="page-stack">
+        <SiteHeader />
+        <section className="card">
+          <header className="page-head">
+            <div>
+              <p className="page-kicker">Nastavení profilu</p>
+              <h1 className="page-title">Pojďme nastavit váš profil</h1>
+              <p className="page-subtitle">
+                Projdeme to spolu ve 3 krocích. Jakmile profil uložíte, můžete v {APP_SHORT_NAME} začít vystavovat faktury.
+              </p>
+            </div>
+          </header>
+          {error && <p className="error">{error}</p>}
+          <OnboardingSubjectWizard loading={saving} onSubmit={onSubmit} submitLabel="Dokončit nastavení profilu" />
+        </section>
+      </div>
     </main>
   );
 }

@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { APP_SHORT_NAME } from '../brand';
 import { useAuth } from '../auth/AuthContext';
+import { SiteHeader } from '../components/SiteHeader';
 
 export function OnboardingStartPage() {
   const { me, loading, register } = useAuth();
@@ -43,84 +44,87 @@ export function OnboardingStartPage() {
 
   return (
     <main className="app-shell">
-      <section className="card card-narrow">
-        <header className="page-head">
-          <div>
-            <p className="page-kicker">Onboarding</p>
-            <h1 className="page-title">Začínáme v {APP_SHORT_NAME}</h1>
-            <p className="page-subtitle">
-              Vytvořte účet a hned navážeme krokovým nastavením subjektu.
-            </p>
-          </div>
-        </header>
+      <div className="page-stack">
+        <SiteHeader />
+        <section className="card card-narrow">
+          <header className="page-head">
+            <div>
+              <p className="page-kicker">První kroky</p>
+              <h1 className="page-title">Začínáme v {APP_SHORT_NAME}</h1>
+              <p className="page-subtitle">
+                Vytvořte účet a hned navážeme krokovým nastavením subjektu.
+              </p>
+            </div>
+          </header>
 
-        <section className="ui-section">
-          <div className="onboarding-steps">
-            <article className="onboarding-step active">
-              <p>Krok 1</p>
-              <strong>Vytvoření účtu</strong>
-              <small>E-mail a heslo</small>
-            </article>
-            <article className="onboarding-step">
-              <p>Krok 2</p>
-              <strong>Subjekt a adresa</strong>
-              <small>ARES + doplnění údajů</small>
-            </article>
-            <article className="onboarding-step">
-              <p>Krok 3</p>
-              <strong>DPH a platby</strong>
-              <small>Daňové a bankovní nastavení</small>
-            </article>
-          </div>
-        </section>
-
-        <form className="subject-form" onSubmit={onSubmit}>
           <section className="ui-section">
-            <h2>Vytvoření účtu</h2>
-            <div className="form-grid form-grid-two">
-              <label>
-                E-mail
-                <input
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  type="email"
-                  required
-                />
-              </label>
-              <label>
-                Heslo
-                <input
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  type="password"
-                  required
-                />
-                <small>Minimálně 8 znaků (může být i heslová fráze).</small>
-              </label>
-              <label>
-                Potvrzení hesla
-                <input
-                  value={passwordConfirm}
-                  onChange={(event) => setPasswordConfirm(event.target.value)}
-                  type="password"
-                  required
-                />
-              </label>
+            <div className="onboarding-steps">
+              <article className="onboarding-step active">
+                <p>Krok 1</p>
+                <strong>Vytvoření účtu</strong>
+                <small>E-mail a heslo</small>
+              </article>
+              <article className="onboarding-step">
+                <p>Krok 2</p>
+                <strong>Subjekt a adresa</strong>
+                <small>ARES + doplnění údajů</small>
+              </article>
+              <article className="onboarding-step">
+                <p>Krok 3</p>
+                <strong>DPH a platby</strong>
+                <small>Daňové a bankovní nastavení</small>
+              </article>
             </div>
           </section>
 
-          {error && <p className="error">{error}</p>}
+          <form className="subject-form" onSubmit={onSubmit}>
+            <section className="ui-section">
+              <h2>Vytvoření účtu</h2>
+              <div className="form-grid onboarding-account-form">
+                <label>
+                  E-mail
+                  <input
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    type="email"
+                    required
+                  />
+                </label>
+                <label>
+                  Heslo
+                  <input
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    type="password"
+                    required
+                  />
+                  <small>Minimálně 8 znaků (může být i heslová fráze).</small>
+                </label>
+                <label>
+                  Potvrzení hesla
+                  <input
+                    value={passwordConfirm}
+                    onChange={(event) => setPasswordConfirm(event.target.value)}
+                    type="password"
+                    required
+                  />
+                </label>
+              </div>
+            </section>
 
-          <div className="button-row">
-            <button disabled={submitting} type="submit">
-              {submitting ? 'Vytvářím účet...' : 'Pokračovat na nastavení subjektu'}
-            </button>
-            <Link className="action-link secondary-link" to="/auth/login">
-              Už mám účet
-            </Link>
-          </div>
-        </form>
-      </section>
+            {error && <p className="error">{error}</p>}
+
+            <div className="button-row">
+              <button disabled={submitting} type="submit">
+                {submitting ? 'Vytvářím účet...' : 'Pokračovat na nastavení subjektu'}
+              </button>
+              <Link className="action-link secondary-link" to="/auth/login">
+                Už mám účet
+              </Link>
+            </div>
+          </form>
+        </section>
+      </div>
     </main>
   );
 }
