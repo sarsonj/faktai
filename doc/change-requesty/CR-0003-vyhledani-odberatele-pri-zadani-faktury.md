@@ -39,7 +39,7 @@ Při zadávání faktury je ruční vypisování odběratele pomalé a chybové.
 - Mitigace: uživatel může před uložením pole upravit.
 
 ## 7. Implementace a ověření
-- Commit(y): implementace CR-0003 je součástí aktuální změnové dávky.
+- Commit(y): `de7050b`
 - Test plan:
   - vyhledání odběratele dle IČO,
   - vyhledání odběratele dle názvu,

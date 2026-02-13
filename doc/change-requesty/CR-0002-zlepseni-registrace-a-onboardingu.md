@@ -53,7 +53,7 @@ Zákaznické testy ukázaly vysoké tření při registraci a prvním vyplnění
 - Mitigace: lookup je pomocná funkce; ruční vyplnění formuláře zůstává dostupné.
 
 ## 7. Implementace a ověření
-- Commit(y): implementace CR-0002 je součástí aktuální změnové dávky.
+- Commit(y): `de7050b`
 - Test plan:
   - registrace a reset hesla s novým pravidlem,
   - onboarding lookup firmy (ARES),
