@@ -32,7 +32,7 @@ export function AppLayout() {
     <div className="app-frame">
       <aside className="app-sidebar">
         <Link to="/invoices" className="app-brand">
-          {APP_SHORT_NAME}
+          <img src="/branding/fakturai-logo.png" alt={APP_SHORT_NAME} className="app-brand-image" />
         </Link>
         <p className="app-sidebar-caption">Hlavní menu</p>
         <nav className="app-nav">
@@ -66,9 +66,9 @@ export function AppLayout() {
                 <button
                   type="button"
                   className="secondary"
-                  onClick={async () => {
-                    await logout();
-                    navigate('/auth/login', { replace: true });
+                  onClick={() => {
+                    void logout();
+                    navigate('/', { replace: true });
                   }}
                 >
                   Odhlásit

@@ -19,7 +19,7 @@ export function OnboardingStartPage() {
     return (
       <main className="app-shell">
         <div className="page-stack">
-          <SiteHeader />
+          <SiteHeader showGuestActions={false} />
           <section className="card">Načítám onboarding...</section>
         </div>
       </main>
@@ -48,7 +48,7 @@ export function OnboardingStartPage() {
   return (
     <main className="app-shell">
       <div className="page-stack">
-        <SiteHeader />
+        <SiteHeader showGuestActions={false} />
         <section className="card">
           <header className="page-head">
             <div>

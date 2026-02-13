@@ -229,17 +229,20 @@ body {
 
 .app-brand {
   display: inline-flex;
+  align-items: center;
   margin-bottom: 18px;
   color: #e2edf8;
   text-decoration: none;
-  font-family: var(--font-heading);
-  font-size: 1.2rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
 }
 
 .app-brand:hover {
   color: #f3f9ff;
+}
+
+.app-brand-image {
+  display: block;
+  width: auto;
+  height: 32px;
 }
 
 .app-sidebar-caption {
@@ -321,22 +324,24 @@ body {
 .site-logo-link {
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
-  padding: 7px 12px;
+  min-height: 42px;
+  padding: 6px 10px;
   border: 1px solid #cddded;
   border-radius: 999px;
   background: #f7fbff;
   color: #15324f;
   text-decoration: none;
-  font-family: var(--font-heading);
-  font-size: 0.95rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
 }
 
 .site-logo-link:hover {
   background: #eef5fd;
   color: #15324f;
+}
+
+.site-logo-image {
+  display: block;
+  width: auto;
+  height: 28px;
 }
 
 .site-auth-links {

@@ -25,7 +25,7 @@ export function LandingPage() {
   return (
     <main className="app-shell">
       <div className="page-stack">
-        <SiteHeader />
+        <SiteHeader showGuestActions={false} />
         <section className="landing-hero">
           <p className="landing-kicker">{APP_SHORT_NAME}</p>
           <h1>{APP_NAME} - fakturační systém, který naprogramovala kompletně AI</h1>

@@ -6,9 +6,14 @@ import { APP_SHORT_NAME } from '../brand';
 type SiteHeaderProps = {
   sectionLabel?: string;
   className?: string;
+  showGuestActions?: boolean;
 };
 
-export function SiteHeader({ sectionLabel, className }: SiteHeaderProps) {
+export function SiteHeader({
+  sectionLabel,
+  className,
+  showGuestActions = true,
+}: SiteHeaderProps) {
   const { me, loading, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,7 +42,7 @@ export function SiteHeader({ sectionLabel, className }: SiteHeaderProps) {
     <header className={`app-topbar site-header${className ? ` ${className}` : ''}`}>
       <div className="site-header-left">
         <Link to={homeTarget} className="site-logo-link">
-          {APP_SHORT_NAME}
+          <img src="/branding/fakturai-logo.png" alt={APP_SHORT_NAME} className="site-logo-image" />
         </Link>
         {sectionLabel && (
           <div>
@@ -53,7 +58,7 @@ export function SiteHeader({ sectionLabel, className }: SiteHeaderProps) {
         </button>
       )}
 
-      {!loading && !me && (
+      {!loading && !me && showGuestActions && (
         <div className="site-auth-links">
           <Link to="/auth/login" className="action-link secondary-link">
             Přihlášení
@@ -81,9 +86,9 @@ export function SiteHeader({ sectionLabel, className }: SiteHeaderProps) {
               <button
                 type="button"
                 className="secondary"
-                onClick={async () => {
-                  await logout();
-                  navigate('/auth/login', { replace: true });
+                onClick={() => {
+                  void logout();
+                  navigate('/', { replace: true });
                 }}
               >
                 Odhlásit
