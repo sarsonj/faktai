@@ -484,6 +484,21 @@ button:disabled {
   margin-bottom: 14px;
 }
 
+.filter-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #5e7289;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.filter-inline select {
+  width: auto;
+  min-width: 170px;
+}
+
 .toolbar-row > a {
   display: inline-flex;
   align-items: center;

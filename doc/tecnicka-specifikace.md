@@ -321,7 +321,7 @@ Backend validace:
 - `pageSize=10|20|50`
 
 Pravidla:
-- `DELETE` povoleno jen pro `draft`; jinak `409 Conflict`.
+- `DELETE` je povoleno pro všechny stavy faktury.
 - `issue` běží transakčně včetně přidělení čísla faktury.
 - `mark-paid` nastaví `status=paid` + `paid_at`.
 - `customerIco` se před uložením normalizuje bez mezer.

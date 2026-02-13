@@ -333,7 +333,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
   - `Uložit` (uložení změn existující faktury)
   - po úspěšném uložení návrat na seznam faktur se zachováním aktivních filtrů
 - `Zrušit` (návrat na seznam)
-- `Smazat` (pouze pro stav `draft`, hard delete)
+- `Smazat` (hard delete, dostupné ze seznamu faktur)
 
 #### 3.4.3 Chování dle režimu
 - Režim `create`:
@@ -393,13 +393,12 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 2. Číslo faktury se přiděluje atomicky při přechodu do stavu `issued` v roční řadě `YYYYNN`.
 3. Variabilní symbol se při vystavení nastaví na stejné číslo jako `invoiceNumber`.
 4. `overdue` se může počítat automaticky dávkou nebo při načtení (dle implementace), ale pravidlo je `dueDate < dnes` a `status != paid`.
-5. Hard delete je ve v1 povolen pouze u `draft`.
-6. Smazání `issued/paid/overdue` ve v1 není povoleno (kvůli návaznosti na účetní evidenci).
-7. Po vystavení se uloží snapshot dodavatele i odběratele pro historickou konzistenci.
-8. Faktura ve stavu `issued` je ve v1 plně editovatelná.
-9. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
-10. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
-11. Po `Uložit` v režimu `edit` se uživatel vrací na seznam faktur (`/invoices`) ve stejném kontextu filtrů/stránkování.
+5. Hard delete je ve v1 povolen i pro vystavené a uhrazené faktury.
+6. Po vystavení se uloží snapshot dodavatele i odběratele pro historickou konzistenci.
+7. Faktura ve stavu `issued` je ve v1 plně editovatelná.
+8. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
+9. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
+10. Po `Uložit` v režimu `edit` se uživatel vrací na seznam faktur (`/invoices`) ve stejném kontextu filtrů/stránkování.
 
 ### 3.8 Stavy a chování UI
 - `Loading`: načítání editoru / faktury.
@@ -407,7 +406,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 - `Unsaved changes`: potvrzení při odchodu bez uložení.
 - `Save success`: toast po uložení konceptu.
 - `Issue success`: toast + návrat do seznamu.
-- `Forbidden action`: hláška při pokusu smazat nebo editovat nepovolený stav.
+- `Forbidden action`: hláška při pokusu editovat nepovolený stav.
 
 ### 3.9 Akceptační kritéria (Scope 3)
 1. Uživatel dokáže vytvořit koncept faktury a později jej dokončit.
@@ -415,7 +414,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 3. Vystavení faktury vytvoří číslo dokladu; faktura ve stavu `issued` zůstává editovatelná.
 4. Při vystavení faktury se `variableSymbol` automaticky nastaví na stejné číslo jako `invoiceNumber` (`YYYYNN`).
 5. Výpočty součtů odpovídají položkám a sazbám DPH.
-6. Smazat lze pouze koncept faktury; pokus o smazání jiného stavu je zamítnut.
+6. Fakturu lze smazat ze seznamu faktur i mimo stav `draft`.
 7. Uživatel může vyhledat odběratele podle IČO i názvu a jedním klikem předvyplnit pole odběratele.
 
 ### 3.10 Potvrzená rozhodnutí

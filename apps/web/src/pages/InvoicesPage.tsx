@@ -7,6 +7,13 @@ const STATUS_OPTIONS = ['all', 'paid', 'unpaid', 'overdue'] as const;
 
 type UiStatus = (typeof STATUS_OPTIONS)[number];
 
+const STATUS_LABELS: Record<UiStatus, string> = {
+  all: 'Všechny',
+  paid: 'Uhrazené',
+  unpaid: 'Neuhrazené',
+  overdue: 'Po splatnosti',
+};
+
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString('cs-CZ');
 }
@@ -193,26 +200,20 @@ export function InvoicesPage() {
       </div>
 
       <div className="toolbar-row">
-        {STATUS_OPTIONS.map((option) => (
-          <button
-            key={option}
-            className={option === status ? 'active-chip' : 'chip'}
-            onClick={() => setQuery({ status: option, page: 1 })}
-            type="button"
+        <label className="filter-inline">
+          Stav
+          <select
+            aria-label="Stav faktur"
+            value={status}
+            onChange={(event) => setQuery({ status: event.target.value as UiStatus, page: 1 })}
           >
-            {option === 'all'
-              ? 'Všechny'
-              : option === 'paid'
-                ? 'Uhrazené'
-                : option === 'unpaid'
-                  ? 'Neuhrazené'
-                  : 'Po splatnosti'}
-          </button>
-        ))}
-      </div>
-
-      <div className="toolbar-row">
-        <small>Zobrazeny jsou poslední doklady dle stavu. Fulltextové hledání je dočasně vypnuté.</small>
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {STATUS_LABELS[option]}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {loading && <p>Načítám faktury...</p>}
@@ -304,17 +305,13 @@ export function InvoicesPage() {
                       </button>
                       <button
                         onClick={() => {
-                          if (item.status !== 'draft') {
-                            setError('Smazat lze pouze koncept faktury.');
-                            return;
-                          }
                           void onDelete(item.id);
                         }}
                         type="button"
-                        className={`icon-button${item.status === 'draft' ? ' danger destructive' : ' muted'}`}
-                        aria-label="Smazat koncept faktury"
+                        className="icon-button danger destructive"
+                        aria-label="Smazat doklad"
                         title="Smazat"
-                        data-tooltip={item.status === 'draft' ? 'Smazat koncept' : 'Smazat lze jen koncept'}
+                        data-tooltip="Smazat doklad"
                       >
                         <DeleteIcon />
                       </button>

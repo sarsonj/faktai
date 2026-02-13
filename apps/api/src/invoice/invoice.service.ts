@@ -1553,10 +1553,6 @@ export class InvoiceService {
       invoiceId,
     );
 
-    if (current.status !== 'draft') {
-      throw new ConflictException('Only draft invoice can be deleted');
-    }
-
     await this.prisma.invoice.delete({
       where: {
         id: current.id,

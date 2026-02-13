@@ -28,3 +28,4 @@
 | `CR-0009` | SaaS app shell: oddělená navigace a uživatelské menu | `Ke schválení` | `Must` |
 | `CR-0010` | Seznam faktur: ikonové akce a proklik čísla dokladu | `Implementováno` | `Should` |
 | `CR-0011` | Seznam faktur: tooltipy, PDF ikona, mazání feedback a kompaktní paginace | `Implementováno` | `Should` |
+| `CR-0012` | Seznam faktur: dropdown filtr a mazání bez omezení stavu | `Implementováno` | `Must` |
