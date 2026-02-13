@@ -18,7 +18,10 @@ export function OnboardingStartPage() {
   if (loading) {
     return (
       <main className="app-shell">
-        <section className="card">Načítám onboarding...</section>
+        <div className="page-stack">
+          <SiteHeader />
+          <section className="card">Načítám onboarding...</section>
+        </div>
       </main>
     );
   }
@@ -46,7 +49,7 @@ export function OnboardingStartPage() {
     <main className="app-shell">
       <div className="page-stack">
         <SiteHeader />
-        <section className="card card-narrow">
+        <section className="card">
           <header className="page-head">
             <div>
               <p className="page-kicker">První kroky</p>

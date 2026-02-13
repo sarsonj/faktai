@@ -49,7 +49,10 @@ export function OnboardingSubjectPage() {
   if (loading) {
     return (
       <main className="app-shell">
-        <section className="card">Načítám onboarding subjektu...</section>
+        <div className="page-stack">
+          <SiteHeader />
+          <section className="card">Načítám onboarding subjektu...</section>
+        </div>
       </main>
     );
   }
@@ -58,7 +61,7 @@ export function OnboardingSubjectPage() {
     <main className="app-shell">
       <div className="page-stack">
         <SiteHeader />
-        <section className="card card-narrow">
+        <section className="card">
           <header className="page-head">
             <div>
               <p className="page-kicker">Nastavení profilu</p>

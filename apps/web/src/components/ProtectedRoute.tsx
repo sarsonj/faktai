@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { SiteHeader } from './SiteHeader';
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -13,7 +14,10 @@ export function ProtectedRoute({ children, requireSubject = false }: ProtectedRo
   if (loading) {
     return (
       <main className="app-shell">
-        <section className="card">Načítání session...</section>
+        <div className="page-stack">
+          <SiteHeader />
+          <section className="card">Načítání session...</section>
+        </div>
       </main>
     );
   }
