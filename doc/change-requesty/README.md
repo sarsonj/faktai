@@ -47,3 +47,4 @@
 | `CR-0028` | Seznam faktur: dvouřádkový layout a filtr roku | `Implementováno` | `Must` |
 | `CR-0029` | Landing page: integrace grafiky hero a feature sekcí | `Implementováno` | `Should` |
 | `CR-0030` | Landing page: hero bez vnitřní „bubliny“ | `Implementováno` | `Should` |
+| `CR-0031` | Odhad realizace a nacenění projektu | `Implementováno` | `Should` |
