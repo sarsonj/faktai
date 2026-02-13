@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { APP_NAME, APP_SHORT_NAME } from '../brand';
+import { APP_NAME } from '../brand';
 import { SiteHeader } from '../components/SiteHeader';
 import { LANDING_HIGHLIGHTS } from '../landing-copy';
 
@@ -29,7 +29,6 @@ export function LandingPage() {
         <SiteHeader showGuestActions={false} />
         <section className="landing-hero">
           <div className="landing-hero-copy">
-            <p className="landing-kicker">{APP_SHORT_NAME}</p>
             <h1>{APP_NAME} - fakturační systém, který kompletně naprogramovala AI</h1>
             <p className="landing-subtitle">
               Vystavíš fakturu, pohlídáš DPH a stáhneš XML pro finanční úřad bez zbytečného dramatu.
