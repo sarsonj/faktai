@@ -324,18 +324,19 @@ body {
 .site-logo-link {
   display: inline-flex;
   align-items: center;
-  min-height: 42px;
-  padding: 6px 10px;
-  border: 1px solid #cddded;
-  border-radius: 999px;
-  background: #f7fbff;
-  color: #15324f;
+  min-height: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
   text-decoration: none;
 }
 
 .site-logo-link:hover {
-  background: #eef5fd;
-  color: #15324f;
+  background: transparent;
+  color: inherit;
+  opacity: 0.92;
 }
 
 .site-logo-image {

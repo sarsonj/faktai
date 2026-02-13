@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { APP_SHORT_NAME, APP_TAGLINE } from '../brand';
+import { LANDING_HIGHLIGHTS } from '../landing-copy';
 import { SiteHeader } from './SiteHeader';
 
 export function AuthLayout() {
@@ -9,7 +10,7 @@ export function AuthLayout() {
   return (
     <main className="app-shell auth-shell">
       <div className="page-stack auth-page-stack">
-        <SiteHeader />
+        <SiteHeader showGuestActions={false} />
         <section className="card auth-card">
           <div className="auth-layout">
             <aside className="auth-aside">
@@ -19,9 +20,9 @@ export function AuthLayout() {
                 Přihlaste se ke svému účtu a pokračujte ve správě faktur, DPH podkladů a nastavení podnikání.
               </p>
               <ul className="auth-benefits">
-                <li>Rychlé vystavení dokladu v roční číselné řadě</li>
-                <li>Export PDF a XML pro finanční úřad</li>
-                <li>Onboarding s načtením dat z registrů</li>
+                {LANDING_HIGHLIGHTS.map((item) => (
+                  <li key={item.title}>{item.title}</li>
+                ))}
               </ul>
             </aside>
 

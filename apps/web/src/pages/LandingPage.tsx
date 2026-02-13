@@ -2,21 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { APP_NAME, APP_SHORT_NAME } from '../brand';
 import { SiteHeader } from '../components/SiteHeader';
-
-const HIGHLIGHTS = [
-  {
-    title: 'Faktura za minutu, ne za půl dne',
-    text: 'Automatické číslování, variabilní symbol i QR platba. Ty řešíš práci, ne formátování.',
-  },
-  {
-    title: 'DPH bez tabulkového maratonu',
-    text: 'Přiznání k DPH i kontrolní hlášení exportuješ do XML připraveného pro finanční úřad.',
-  },
-  {
-    title: 'Výstupy, které vypadají dospěle',
-    text: 'PDF faktury působí profesionálně, takže se nemusíš stydět je poslat klientovi.',
-  },
-];
+import { LANDING_HIGHLIGHTS } from '../landing-copy';
 
 export function LandingPage() {
   const { me, loading } = useAuth();
@@ -66,7 +52,7 @@ export function LandingPage() {
         <section className="landing-section">
           <h2>Co už dnes umí</h2>
           <div className="landing-grid">
-            {HIGHLIGHTS.map((item) => (
+            {LANDING_HIGHLIGHTS.map((item) => (
               <article key={item.title} className="landing-card">
                 <h3>{item.title}</h3>
                 <p>{item.text}</p>
