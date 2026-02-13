@@ -1,7 +1,7 @@
 # Technická specifikace projektu TappyFaktur
 
 ## 0. Stav dokumentu
-- Verze: `0.6`
+- Verze: `0.7`
 - Datum: `2026-02-13`
 - Stav: `Rozpracováno`
 - Vazba na funkční specifikaci: `doc/funkcni-specifikace.md` (verze `1.3`)
@@ -325,6 +325,11 @@ Pravidla:
 - `draft` vrací `409`.
 - Export vrací `application/pdf` stream.
 - Pokud se payload změnil od posledního exportu, zvýší se `pdf_version`.
+- Renderer používá blokový layout:
+  - hlavička + identifikace stran,
+  - platební tabulka,
+  - položková tabulka,
+  - QR + tabulka souhrnu DPH + zvýrazněný grand total.
 
 ### 5.5 Tax reports (Scope 5)
 1. `POST /tax-reports/preview`
@@ -341,6 +346,8 @@ Pravidla:
 - stejné vstupy jako preview
 - odpověď: `application/xml`
 - současně se uloží záznam `tax_report_runs`.
+- `vat_return` exportuje FU strukturu `Pisemnost/DPHDP3`.
+- `control_statement` exportuje FU strukturu `Pisemnost/DPHKH1`.
 
 ## 6. Klíčové transakční scénáře
 
@@ -396,11 +403,21 @@ Poznámka:
 4. Pokud hash != `pdf_payload_hash`:
    - `pdf_version += 1`,
    - uložit nový hash.
-5. Vygenerovat a streamovat PDF.
+5. Vyrenderovat sekce dokumentu v pořadí:
+   - hlavička dokladu,
+   - strany dokladu,
+   - platební tabulka,
+   - položková tabulka,
+   - QR + souhrn DPH + grand total,
+   - patička.
+6. Streamovat PDF.
 
 ### 6.8 Export XML daňových podkladů
 1. Spočítat dataset pro období.
-2. Sestavit XML dle typu podání.
+2. Sestavit XML dle typu podání:
+   - `vat_return` -> `DPHDP3` + `VetaD/VetaP/Veta1..Veta6`,
+   - `control_statement` -> `DPHKH1` + `VetaD/VetaP/VetaA4/VetaC`,
+   - `summary_statement` -> interní v1 struktura dle stávající mapy.
 3. Validovat proti XSD.
 4. Spočítat `dataset_hash`.
 5. Určit `run_version`:
@@ -472,6 +489,7 @@ Poznámka:
 - Server-side render do PDF.
 - Embedded font s podporou češtiny.
 - Layout odpovídá funkční specifikaci Scope 4.
+- Vizuální baseline pro v1 odpovídá referenci `doc/examples/Vydaná faktura - 0126.pdf`.
 
 ### 9.2 SPD payload
 - Povinná pole: `ACC`, `AM`, `CC`, `X-VS`.
@@ -488,11 +506,17 @@ Poznámka:
 - Každý typ podání má vlastní mapper dat -> XML model.
 - Nad výsledkem probíhá XSD validace.
 - Chyby mapování/validace vrací `422` s detailním listem problémů.
+- Pro `vat_return` a `control_statement` se používá FU-compatible struktura atributových vět (`Veta*`).
 
 ### 10.2 Typy exportu v1
 1. `Přiznání k DPH`
 2. `Souhrnné hlášení`
 3. `Kontrolní hlášení`
+
+Mapování v1:
+1. `Přiznání k DPH` -> `Pisemnost/DPHDP3`
+2. `Kontrolní hlášení` -> `Pisemnost/DPHKH1`
+3. Referenční struktury: `doc/examples/iDoklad_DPH3_2025Q04B`, `doc/examples/iDoklad_DPHKH_2025Q04B`
 
 ### 10.3 Strategie verzování běhů
 - Verze běhu je interní metadata.
@@ -539,8 +563,10 @@ Poznámka:
 - Invoice lifecycle: create -> issue -> paid.
 - Invoice editor: lookup odběratele + ruční editace po předvyplnění.
 - Delete draft vs. zákaz delete issued.
-- PDF export a verze.
+- PDF export a verze včetně layout smoke kontroly.
 - Tax report export + run versioning.
+- Kontrola, že `vat_return` export obsahuje `DPHDP3` a `Veta1..Veta6`.
+- Kontrola, že `control_statement` export obsahuje `DPHKH1` a `VetaA4/VetaC`.
 
 ### 12.3 E2E testy
 - Registrace -> onboarding subjektu -> invoices landing.

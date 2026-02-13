@@ -20,3 +20,5 @@
 | `CR-0001` | Zavedení procesu řízení změn | `Schváleno` | `Must` |
 | `CR-0002` | Zlepšení registrace a onboardingu | `Ověřeno` | `Must` |
 | `CR-0003` | Vyhledání odběratele při zadání faktury | `Ověřeno` | `Must` |
+| `CR-0004` | Redesign PDF vzhledu faktury | `Ověřeno` | `Must` |
+| `CR-0005` | FU XML export pro přiznání DPH a kontrolní hlášení | `Ověřeno` | `Must` |

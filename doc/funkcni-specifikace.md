@@ -1,7 +1,7 @@
 # Funkční specifikace projektu TappyFaktur
 
 ## 0. Stav dokumentu
-- Verze: `1.4`
+- Verze: `1.5`
 - Datum: `2026-02-13`
 - Stav: `Rozpracováno`
 - Aktuálně zpracovaný rozsah: `Scope 1-7`
@@ -492,6 +492,14 @@ Umožnit vygenerovat profesionální PDF faktury v českém formátu včetně QR
 - Volitelná poznámka z faktury.
 - Text `Faktura je vedena elektronicky` (informační patička).
 
+#### 4.4.6 Vizuální layout (v1)
+- PDF má dvousloupcovou horní část (`Dodavatel` vlevo, hlavička dokladu + `Odběratel` vpravo).
+- Pod horní částí je samostatný blok platebních údajů (`Způsob úhrady`, bankovní účet, symboly, data).
+- Položky dokladu jsou v tabulce se záhlavím a oddělenými sloupci.
+- V dolní části je blok QR platby a samostatná tabulka souhrnu DPH podle sazeb.
+- Finální částka `Celkem k úhradě` je vizuálně zvýrazněna.
+- Referenční vizuální vzor pro v1: `doc/examples/Vydaná faktura - 0126.pdf`.
+
 ### 4.5 Pravidla QR platby (SPD)
 1. QR kód se generuje podle standardu `SPD 1.0`.
 2. Minimální povinné hodnoty:
@@ -529,6 +537,7 @@ Umožnit vygenerovat profesionální PDF faktury v českém formátu včetně QR
 3. QR kód je validní pro mobilní bankovnictví podporující SPD.
 4. Při změně `issued` faktury a opětovném exportu se zvýší `pdfVersion`.
 5. Export `draft` faktury je zamítnut.
+6. Výstup PDF má čitelný blokový layout dle referenční šablony v dokumentaci.
 
 ### 4.10 Potvrzená rozhodnutí
 1. Export `draft` faktury je ve v1 zakázán.
@@ -630,6 +639,11 @@ Pravidla:
    - agregované hodnoty,
    - technické metainformace požadované schématem.
 4. Aplikace pouze generuje soubor; podání do datové schránky provádí uživatel.
+5. `Přiznání k DPH` používá strukturu `Pisemnost/DPHDP3` s větami `VetaD`, `VetaP`, `Veta1` až `Veta6`.
+6. `Kontrolní hlášení` používá strukturu `Pisemnost/DPHKH1` s větami `VetaD`, `VetaP`, `VetaA4`, `VetaC`.
+7. Referenční příklady formátu jsou v:
+   - `doc/examples/iDoklad_DPH3_2025Q04B`
+   - `doc/examples/iDoklad_DPHKH_2025Q04B`
 
 ### 5.9 Verze a auditní stopa podkladů
 1. Každý export vytvoří záznam `taxReportRun`.
@@ -669,6 +683,7 @@ Pravidla:
 4. Faktury `draft` nejsou nikdy zahrnuty do výpočtu.
 5. Při změně faktury v období a novém exportu se zvýší verze běhu.
 6. Neplátce DPH nemůže export spustit a vidí srozumitelný informační stav.
+7. XML `Přiznání k DPH` a `Kontrolní hlášení` je ve FU-compatible struktuře vět.
 
 ### 5.12 Potvrzená rozhodnutí
 1. Ve v1 se podporuje měsíční i čtvrtletní období.

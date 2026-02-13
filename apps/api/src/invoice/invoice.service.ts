@@ -549,16 +549,64 @@ export class InvoiceService {
     })} Kč`;
   }
 
+  private formatDateCz(value: Date): string {
+    return value.toLocaleDateString('cs-CZ');
+  }
+
   private formatSupplierBankAccount(supplier: SupplierSnapshot): string {
     return supplier.bankAccountPrefix
       ? `${supplier.bankAccountPrefix}-${supplier.bankAccountNumber}/${supplier.bankCode}`
       : `${supplier.bankAccountNumber}/${supplier.bankCode}`;
   }
 
+  private buildVatRows(items: InvoiceItem[]) {
+    const grouped = new Map<number, { base: Decimal; vat: Decimal; total: Decimal }>();
+    for (const item of items) {
+      const current = grouped.get(item.vatRate) ?? {
+        base: new Decimal(0),
+        vat: new Decimal(0),
+        total: new Decimal(0),
+      };
+      current.base = current.base.add(item.lineTotalWithoutVat.toString());
+      current.vat = current.vat.add(item.lineVatAmount.toString());
+      current.total = current.total.add(item.lineTotalWithVat.toString());
+      grouped.set(item.vatRate, current);
+    }
+
+    return Array.from(grouped.entries())
+      .sort((a, b) => b[0] - a[0])
+      .map(([rate, values]) => ({
+        rate,
+        base: values.base.toFixed(2),
+        vat: values.vat.toFixed(2),
+        total: values.total.toFixed(2),
+      }));
+  }
+
+  private drawPseudoBarcode(doc: PDFKit.PDFDocument, x: number, y: number, width: number, value: string) {
+    const bars = value.replace(/\D/g, '');
+    if (!bars) {
+      return;
+    }
+
+    const barWidth = Math.max(1, Math.floor(width / (bars.length * 2)));
+    let currentX = x;
+    for (let i = 0; i < bars.length; i += 1) {
+      const digit = Number(bars[i]);
+      const height = 16 + (digit % 4) * 3;
+      doc.rect(currentX, y, barWidth, height).fill('#111111');
+      currentX += barWidth * 2;
+      if (currentX > x + width) {
+        break;
+      }
+    }
+  }
+
   private async renderPdf(input: {
     invoice: Invoice & { items: InvoiceItem[] };
     supplier: SupplierSnapshot;
     qrDataUrl: string;
+    iban: string;
   }): Promise<Buffer> {
     const doc = new PDFDocument({
       size: 'A4',
@@ -576,93 +624,239 @@ export class InvoiceService {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      doc.fontSize(18).text('FAKTURA - daňový doklad', { align: 'left' });
-      doc.moveDown(0.5);
+      const left = doc.page.margins.left;
+      const top = doc.page.margins.top;
+      const contentWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+      const right = left + contentWidth;
+      const mid = left + contentWidth / 2;
+
+      const supplierName = input.supplier.businessName
+        ? input.supplier.businessName
+        : `${input.supplier.firstName} ${input.supplier.lastName}`;
+      const invoiceNumber = input.invoice.invoiceNumber ?? input.invoice.id.slice(0, 8);
+
+      doc.fontSize(10).fillColor('#111111');
+      doc.font('Helvetica-Bold').text('Dodavatel', left, top);
+      doc.font('Helvetica').fontSize(9).text(supplierName, left, top + 16);
+      doc.text(input.supplier.street, left, top + 30);
+      doc.text(`${input.supplier.postalCode} ${input.supplier.city}`, left, top + 44);
+      doc.text(input.supplier.countryCode === 'CZ' ? 'Česká republika' : input.supplier.countryCode, left, top + 58);
+      doc.text(
+        `IČ: ${input.supplier.ico}${input.supplier.dic ? `    DIČ: ${input.supplier.dic}` : ''}`,
+        left,
+        top + 74,
+      );
+
+      doc.moveTo(mid - 10, top).lineTo(mid - 10, top + 170).strokeColor('#d9d9d9').stroke();
+
+      doc.font('Helvetica-Bold').fontSize(16).text('Faktura - daňový doklad', mid + 20, top + 4);
+      doc.rect(right - 110, top, 90, 28).fill('#eeeeee');
+      doc.fillColor('#111111').font('Helvetica-Bold').fontSize(12).text(invoiceNumber, right - 80, top + 8);
+      this.drawPseudoBarcode(doc, right - 102, top + 34, 84, invoiceNumber);
+
+      doc.font('Helvetica-Bold').fontSize(10).text('Odběratel', mid + 20, top + 98);
+      doc.font('Helvetica').fontSize(9).text(input.invoice.customerName, mid + 20, top + 114);
+      doc.text(input.invoice.customerStreet, mid + 20, top + 128);
+      doc.text(
+        `${input.invoice.customerPostalCode} ${input.invoice.customerCity}`,
+        mid + 20,
+        top + 142,
+      );
+      doc.text(
+        input.invoice.customerCountryCode === 'CZ' ? 'Česká republika' : input.invoice.customerCountryCode,
+        mid + 20,
+        top + 156,
+      );
+      const customerIdLine = [
+        input.invoice.customerIco ? `IČ: ${input.invoice.customerIco}` : '',
+        input.invoice.customerDic ? `DIČ: ${input.invoice.customerDic}` : '',
+      ]
+        .filter(Boolean)
+        .join('    ');
+      if (customerIdLine) {
+        doc.text(customerIdLine, mid + 20, top + 170);
+      }
+
+      let y = top + 205;
+      doc.font('Helvetica').fontSize(9);
+      doc.text('Způsob úhrady:', left, y);
+      doc.font('Helvetica-Bold').text('Převodem', left + 74, y);
+      y += 16;
+
+      const paymentTableTop = y;
+      const paymentTableHeight = 94;
+      const col1Width = 220;
+      const col2Width = 130;
+      const col3Width = contentWidth - col1Width - col2Width;
+      doc.rect(left, paymentTableTop, contentWidth, paymentTableHeight).strokeColor('#d4d4d4').stroke();
       doc
-        .fontSize(11)
-        .text(`Číslo dokladu: ${input.invoice.invoiceNumber ?? '-'}`);
-      doc.text(
-        `Datum vystavení: ${input.invoice.issueDate.toLocaleDateString('cs-CZ')}`,
-      );
-      doc.text(
-        `Datum zdanitelného plnění: ${input.invoice.taxableSupplyDate.toLocaleDateString('cs-CZ')}`,
-      );
-      doc.text(
-        `Datum splatnosti: ${input.invoice.dueDate.toLocaleDateString('cs-CZ')}`,
-      );
-      doc.text(`Variabilní symbol: ${input.invoice.variableSymbol}`);
-      doc.moveDown();
-
-      doc.fontSize(13).text('Dodavatel');
-      doc.fontSize(10);
-      doc.text(`${input.supplier.firstName} ${input.supplier.lastName}`);
-      if (input.supplier.businessName) {
-        doc.text(input.supplier.businessName);
-      }
-      doc.text(`IČO: ${input.supplier.ico}`);
-      if (input.supplier.dic) {
-        doc.text(`DIČ: ${input.supplier.dic}`);
-      }
-      doc.text(`${input.supplier.street}, ${input.supplier.city}`);
-      doc.text(`${input.supplier.postalCode}, ${input.supplier.countryCode}`);
-      doc.text(`Účet: ${this.formatSupplierBankAccount(input.supplier)}`);
-      doc.moveDown();
-
-      doc.fontSize(13).text('Odběratel');
-      doc.fontSize(10);
-      doc.text(input.invoice.customerName);
-      if (input.invoice.customerIco) {
-        doc.text(`IČO: ${input.invoice.customerIco}`);
-      }
-      if (input.invoice.customerDic) {
-        doc.text(`DIČ: ${input.invoice.customerDic}`);
-      }
-      doc.text(
-        `${input.invoice.customerStreet}, ${input.invoice.customerCity}`,
-      );
-      doc.text(
-        `${input.invoice.customerPostalCode}, ${input.invoice.customerCountryCode}`,
-      );
-      doc.moveDown();
-
-      doc.fontSize(13).text('Položky');
-      doc.moveDown(0.3);
-      doc.fontSize(10);
-      for (const item of input.invoice.items.sort(
-        (a, b) => a.position - b.position,
-      )) {
-        doc.text(
-          `${item.position}. ${item.description} | ${item.quantity.toString()} ${item.unit} | ${item.vatRate}% | ${this.formatMoney(item.lineTotalWithVat.toString())}`,
-        );
-      }
-      doc.moveDown();
-
+        .moveTo(left + col1Width, paymentTableTop)
+        .lineTo(left + col1Width, paymentTableTop + paymentTableHeight)
+        .stroke();
       doc
-        .fontSize(11)
-        .text(
-          `Celkem bez DPH: ${this.formatMoney(input.invoice.totalWithoutVat.toString())}`,
-        );
-      doc.text(`DPH: ${this.formatMoney(input.invoice.totalVat.toString())}`);
+        .moveTo(left + col1Width + col2Width, paymentTableTop)
+        .lineTo(left + col1Width + col2Width, paymentTableTop + paymentTableHeight)
+        .stroke();
       doc
-        .fontSize(12)
-        .text(
-          `Celkem k úhradě: ${this.formatMoney(input.invoice.totalWithVat.toString())}`,
-        );
-      doc.moveDown();
+        .moveTo(left, paymentTableTop + 20)
+        .lineTo(right, paymentTableTop + 20)
+        .stroke();
 
-      doc.fontSize(11).text('Platba');
-      doc.text(`Metoda: Bankovní převod`);
-      doc.text(`Variabilní symbol: ${input.invoice.variableSymbol}`);
-      doc.image(qrImage, doc.page.width - 180, doc.y - 30, {
-        width: 120,
-      });
-      doc.moveDown(6);
+      doc.font('Helvetica-Bold').fontSize(9);
+      doc.text('Bankovní účet', left + 6, paymentTableTop + 6);
+      doc.text('Symbol', left + col1Width + 6, paymentTableTop + 6);
+      doc.text('Datum', left + col1Width + col2Width + 6, paymentTableTop + 6);
+
+      doc.font('Helvetica').fontSize(9);
+      doc.text(this.formatSupplierBankAccount(input.supplier), left + 6, paymentTableTop + 28);
+      doc.text(`IBAN: ${input.iban}`, left + 6, paymentTableTop + 42);
+      doc.text('SWIFT: -', left + 6, paymentTableTop + 56);
+
+      doc.text('variabilní:', left + col1Width + 6, paymentTableTop + 28);
+      doc.font('Helvetica-Bold').text(input.invoice.variableSymbol, left + col1Width + 54, paymentTableTop + 28);
+      doc.font('Helvetica').text('konstantní:', left + col1Width + 6, paymentTableTop + 42);
+      doc.font('Helvetica-Bold').text('0308', left + col1Width + 54, paymentTableTop + 42);
+
+      doc.font('Helvetica').text('vystavení:', left + col1Width + col2Width + 6, paymentTableTop + 28);
+      doc.font('Helvetica-Bold').text(
+        this.formatDateCz(input.invoice.issueDate),
+        left + col1Width + col2Width + 56,
+        paymentTableTop + 28,
+      );
+      doc.font('Helvetica').text('splatnosti:', left + col1Width + col2Width + 6, paymentTableTop + 42);
+      doc.font('Helvetica-Bold').text(
+        this.formatDateCz(input.invoice.dueDate),
+        left + col1Width + col2Width + 56,
+        paymentTableTop + 42,
+      );
+      doc.font('Helvetica').text('DUZP:', left + col1Width + col2Width + 6, paymentTableTop + 56);
+      doc.font('Helvetica-Bold').text(
+        this.formatDateCz(input.invoice.taxableSupplyDate),
+        left + col1Width + col2Width + 56,
+        paymentTableTop + 56,
+      );
+
+      y = paymentTableTop + paymentTableHeight + 14;
+      doc.font('Helvetica').fontSize(9).fillColor('#222222').text(
+        `Fakturujeme: ${input.invoice.note ?? input.invoice.items[0]?.description ?? ''}`,
+        left,
+        y,
+      );
+
+      y += 18;
+      const itemHeaderHeight = 18;
+      const itemRowHeight = 18;
+      const cols = [230, 52, 68, 44, 70, 58, 66];
+      const itemHeaders = ['Označení dodávky', 'Počet m.j.', 'Cena za m.j.', 'DPH %', 'Bez DPH', 'DPH', 'Celkem'];
+
+      doc.rect(left, y, contentWidth, itemHeaderHeight).fill('#f3f3f3');
+      doc.fillColor('#111111').font('Helvetica-Bold').fontSize(8);
+      let cx = left + 4;
+      for (let i = 0; i < itemHeaders.length; i += 1) {
+        doc.text(itemHeaders[i], cx, y + 6, { width: cols[i] - 8, align: i === 0 ? 'left' : 'right' });
+        cx += cols[i];
+      }
+      y += itemHeaderHeight;
+      doc.moveTo(left, y).lineTo(right, y).strokeColor('#d4d4d4').stroke();
+
+      doc.font('Helvetica').fontSize(8.5).fillColor('#111111');
+      const sortedItems = [...input.invoice.items].sort((a, b) => a.position - b.position);
+      for (const item of sortedItems) {
+        cx = left + 4;
+        doc.text(item.description, cx, y + 5, { width: cols[0] - 8 });
+        cx += cols[0];
+        doc.text(item.quantity.toString(), cx, y + 5, { width: cols[1] - 8, align: 'right' });
+        cx += cols[1];
+        doc.text(item.unitPrice.toString(), cx, y + 5, { width: cols[2] - 8, align: 'right' });
+        cx += cols[2];
+        doc.text(String(item.vatRate), cx, y + 5, { width: cols[3] - 8, align: 'right' });
+        cx += cols[3];
+        doc.text(this.formatMoney(item.lineTotalWithoutVat.toString()), cx, y + 5, { width: cols[4] - 8, align: 'right' });
+        cx += cols[4];
+        doc.text(this.formatMoney(item.lineVatAmount.toString()), cx, y + 5, { width: cols[5] - 8, align: 'right' });
+        cx += cols[5];
+        doc.font('Helvetica-Bold').text(this.formatMoney(item.lineTotalWithVat.toString()), cx, y + 5, {
+          width: cols[6] - 8,
+          align: 'right',
+        });
+        doc.font('Helvetica');
+        y += itemRowHeight;
+        doc.moveTo(left, y).lineTo(right, y).strokeColor('#e5e5e5').stroke();
+      }
+
+      y += 10;
+      doc.image(qrImage, left, y, { width: 95, height: 95 });
+      doc.font('Helvetica-Bold').fontSize(10).text('QR Platba+F', left + 2, y + 100);
+
+      const vatTableX = left + 210;
+      const vatTableY = y + 8;
+      const vatTableW = contentWidth - 210;
+      const vatHeaderH = 16;
+      const vatRowH = 16;
+      const vatCols = [80, 90, 90, vatTableW - 260];
+      doc.rect(vatTableX, vatTableY, vatTableW, vatHeaderH).fill('#f3f3f3');
+      doc.fillColor('#111111').font('Helvetica-Bold').fontSize(8);
+      let vx = vatTableX + 4;
+      for (const [index, heading] of ['Sazba DPH', 'Základ', 'Výše DPH', 'Celkem'].entries()) {
+        doc.text(heading, vx, vatTableY + 5, { width: vatCols[index] - 8, align: index === 0 ? 'left' : 'right' });
+        vx += vatCols[index];
+      }
+
+      const vatRows = this.buildVatRows(sortedItems);
+      let vy = vatTableY + vatHeaderH;
+      doc.font('Helvetica').fontSize(8.5);
+      for (const row of vatRows) {
+        vx = vatTableX + 4;
+        doc.text(`${row.rate} %`, vx, vy + 5, { width: vatCols[0] - 8 });
+        vx += vatCols[0];
+        doc.text(this.formatMoney(row.base), vx, vy + 5, { width: vatCols[1] - 8, align: 'right' });
+        vx += vatCols[1];
+        doc.text(this.formatMoney(row.vat), vx, vy + 5, { width: vatCols[2] - 8, align: 'right' });
+        vx += vatCols[2];
+        doc.font('Helvetica-Bold').text(this.formatMoney(row.total), vx, vy + 5, {
+          width: vatCols[3] - 8,
+          align: 'right',
+        });
+        doc.font('Helvetica');
+        vy += vatRowH;
+        doc.moveTo(vatTableX, vy).lineTo(vatTableX + vatTableW, vy).strokeColor('#e5e5e5').stroke();
+      }
+
+      vx = vatTableX + 4;
+      doc.font('Helvetica-Bold').text('CELKEM', vx, vy + 5, { width: vatCols[0] - 8 });
+      vx += vatCols[0];
+      doc.text(this.formatMoney(input.invoice.totalWithoutVat.toString()), vx, vy + 5, { width: vatCols[1] - 8, align: 'right' });
+      vx += vatCols[1];
+      doc.text(this.formatMoney(input.invoice.totalVat.toString()), vx, vy + 5, { width: vatCols[2] - 8, align: 'right' });
+      vx += vatCols[2];
+      doc.text(this.formatMoney(input.invoice.totalWithVat.toString()), vx, vy + 5, { width: vatCols[3] - 8, align: 'right' });
+
+      vy += vatRowH + 10;
+      doc.font('Helvetica-Bold').fontSize(14).text(
+        `Celkem k úhradě:  ${this.formatMoney(input.invoice.totalWithVat.toString())}`,
+        vatTableX,
+        vy,
+        { width: vatTableW, align: 'right' },
+      );
 
       if (input.invoice.note) {
-        doc.fontSize(10).text(`Poznámka: ${input.invoice.note}`);
+        doc.font('Helvetica').fontSize(9).fillColor('#333333').text(`Poznámka: ${input.invoice.note}`, left, Math.max(vy + 24, y + 118));
       }
-      doc.moveDown();
-      doc.fontSize(9).fillColor('#555').text('Faktura je vedena elektronicky.');
+
+      const footerY = doc.page.height - 42;
+      doc.moveTo(left, footerY - 12).lineTo(right, footerY - 12).strokeColor('#d8d8d8').stroke();
+      doc.fillColor('#555555').font('Helvetica').fontSize(7.5);
+      doc.text(
+        `Vytiskl(a): ${input.supplier.firstName} ${input.supplier.lastName}, ${this.formatDateCz(new Date())}`,
+        left,
+        footerY,
+      );
+      doc.text('Vystaveno v online fakturační službě iDoklad', left + 200, footerY, {
+        width: 220,
+        align: 'center',
+      });
+      doc.text('Strana 1/1', right - 70, footerY, { width: 70, align: 'right' });
+
       doc.end();
     });
   }
@@ -1115,6 +1309,7 @@ export class InvoiceService {
       invoice,
       supplier,
       qrDataUrl,
+      iban,
     });
 
     const filePrefix = invoice.invoiceNumber ?? invoice.id;

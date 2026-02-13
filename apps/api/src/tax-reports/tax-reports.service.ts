@@ -9,7 +9,6 @@ import { ConfigService } from '@nestjs/config';
 import {
   Prisma,
   Subject,
-  TaxClassification,
   TaxPeriodType,
   TaxReportType,
 } from '@prisma/client';
@@ -42,6 +41,17 @@ type TaxPreviewResult = {
   summary: Record<string, unknown>;
 };
 
+type VatFigures = {
+  base21: Decimal;
+  vat21: Decimal;
+  base12: Decimal;
+  vat12: Decimal;
+  base0: Decimal;
+  vat0: Decimal;
+  reverse21: Decimal;
+  reverse12: Decimal;
+};
+
 @Injectable()
 export class TaxReportsService {
   constructor(
@@ -51,11 +61,11 @@ export class TaxReportsService {
 
   private normalizePeriod(dto: TaxReportRequestDto): TaxReportRequestDto {
     if (dto.periodType === 'month' && (dto.value < 1 || dto.value > 12)) {
-      throw new BadRequestException('For monthly period, value must be 1-12');
+      throw new BadRequestException('Pro měsíční období musí být hodnota 1-12.');
     }
 
     if (dto.periodType === 'quarter' && (dto.value < 1 || dto.value > 4)) {
-      throw new BadRequestException('For quarterly period, value must be 1-4');
+      throw new BadRequestException('Pro čtvrtletní období musí být hodnota 1-4.');
     }
 
     return dto;
@@ -77,7 +87,7 @@ export class TaxReportsService {
   private async getSubjectByUserOrThrow(userId: string): Promise<Subject> {
     const subject = await this.prisma.subject.findUnique({ where: { userId } });
     if (!subject) {
-      throw new NotFoundException('Subject not found');
+      throw new NotFoundException('Subjekt nebyl nalezen.');
     }
 
     return subject;
@@ -258,6 +268,364 @@ export class TaxReportsService {
     return selectedVersion;
   }
 
+  private formatDateForFu(value: Date): string {
+    const day = String(value.getDate()).padStart(2, '0');
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const year = value.getFullYear();
+    return `${day}.${month}.${year}`;
+  }
+
+  private formatDecimal(value: Decimal.Value): string {
+    return new Decimal(value).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toFixed(2);
+  }
+
+  private formatWhole(value: Decimal.Value): string {
+    return new Decimal(value).toDecimalPlaces(0, Decimal.ROUND_HALF_UP).toFixed(0);
+  }
+
+  private normalizeVatId(value?: string | null): string {
+    if (!value) {
+      return '';
+    }
+    return value.replace(/\s+/g, '').toUpperCase().replace(/^CZ/, '');
+  }
+
+  private toFuAttributes(values: Record<string, string>): Record<string, string> {
+    const attrs: Record<string, string> = {};
+    for (const [key, value] of Object.entries(values)) {
+      attrs[`@_${key}`] = value;
+    }
+    return attrs;
+  }
+
+  private buildFuVetaD(
+    request: TaxReportRequestDto,
+    document: 'DP3' | 'KH1',
+    formFieldName: 'dapdph_forma' | 'khdph_forma',
+    extraFields: Record<string, string> = {},
+  ) {
+    const periodFields: Record<string, string> = {
+      [formFieldName]: request.periodType === 'month' ? 'A' : 'B',
+    };
+    if (request.periodType === 'month') {
+      periodFields.mesic = String(request.value);
+    } else {
+      periodFields.ctvrt = String(request.value);
+    }
+
+    return this.toFuAttributes({
+      k_uladis: 'DPH',
+      d_poddp: this.formatDateForFu(new Date()),
+      rok: String(request.year),
+      dokument: document,
+      ...periodFields,
+      ...extraFields,
+    });
+  }
+
+  private buildFuVetaP(subject: Subject) {
+    return this.toFuAttributes({
+      c_orient: '',
+      c_pop: '',
+      c_pracufo: '',
+      c_ufo: '',
+      dic: this.normalizeVatId(subject.dic),
+      jmeno: subject.firstName,
+      prijmeni: subject.lastName,
+      naz_obce: subject.city,
+      psc: subject.postalCode,
+      stat: subject.countryCode === 'CZ' ? 'Česká republika' : subject.countryCode,
+      ulice: subject.street,
+      sest_jmeno: subject.firstName,
+      sest_prijmeni: subject.lastName,
+      sest_telef: '',
+      typ_ds: 'F',
+      c_telef: '',
+      email: '',
+    });
+  }
+
+  private collectVatFigures(invoices: InvoiceWithItems[]): VatFigures {
+    const figures: VatFigures = {
+      base21: new Decimal(0),
+      vat21: new Decimal(0),
+      base12: new Decimal(0),
+      vat12: new Decimal(0),
+      base0: new Decimal(0),
+      vat0: new Decimal(0),
+      reverse21: new Decimal(0),
+      reverse12: new Decimal(0),
+    };
+
+    for (const invoice of invoices) {
+      for (const item of invoice.items) {
+        const base = new Decimal(item.lineTotalWithoutVat.toString());
+        const vat = new Decimal(item.lineVatAmount.toString());
+
+        const isReverse = invoice.taxClassification === 'domestic_reverse_charge';
+        if (isReverse) {
+          if (item.vatRate === 21) {
+            figures.reverse21 = figures.reverse21.add(base);
+          } else if (item.vatRate === 12) {
+            figures.reverse12 = figures.reverse12.add(base);
+          }
+          continue;
+        }
+
+        if (item.vatRate === 21) {
+          figures.base21 = figures.base21.add(base);
+          figures.vat21 = figures.vat21.add(vat);
+        } else if (item.vatRate === 12) {
+          figures.base12 = figures.base12.add(base);
+          figures.vat12 = figures.vat12.add(vat);
+        } else if (item.vatRate === 0) {
+          figures.base0 = figures.base0.add(base);
+          figures.vat0 = figures.vat0.add(vat);
+        }
+      }
+    }
+
+    return figures;
+  }
+
+  private validateXmlContent(xml: string): string {
+    const validation = XMLValidator.validate(xml);
+    if (validation !== true) {
+      throw new UnprocessableEntityException('Vygenerované XML není validní');
+    }
+    return xml;
+  }
+
+  private buildFuVatReturnXml(
+    subject: Subject,
+    request: TaxReportRequestDto,
+    invoices: InvoiceWithItems[],
+  ): string {
+    const builder = new XMLBuilder({
+      format: true,
+      ignoreAttributes: false,
+      suppressEmptyNode: true,
+    });
+
+    const figures = this.collectVatFigures(invoices);
+    const vatDue = figures.vat21.add(figures.vat12);
+
+    const xmlPayload = {
+      Pisemnost: {
+        ...this.toFuAttributes({
+          nazevSW: 'TappyFaktur',
+          verzeSW: '1.0.0',
+        }),
+        DPHDP3: {
+          ...this.toFuAttributes({ verzePis: '01.02.01' }),
+          VetaD: this.buildFuVetaD(request, 'DP3', 'dapdph_forma', {
+            typ_platce: 'P',
+            trans: 'A',
+            c_okec: '',
+          }),
+          VetaP: this.buildFuVetaP(subject),
+          Veta1: this.toFuAttributes({
+            dan23: this.formatWhole(figures.vat21),
+            dan5: this.formatWhole(figures.vat12),
+            dan_pzb23: '0',
+            dan_pzb5: '0',
+            dan_psl23_e: '0',
+            dan_psl5_e: '0',
+            dan_dzb23: '0',
+            dan_dzb5: '0',
+            dan_pdop_nrg: '0',
+            dan_rpren23: '0',
+            dan_rpren5: '0',
+            dan_psl23_z: '0',
+            dan_psl5_z: '0',
+            obrat23: this.formatWhole(figures.base21),
+            obrat5: this.formatWhole(figures.base12),
+            p_zb23: this.formatWhole(figures.base0),
+            p_zb5: '0',
+            p_sl23_e: '0',
+            p_sl5_e: '0',
+            dov_zb23: '0',
+            dov_zb5: '0',
+            p_dop_nrg: '0',
+            rez_pren23: this.formatWhole(figures.reverse21),
+            rez_pren5: this.formatWhole(figures.reverse12),
+            p_sl23_z: '0',
+            p_sl5_z: '0',
+          }),
+          Veta2: this.toFuAttributes({
+            dod_zb: '0',
+            pln_sluzby: '0',
+            pln_vyvoz: '0',
+            dod_dop_nrg: '0',
+            pln_zaslani: '0',
+            pln_rez_pren: '0',
+            pln_ost: '0',
+          }),
+          Veta3: this.toFuAttributes({
+            tri_pozb: '0',
+            tri_dozb: '0',
+            dov_osv: '0',
+            opr_verit: '0',
+            opr_dluz: '0',
+          }),
+          Veta4: this.toFuAttributes({
+            pln23: '0',
+            pln5: '0',
+            dov_cu: '0',
+            nar_zdp23: '0',
+            nar_zdp5: '0',
+            nar_maj: '0',
+            odp_tuz23_nar: '0',
+            odp_tuz5_nar: '0',
+            odp_cu_nar: '0',
+            od_zdp23: '0',
+            od_zdp5: '0',
+            odp_sum_nar: '0',
+            od_maj: '0',
+            odp_tuz23: '0',
+            odp_tuz5: '0',
+            odp_cu: '0',
+            odp_sum_kr: '0',
+            odkr_maj: '0',
+          }),
+          Veta5: this.toFuAttributes({
+            plnosv_kf: '0',
+          }),
+          Veta6: this.toFuAttributes({
+            dan_zocelk: this.formatWhole(vatDue),
+            odp_zocelk: '0',
+            dano_da: this.formatWhole(vatDue),
+            dano_no: '0',
+          }),
+        },
+      },
+    };
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n${builder.build(xmlPayload)}`;
+    return this.validateXmlContent(xml);
+  }
+
+  private buildFuControlStatementXml(
+    subject: Subject,
+    request: TaxReportRequestDto,
+    invoices: InvoiceWithItems[],
+  ): string {
+    const builder = new XMLBuilder({
+      format: true,
+      ignoreAttributes: false,
+      suppressEmptyNode: true,
+    });
+
+    const figures = this.collectVatFigures(invoices);
+    const domesticInvoices = invoices.filter(
+      (invoice) =>
+        invoice.taxClassification === 'domestic_standard' ||
+        invoice.taxClassification === 'domestic_reverse_charge',
+    );
+
+    const vetaA4 = domesticInvoices.map((invoice) => {
+      const customerId = this.normalizeVatId(invoice.customerDic) || this.normalizeVatId(invoice.customerIco);
+      if (!customerId) {
+        throw new BadRequestException(
+          `Faktura ${invoice.invoiceNumber ?? invoice.id} nemá vyplněné DIČ nebo IČO odběratele pro kontrolní hlášení.`,
+        );
+      }
+
+      return this.toFuAttributes({
+        c_evid_dd: invoice.invoiceNumber ?? invoice.id.slice(0, 10),
+        dan1: this.formatDecimal(invoice.totalVat.toString()),
+        dan2: '0',
+        dan3: '0',
+        dppd: this.formatDateForFu(invoice.taxableSupplyDate),
+        dic_odb: customerId,
+        zakl_dane1: this.formatDecimal(invoice.totalWithoutVat.toString()),
+        zakl_dane2: '0',
+        zakl_dane3: '0',
+        kod_rezim_pl: '0',
+        zdph_44: 'N',
+      });
+    });
+
+    const reportNode: Record<string, unknown> = {
+      ...this.toFuAttributes({ verzePis: '01.02.01' }),
+      VetaD: this.buildFuVetaD(request, 'KH1', 'khdph_forma'),
+      VetaP: this.buildFuVetaP(subject),
+      VetaC: this.toFuAttributes({
+        celk_zd_a2: '0',
+        obrat23: this.formatDecimal(figures.base21),
+        obrat5: this.formatDecimal(figures.base12),
+        pln23: '0',
+        pln5: '0',
+        pln_rez_pren: this.formatDecimal(figures.reverse21.add(figures.reverse12)),
+        rez_pren23: this.formatDecimal(figures.reverse21),
+        rez_pren5: this.formatDecimal(figures.reverse12),
+      }),
+    };
+
+    if (vetaA4.length > 0) {
+      reportNode.VetaA4 = vetaA4;
+    }
+
+    const xmlPayload = {
+      Pisemnost: {
+        ...this.toFuAttributes({
+          nazevSW: 'TappyFaktur',
+          verzeSW: '1.0.0',
+        }),
+        DPHKH1: reportNode,
+      },
+    };
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n${builder.build(xmlPayload)}`;
+    return this.validateXmlContent(xml);
+  }
+
+  private buildLegacyXml(subject: Subject, preview: TaxPreviewResult): string {
+    const builder = new XMLBuilder({
+      format: true,
+      ignoreAttributes: false,
+      suppressEmptyNode: true,
+    });
+
+    const xmlPayload = {
+      TaxReport: {
+        Metadata: {
+          ReportType: preview.reportType,
+          SchemaVersion: preview.schemaVersion,
+          PeriodType: preview.periodType,
+          Year: preview.year,
+          Value: preview.value,
+          Currency: 'CZK',
+          Subject: {
+            ICO: subject.ico,
+            DIC: subject.dic,
+          },
+        },
+        Summary: preview.summary,
+      },
+    };
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n${builder.build(xmlPayload)}`;
+    return this.validateXmlContent(xml);
+  }
+
+  private buildExportXml(
+    subject: Subject,
+    request: TaxReportRequestDto,
+    preview: TaxPreviewResult,
+    invoices: InvoiceWithItems[],
+  ): string {
+    if (request.reportType === 'vat_return') {
+      return this.buildFuVatReturnXml(subject, request, invoices);
+    }
+
+    if (request.reportType === 'control_statement') {
+      return this.buildFuControlStatementXml(subject, request, invoices);
+    }
+
+    return this.buildLegacyXml(subject, preview);
+  }
+
   private buildPreview(
     dto: TaxReportRequestDto,
     invoices: InvoiceWithItems[],
@@ -303,40 +671,6 @@ export class TaxReportsService {
     };
   }
 
-  private buildXml(subject: Subject, preview: TaxPreviewResult): string {
-    const builder = new XMLBuilder({
-      format: true,
-      ignoreAttributes: false,
-      suppressEmptyNode: true,
-    });
-
-    const xmlPayload = {
-      TaxReport: {
-        Metadata: {
-          ReportType: preview.reportType,
-          SchemaVersion: preview.schemaVersion,
-          PeriodType: preview.periodType,
-          Year: preview.year,
-          Value: preview.value,
-          Currency: 'CZK',
-          Subject: {
-            ICO: subject.ico,
-            DIC: subject.dic,
-          },
-        },
-        Summary: preview.summary,
-      },
-    };
-
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n${builder.build(xmlPayload)}`;
-    const validation = XMLValidator.validate(xml);
-    if (validation !== true) {
-      throw new UnprocessableEntityException('Vygenerované XML není validní');
-    }
-
-    return xml;
-  }
-
   private getExportFileName(
     request: TaxReportRequestDto,
     runVersion: number,
@@ -377,7 +711,7 @@ export class TaxReportsService {
 
     this.ensureClassifications(invoices);
     const preview = this.buildPreview(normalized, invoices);
-    const xml = this.buildXml(subject, preview);
+    const xml = this.buildExportXml(subject, normalized, preview, invoices);
 
     const latestRun = await this.prisma.taxReportRun.findFirst({
       where: {
