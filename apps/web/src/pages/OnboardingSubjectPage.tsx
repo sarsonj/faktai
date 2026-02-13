@@ -55,20 +55,28 @@ export function OnboardingSubjectPage() {
   return (
     <main className="app-shell">
       <section className="card">
-        <h1>Onboarding živnostníka</h1>
-        <p>Vyplňte profil subjektu pro fakturaci.</p>
+        <header className="page-head">
+          <div>
+            <p className="page-kicker">Onboarding</p>
+            <h1 className="page-title">Onboarding živnostníka</h1>
+            <p className="page-subtitle">Vyplňte profil subjektu, aby šlo začít vystavovat faktury.</p>
+          </div>
+        </header>
         {error && <p className="error">{error}</p>}
         <SubjectForm loading={saving} onSubmit={onSubmit} submitLabel="Uložit a pokračovat" />
         <hr />
-        <button
-          onClick={async () => {
-            await logout();
-            navigate('/auth/login', { replace: true });
-          }}
-          type="button"
-        >
-          Odhlásit
-        </button>
+        <div className="button-row">
+          <button
+            onClick={async () => {
+              await logout();
+              navigate('/auth/login', { replace: true });
+            }}
+            type="button"
+            className="secondary"
+          >
+            Odhlásit
+          </button>
+        </div>
       </section>
     </main>
   );

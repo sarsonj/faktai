@@ -135,19 +135,26 @@ export function TaxReportsPage() {
 
   return (
     <section className="card card-wide">
-      <h1>DPH podklady</h1>
+      <header className="page-head">
+        <div>
+          <p className="page-kicker">Daňové podklady</p>
+          <h1 className="page-title">DPH podklady</h1>
+          <p className="page-subtitle">Generování XML podání pro finanční úřad z aktuálních fakturačních dat.</p>
+        </div>
+      </header>
 
       {error && <p className="error">{error}</p>}
       {success && <p>{success}</p>}
 
       {!isVatPayer && (
-        <div>
+        <div className="ui-section empty-state">
           <p>Subjekt není plátce DPH, export XML je zablokovaný.</p>
         </div>
       )}
 
       {isVatPayer && (
-        <>
+        <section className="ui-section">
+          <h2>Nastavení exportu</h2>
           <div className="form-grid invoice-form-grid">
             <label>
               Typ podání
@@ -220,7 +227,7 @@ export function TaxReportsPage() {
               {exporting ? 'Exportuji...' : 'Export XML'}
             </button>
           </div>
-        </>
+        </section>
       )}
     </section>
   );

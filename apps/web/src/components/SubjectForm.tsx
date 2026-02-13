@@ -211,239 +211,264 @@ export function SubjectForm({ initial, submitLabel, loading = false, onSubmit }:
   };
 
   return (
-    <form className="form-grid" onSubmit={handleSubmit}>
-      <section className="lookup-box">
-        <h3>Načíst firmu z ARES</h3>
-        <div className="lookup-controls">
-          <input
-            placeholder="IČO nebo název firmy"
-            value={companyQuery}
-            onChange={(event) => setCompanyQuery(event.target.value)}
-          />
-          <button type="button" className="secondary" disabled={companyLoading || loading} onClick={handleCompanySearch}>
-            {companyLoading ? 'Načítám...' : 'Vyhledat'}
-          </button>
+    <form className="subject-form" onSubmit={handleSubmit}>
+      <section className="ui-section">
+        <h2>Načtení dat z registrů</h2>
+        <div className="form-grid form-grid-two">
+          <section className="lookup-box">
+            <h3>Načíst firmu z ARES</h3>
+            <div className="lookup-controls">
+              <input
+                placeholder="IČO nebo název firmy"
+                value={companyQuery}
+                onChange={(event) => setCompanyQuery(event.target.value)}
+              />
+              <button type="button" className="secondary" disabled={companyLoading || loading} onClick={handleCompanySearch}>
+                {companyLoading ? 'Načítám...' : 'Vyhledat'}
+              </button>
+            </div>
+            {companyError && <p className="error">{companyError}</p>}
+            {companyResults.length > 0 && (
+              <ul className="lookup-results">
+                {companyResults.map((item) => (
+                  <li key={`${item.ico}-${item.name}`}>
+                    <button type="button" className="secondary" onClick={() => applyCompanyResult(item)}>
+                      Použít
+                    </button>
+                    <span>{formatCompanyResult(item)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="lookup-box">
+            <h3>Načíst adresu</h3>
+            <div className="lookup-controls">
+              <input
+                placeholder="Ulice a číslo"
+                value={addressQuery}
+                onChange={(event) => setAddressQuery(event.target.value)}
+              />
+              <button type="button" className="secondary" disabled={addressLoading || loading} onClick={handleAddressSearch}>
+                {addressLoading ? 'Načítám...' : 'Vyhledat adresu'}
+              </button>
+            </div>
+            {addressError && <p className="error">{addressError}</p>}
+            {addressResults.length > 0 && (
+              <ul className="lookup-results">
+                {addressResults.map((item) => (
+                  <li key={item.id}>
+                    <button type="button" className="secondary" onClick={() => applyAddressResult(item)}>
+                      Použít
+                    </button>
+                    <span>{formatAddressResult(item)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
-        {companyError && <p className="error">{companyError}</p>}
-        {companyResults.length > 0 && (
-          <ul className="lookup-results">
-            {companyResults.map((item) => (
-              <li key={`${item.ico}-${item.name}`}>
-                <button type="button" className="secondary" onClick={() => applyCompanyResult(item)}>
-                  Použít
-                </button>
-                <span>{formatCompanyResult(item)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
 
-      <section className="lookup-box">
-        <h3>Načíst adresu</h3>
-        <div className="lookup-controls">
-          <input
-            placeholder="Ulice a číslo"
-            value={addressQuery}
-            onChange={(event) => setAddressQuery(event.target.value)}
-          />
-          <button type="button" className="secondary" disabled={addressLoading || loading} onClick={handleAddressSearch}>
-            {addressLoading ? 'Načítám...' : 'Vyhledat adresu'}
-          </button>
+      <section className="ui-section">
+        <h2>Základní údaje</h2>
+        <div className="form-grid form-grid-two">
+          <label>
+            Jméno
+            <input
+              value={state.firstName}
+              onChange={(event) => setState((current) => ({ ...current, firstName: event.target.value }))}
+              required
+            />
+          </label>
+          <label>
+            Příjmení
+            <input
+              value={state.lastName}
+              onChange={(event) => setState((current) => ({ ...current, lastName: event.target.value }))}
+              required
+            />
+          </label>
+          <label>
+            Obchodní název
+            <input
+              value={state.businessName}
+              onChange={(event) => setState((current) => ({ ...current, businessName: event.target.value }))}
+            />
+          </label>
+          <label>
+            IČO
+            <input
+              value={state.ico}
+              onChange={(event) =>
+                setState((current) => ({ ...current, ico: normalizeIco(event.target.value) }))
+              }
+              required
+            />
+          </label>
+          <label className="checkbox-row">
+            <span>Plátce DPH</span>
+            <input
+              checked={state.isVatPayer}
+              onChange={(event) => setState((current) => ({ ...current, isVatPayer: event.target.checked }))}
+              type="checkbox"
+            />
+          </label>
+          <label>
+            DIČ
+            <input
+              disabled={!state.isVatPayer}
+              value={state.dic}
+              onChange={(event) => setState((current) => ({ ...current, dic: event.target.value }))}
+            />
+          </label>
+          <label>
+            Datum registrace DPH
+            <input
+              disabled={!state.isVatPayer}
+              value={state.vatRegistrationDate}
+              onChange={(event) =>
+                setState((current) => ({ ...current, vatRegistrationDate: event.target.value }))
+              }
+              type="date"
+            />
+          </label>
+          <label>
+            Periodicita DPH
+            <select
+              disabled={!state.isVatPayer}
+              value={state.vatPeriodType}
+              onChange={(event) =>
+                setState((current) => ({
+                  ...current,
+                  vatPeriodType: event.target.value as 'month' | 'quarter',
+                }))
+              }
+            >
+              <option value="month">Měsíční</option>
+              <option value="quarter">Čtvrtletní</option>
+            </select>
+          </label>
         </div>
-        {addressError && <p className="error">{addressError}</p>}
-        {addressResults.length > 0 && (
-          <ul className="lookup-results">
-            {addressResults.map((item) => (
-              <li key={item.id}>
-                <button type="button" className="secondary" onClick={() => applyAddressResult(item)}>
-                  Použít
-                </button>
-                <span>{formatAddressResult(item)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
 
-      <label>
-        Jméno
-        <input
-          value={state.firstName}
-          onChange={(event) => setState((current) => ({ ...current, firstName: event.target.value }))}
-          required
-        />
-      </label>
-      <label>
-        Příjmení
-        <input
-          value={state.lastName}
-          onChange={(event) => setState((current) => ({ ...current, lastName: event.target.value }))}
-          required
-        />
-      </label>
-      <label>
-        Obchodní název
-        <input
-          value={state.businessName}
-          onChange={(event) => setState((current) => ({ ...current, businessName: event.target.value }))}
-        />
-      </label>
-      <label>
-        IČO
-        <input
-          value={state.ico}
-          onChange={(event) =>
-            setState((current) => ({ ...current, ico: normalizeIco(event.target.value) }))
-          }
-          required
-        />
-      </label>
-      <label>
-        Plátce DPH
-        <input
-          checked={state.isVatPayer}
-          onChange={(event) => setState((current) => ({ ...current, isVatPayer: event.target.checked }))}
-          type="checkbox"
-        />
-      </label>
-      <label>
-        DIČ
-        <input
-          disabled={!state.isVatPayer}
-          value={state.dic}
-          onChange={(event) => setState((current) => ({ ...current, dic: event.target.value }))}
-        />
-      </label>
-      <label>
-        Datum registrace DPH
-        <input
-          disabled={!state.isVatPayer}
-          value={state.vatRegistrationDate}
-          onChange={(event) =>
-            setState((current) => ({ ...current, vatRegistrationDate: event.target.value }))
-          }
-          type="date"
-        />
-      </label>
-      <label>
-        Periodicita DPH
-        <select
-          disabled={!state.isVatPayer}
-          value={state.vatPeriodType}
-          onChange={(event) =>
-            setState((current) => ({
-              ...current,
-              vatPeriodType: event.target.value as 'month' | 'quarter',
-            }))
-          }
-        >
-          <option value="month">Měsíční</option>
-          <option value="quarter">Čtvrtletní</option>
-        </select>
-      </label>
-      <label>
-        Ulice
-        <input
-          value={state.street}
-          onChange={(event) => setState((current) => ({ ...current, street: event.target.value }))}
-          required
-        />
-      </label>
-      <label>
-        Město
-        <input
-          value={state.city}
-          onChange={(event) => setState((current) => ({ ...current, city: event.target.value }))}
-          required
-        />
-      </label>
-      <label>
-        PSČ
-        <input
-          value={state.postalCode}
-          onChange={(event) =>
-            setState((current) => ({ ...current, postalCode: normalizePostalCode(event.target.value) }))
-          }
-          required
-        />
-      </label>
-      <label>
-        Země
-        <input
-          value={state.countryCode}
-          onChange={(event) =>
-            setState((current) => ({ ...current, countryCode: normalizeCountryCode(event.target.value) }))
-          }
-          required
-        />
-      </label>
-      <label>
-        Prefix účtu
-        <input
-          value={state.bankAccountPrefix}
-          onChange={(event) =>
-            setState((current) => ({ ...current, bankAccountPrefix: event.target.value }))
-          }
-        />
-      </label>
-      <label>
-        Číslo účtu
-        <input
-          value={state.bankAccountNumber}
-          onChange={(event) =>
-            setState((current) => ({ ...current, bankAccountNumber: event.target.value }))
-          }
-          required
-        />
-      </label>
-      <label>
-        Kód banky
-        <input
-          value={state.bankCode}
-          onChange={(event) => setState((current) => ({ ...current, bankCode: event.target.value }))}
-          required
-        />
-      </label>
-      <label>
-        Strategie VS
-        <select
-          value={state.defaultVariableSymbolType}
-          onChange={(event) =>
-            setState((current) => ({
-              ...current,
-              defaultVariableSymbolType: event.target.value as 'ico' | 'custom',
-            }))
-          }
-        >
-          <option value="ico">Použít IČO</option>
-          <option value="custom">Vlastní</option>
-        </select>
-      </label>
-      <label>
-        Výchozí VS
-        <input
-          disabled={!isCustomVs}
-          value={state.defaultVariableSymbolValue}
-          onChange={(event) =>
-            setState((current) => ({ ...current, defaultVariableSymbolValue: event.target.value }))
-          }
-          required={isCustomVs}
-        />
-      </label>
-      <label>
-        Splatnost (dny)
-        <input
-          value={state.defaultDueDays}
-          onChange={(event) => setState((current) => ({ ...current, defaultDueDays: event.target.value }))}
-          required
-          type="number"
-        />
-      </label>
+      <section className="ui-section">
+        <h2>Adresa</h2>
+        <div className="form-grid form-grid-two">
+          <label>
+            Ulice
+            <input
+              value={state.street}
+              onChange={(event) => setState((current) => ({ ...current, street: event.target.value }))}
+              required
+            />
+          </label>
+          <label>
+            Město
+            <input
+              value={state.city}
+              onChange={(event) => setState((current) => ({ ...current, city: event.target.value }))}
+              required
+            />
+          </label>
+          <label>
+            PSČ
+            <input
+              value={state.postalCode}
+              onChange={(event) =>
+                setState((current) => ({ ...current, postalCode: normalizePostalCode(event.target.value) }))
+              }
+              required
+            />
+          </label>
+          <label>
+            Země
+            <input
+              value={state.countryCode}
+              onChange={(event) =>
+                setState((current) => ({ ...current, countryCode: normalizeCountryCode(event.target.value) }))
+              }
+              required
+            />
+          </label>
+        </div>
+      </section>
+
+      <section className="ui-section">
+        <h2>Platební a výchozí nastavení</h2>
+        <div className="form-grid form-grid-two">
+          <label>
+            Prefix účtu
+            <input
+              value={state.bankAccountPrefix}
+              onChange={(event) =>
+                setState((current) => ({ ...current, bankAccountPrefix: event.target.value }))
+              }
+            />
+          </label>
+          <label>
+            Číslo účtu
+            <input
+              value={state.bankAccountNumber}
+              onChange={(event) =>
+                setState((current) => ({ ...current, bankAccountNumber: event.target.value }))
+              }
+              required
+            />
+          </label>
+          <label>
+            Kód banky
+            <input
+              value={state.bankCode}
+              onChange={(event) => setState((current) => ({ ...current, bankCode: event.target.value }))}
+              required
+            />
+          </label>
+          <label>
+            Strategie VS
+            <select
+              value={state.defaultVariableSymbolType}
+              onChange={(event) =>
+                setState((current) => ({
+                  ...current,
+                  defaultVariableSymbolType: event.target.value as 'ico' | 'custom',
+                }))
+              }
+            >
+              <option value="ico">Použít IČO</option>
+              <option value="custom">Vlastní</option>
+            </select>
+          </label>
+          <label>
+            Výchozí VS
+            <input
+              disabled={!isCustomVs}
+              value={state.defaultVariableSymbolValue}
+              onChange={(event) =>
+                setState((current) => ({ ...current, defaultVariableSymbolValue: event.target.value }))
+              }
+              required={isCustomVs}
+            />
+          </label>
+          <label>
+            Splatnost (dny)
+            <input
+              value={state.defaultDueDays}
+              onChange={(event) => setState((current) => ({ ...current, defaultDueDays: event.target.value }))}
+              required
+              type="number"
+            />
+          </label>
+        </div>
+      </section>
+
       {error && <p className="error">{error}</p>}
-      <button disabled={loading} type="submit">
-        {loading ? 'Ukládám...' : submitLabel}
-      </button>
+      <div className="button-row">
+        <button disabled={loading} type="submit">
+          {loading ? 'Ukládám...' : submitLabel}
+        </button>
+      </div>
     </form>
   );
 }

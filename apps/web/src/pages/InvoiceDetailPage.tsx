@@ -126,12 +126,27 @@ export function InvoiceDetailPage() {
 
   return (
     <section className="card card-wide">
-      <h1>Detail faktury {invoice.invoiceNumber ?? '(koncept)'}</h1>
+      <header className="page-head">
+        <div>
+          <p className="page-kicker">Fakturace</p>
+          <h1 className="page-title">Detail faktury {invoice.invoiceNumber ?? '(koncept)'}</h1>
+          <p className="page-subtitle">Přehled stavu, metadat a položek dokladu.</p>
+        </div>
+        <div className="page-actions">
+          <Link className="action-link" to={backHref}>
+            Zpět na seznam
+          </Link>
+          <Link className="action-link secondary-link" to={`/invoices/${invoice.id}/edit${listQuery ? `?${listQuery}` : ''}`}>
+            Upravit
+          </Link>
+        </div>
+      </header>
 
-        <div className="toolbar-row">
-          <Link to={backHref}>Zpět na seznam</Link>
-          <Link to={`/invoices/${invoice.id}/edit${listQuery ? `?${listQuery}` : ''}`}>Upravit</Link>
-          <Link to={`/invoices/${invoice.id}/copy${listQuery ? `?${listQuery}` : ''}`}>Kopie</Link>
+      <section className="ui-section">
+        <div className="button-row wrap">
+          <Link className="action-link secondary-link" to={`/invoices/${invoice.id}/copy${listQuery ? `?${listQuery}` : ''}`}>
+            Kopie
+          </Link>
           <button
             type="button"
             className="secondary"
@@ -155,7 +170,10 @@ export function InvoiceDetailPage() {
             </button>
           )}
         </div>
+      </section>
 
+      <section className="ui-section">
+        <h2>Metadata faktury</h2>
         <div className="summary-grid">
           <p>
             <strong>Stav:</strong> <span className={statusClassName(invoice.status)}>{statusLabel(invoice.status)}</span>
@@ -179,42 +197,49 @@ export function InvoiceDetailPage() {
             <strong>PDF verze:</strong> {invoice.pdfVersion}
           </p>
         </div>
+      </section>
 
+      <section className="ui-section">
         <h2>Odběratel</h2>
         <p>{invoice.customerName}</p>
         <p>{invoice.customerStreet}</p>
         <p>
           {invoice.customerPostalCode} {invoice.customerCity}, {invoice.customerCountryCode}
         </p>
+      </section>
 
-        <table className="invoice-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Popis</th>
-              <th>Množství</th>
-              <th>Jednotka</th>
-              <th>Jedn. cena</th>
-              <th>DPH</th>
-              <th>Bez DPH</th>
-              <th>S DPH</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoice.items.map((item) => (
-              <tr key={item.id}>
-                <td>{item.position}</td>
-                <td>{item.description}</td>
-                <td>{item.quantity}</td>
-                <td>{item.unit}</td>
-                <td>{formatMoney(item.unitPrice)}</td>
-                <td>{item.vatRate} %</td>
-                <td>{formatMoney(item.lineTotalWithoutVat)}</td>
-                <td>{formatMoney(item.lineTotalWithVat)}</td>
+      <section className="ui-section">
+        <h2>Položky faktury</h2>
+        <div className="data-table-wrap">
+          <table className="invoice-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Popis</th>
+                <th>Množství</th>
+                <th>Jednotka</th>
+                <th>Jedn. cena</th>
+                <th>DPH</th>
+                <th>Bez DPH</th>
+                <th>S DPH</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {invoice.items.map((item) => (
+                <tr key={item.id}>
+                  <td>{item.position}</td>
+                  <td>{item.description}</td>
+                  <td>{item.quantity}</td>
+                  <td>{item.unit}</td>
+                  <td>{formatMoney(item.unitPrice)}</td>
+                  <td>{item.vatRate} %</td>
+                  <td>{formatMoney(item.lineTotalWithoutVat)}</td>
+                  <td>{formatMoney(item.lineTotalWithVat)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <div className="totals-box">
           <p>Bez DPH: {formatMoney(invoice.totalWithoutVat)}</p>
@@ -223,6 +248,7 @@ export function InvoiceDetailPage() {
             <strong>Celkem: {formatMoney(invoice.totalWithVat)}</strong>
           </p>
         </div>
+      </section>
     </section>
   );
 }

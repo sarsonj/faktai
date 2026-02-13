@@ -425,10 +425,21 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
 
   return (
     <section className="card card-wide">
-      <h1>{mode === 'create' ? 'Nová faktura' : `Editace faktury ${invoice?.invoiceNumber ?? ''}`}</h1>
-        <div className="toolbar-row">
-          <Link to={backHref}>Zpět na seznam</Link>
-          {mode === 'edit' && invoice && <Link to={`/invoices/${invoice.id}${listQuery ? `?${listQuery}` : ''}`}>Detail faktury</Link>}
+      <header className="page-head">
+        <div>
+          <p className="page-kicker">Fakturace</p>
+          <h1 className="page-title">{mode === 'create' ? 'Nová faktura' : `Editace faktury ${invoice?.invoiceNumber ?? ''}`}</h1>
+          <p className="page-subtitle">Vyplňte parametry dokladu, odběratele a položky faktury.</p>
+        </div>
+        <div className="page-actions">
+          <Link className="action-link" to={backHref}>
+            Zpět na seznam
+          </Link>
+          {mode === 'edit' && invoice && (
+            <Link className="action-link secondary-link" to={`/invoices/${invoice.id}${listQuery ? `?${listQuery}` : ''}`}>
+              Detail faktury
+            </Link>
+          )}
           {mode === 'edit' && invoice && (
             <button
               type="button"
@@ -444,11 +455,14 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
             </button>
           )}
         </div>
+      </header>
 
-        {error && <p className="error">{error}</p>}
-        {success && <p>{success}</p>}
-        {invoice && <p>Aktuální PDF verze: {invoice.pdfVersion}</p>}
+      {error && <p className="error">{error}</p>}
+      {success && <p>{success}</p>}
+      {invoice && <p className="helper-text">Aktuální PDF verze: {invoice.pdfVersion}</p>}
 
+      <section className="ui-section">
+        <h2>Parametry dokladu</h2>
         <div className="form-grid invoice-form-grid">
           <label>
             Variabilní symbol
@@ -510,7 +524,9 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
             </select>
           </label>
         </div>
+      </section>
 
+      <section className="ui-section">
         <h2>Odběratel</h2>
         <div className="lookup-box">
           <h3>Vyhledat odběratele v ARES</h3>
@@ -553,6 +569,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
             </ul>
           )}
         </div>
+
         <div className="form-grid invoice-form-grid">
           <label>
             Název / jméno
@@ -628,8 +645,17 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
             />
           </label>
         </div>
+      </section>
 
-        <h2>Položky</h2>
+      <section className="ui-section">
+        <div className="ui-section-head">
+          <h2>Položky</h2>
+          {!readOnly && (
+            <button type="button" className="secondary" onClick={addItem}>
+              Přidat položku
+            </button>
+          )}
+        </div>
         <div className="invoice-items-list">
           {state.items.map((item, index) => (
             <div className="invoice-item-row" key={index}>
@@ -679,15 +705,9 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
             </div>
           ))}
         </div>
+      </section>
 
-        {!readOnly && (
-          <div className="toolbar-row">
-            <button type="button" className="secondary" onClick={addItem}>
-              Přidat položku
-            </button>
-          </div>
-        )}
-
+      <section className="ui-section">
         <label>
           Poznámka
           <textarea
@@ -733,6 +753,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
             Zrušit
           </button>
         </div>
+      </section>
     </section>
   );
 }

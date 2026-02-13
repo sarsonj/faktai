@@ -193,168 +193,193 @@ export function InvoicesPage() {
 
   return (
     <section className="card card-wide">
-      <h1>Vydané faktury</h1>
-
-      <div className="toolbar-row">
-        <Link to={`/invoices/new${listContext ? `?${listContext}` : ''}`}>Nová faktura</Link>
-      </div>
-
-      <div className="toolbar-row">
-        <label className="filter-inline">
-          Stav
-          <select
-            aria-label="Stav faktur"
-            value={status}
-            onChange={(event) => setQuery({ status: event.target.value as UiStatus, page: 1 })}
-          >
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {STATUS_LABELS[option]}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      {loading && <p>Načítám faktury...</p>}
+      <header className="page-head">
+        <div>
+          <p className="page-kicker">Fakturace</p>
+          <h1 className="page-title">Vydané faktury</h1>
+          <p className="page-subtitle">Přehled vystavených dokladů, jejich stavů a navazujících akcí.</p>
+        </div>
+        <div className="page-actions">
+          <Link className="action-link" to={`/invoices/new${listContext ? `?${listContext}` : ''}`}>
+            Nová faktura
+          </Link>
+        </div>
+      </header>
       {error && <p className="error">{error}</p>}
 
-      {!loading && !error && data && data.items.length === 0 && (
-        <div>
-          <p>Pro zadaný filtr nebyly nalezeny výsledky.</p>
-          <Link to={`/invoices/new${listContext ? `?${listContext}` : ''}`}>Vystavit první fakturu</Link>
+      <section className="ui-section">
+        <div className="ui-section-head">
+          <h2>Seznam dokladů</h2>
+          <div className="section-inline-fields">
+            <label className="filter-inline">
+              Stav
+              <select
+                aria-label="Stav faktur"
+                value={status}
+                onChange={(event) => setQuery({ status: event.target.value as UiStatus, page: 1 })}
+              >
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {STATUS_LABELS[option]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
-      )}
 
-      {!loading && !error && data && data.items.length > 0 && (
-        <>
-          <table className="invoice-table">
-            <thead>
-              <tr>
-                <th>Číslo dokladu</th>
-                <th>Stav</th>
-                <th>Popis</th>
-                <th>Odběratel</th>
-                <th>Vystaveno</th>
-                <th>Splatnost</th>
-                <th>Cena bez DPH</th>
-                <th>Cena s DPH</th>
-                <th>Uhrazena dne</th>
-                <th>Akce</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.items.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    <Link className="invoice-number-link" to={`/invoices/${item.id}${listContext ? `?${listContext}` : ''}`}>
-                      {item.invoiceNumber ?? 'Koncept'}
-                    </Link>
-                  </td>
-                  <td>
-                    <span className={statusClassName(item.status)}>{statusLabel(item.status)}</span>
-                  </td>
-                  <td>{item.description || '-'}</td>
-                  <td>{item.customerName}</td>
-                  <td>{formatDate(item.issueDate)}</td>
-                  <td>{formatDate(item.dueDate)}</td>
-                  <td>{formatMoney(item.totalWithoutVat)}</td>
-                  <td>{formatMoney(item.totalWithVat)}</td>
-                  <td>{item.paidAt ? formatDate(item.paidAt) : '-'}</td>
-                  <td>
-                    <div className="table-actions">
-                      <Link
-                        className="icon-link"
-                        to={`/invoices/${item.id}/edit${listContext ? `?${listContext}` : ''}`}
-                        aria-label="Upravit fakturu"
-                        title="Upravit"
-                        data-tooltip="Upravit"
-                      >
-                        <EditIcon />
-                      </Link>
-                      <Link
-                        className="icon-link"
-                        to={`/invoices/${item.id}/copy${listContext ? `?${listContext}` : ''}`}
-                        aria-label="Vytvořit kopii faktury"
-                        title="Kopie"
-                        data-tooltip="Kopie"
-                      >
-                        <CopyIcon />
-                      </Link>
-                      <button
-                        onClick={() => {
-                          if (item.status === 'draft' || item.status === 'cancelled') {
-                            setError('PDF lze exportovat jen u vystavené nebo uhrazené faktury.');
-                            return;
-                          }
-                          void downloadInvoicePdf(item.id).catch((err: unknown) => {
-                            setError(err instanceof Error ? err.message : 'Export PDF selhal');
-                          });
-                        }}
-                        type="button"
-                        className={`icon-button secondary${item.status === 'draft' || item.status === 'cancelled' ? ' muted' : ''}`}
-                        aria-label="Stáhnout PDF"
-                        title="PDF"
-                        data-tooltip={
-                          item.status === 'draft' || item.status === 'cancelled'
-                            ? 'PDF jen pro vystavené/uhrazené'
-                            : 'Export PDF'
-                        }
-                      >
-                        <PdfIcon />
-                      </button>
-                      <button
-                        onClick={() => {
-                          void onDelete(item.id);
-                        }}
-                        type="button"
-                        className="icon-button danger destructive"
-                        aria-label="Smazat doklad"
-                        title="Smazat"
-                        data-tooltip="Smazat doklad"
-                      >
-                        <DeleteIcon />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {loading && <p>Načítám faktury...</p>}
 
-          <div className="pagination-row">
-            <span className="pagination-meta">
-              Strana {data.page} / {totalPages} | {data.total} položek
-            </span>
-            <div className="pagination-controls">
-              <label className="pagination-size">
-                Na stránku
-                <select
-                  aria-label="Počet položek na stránku"
-                  value={String(pageSize)}
-                  onChange={(event) => setQuery({ pageSize: Number(event.target.value) as 10 | 20 | 50, page: 1 })}
-                >
-                  <option value="10">10</option>
-                  <option value="20">20</option>
-                  <option value="50">50</option>
-                </select>
-              </label>
-              <div className="pagination-nav">
-                <button disabled={data.page <= 1} onClick={() => setQuery({ page: data.page - 1 })} type="button">
-                  ←
-                </button>
-                <button
-                  disabled={data.page >= totalPages}
-                  onClick={() => setQuery({ page: data.page + 1 })}
-                  type="button"
-                >
-                  →
-                </button>
+        {!loading && !error && data && data.items.length === 0 && (
+          <div className="empty-state">
+            <p>Pro zadaný filtr nebyly nalezeny výsledky.</p>
+            <Link to={`/invoices/new${listContext ? `?${listContext}` : ''}`}>Vystavit první fakturu</Link>
+          </div>
+        )}
+
+        {!loading && !error && data && data.items.length > 0 && (
+          <>
+            <div className="data-table-wrap">
+              <table className="invoice-table">
+                <thead>
+                  <tr>
+                    <th>Číslo dokladu</th>
+                    <th>Stav</th>
+                    <th>Popis</th>
+                    <th>Odběratel</th>
+                    <th>Vystaveno</th>
+                    <th>Splatnost</th>
+                    <th>Cena bez DPH</th>
+                    <th>Cena s DPH</th>
+                    <th>Uhrazena dne</th>
+                    <th>Akce</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.items.map((item) => (
+                    <tr key={item.id}>
+                      <td>
+                        <Link
+                          className="invoice-number-link"
+                          to={`/invoices/${item.id}${listContext ? `?${listContext}` : ''}`}
+                        >
+                          {item.invoiceNumber ?? 'Koncept'}
+                        </Link>
+                      </td>
+                      <td>
+                        <span className={statusClassName(item.status)}>{statusLabel(item.status)}</span>
+                      </td>
+                      <td>{item.description || '-'}</td>
+                      <td>{item.customerName}</td>
+                      <td>{formatDate(item.issueDate)}</td>
+                      <td>{formatDate(item.dueDate)}</td>
+                      <td>{formatMoney(item.totalWithoutVat)}</td>
+                      <td>{formatMoney(item.totalWithVat)}</td>
+                      <td>{item.paidAt ? formatDate(item.paidAt) : '-'}</td>
+                      <td>
+                        <div className="table-actions">
+                          <Link
+                            className="icon-link"
+                            to={`/invoices/${item.id}/edit${listContext ? `?${listContext}` : ''}`}
+                            aria-label="Upravit fakturu"
+                            title="Upravit"
+                            data-tooltip="Upravit"
+                          >
+                            <EditIcon />
+                          </Link>
+                          <Link
+                            className="icon-link"
+                            to={`/invoices/${item.id}/copy${listContext ? `?${listContext}` : ''}`}
+                            aria-label="Vytvořit kopii faktury"
+                            title="Kopie"
+                            data-tooltip="Kopie"
+                          >
+                            <CopyIcon />
+                          </Link>
+                          <button
+                            onClick={() => {
+                              if (item.status === 'draft' || item.status === 'cancelled') {
+                                setError('PDF lze exportovat jen u vystavené nebo uhrazené faktury.');
+                                return;
+                              }
+                              void downloadInvoicePdf(item.id).catch((err: unknown) => {
+                                setError(err instanceof Error ? err.message : 'Export PDF selhal');
+                              });
+                            }}
+                            type="button"
+                            className={`icon-button secondary${item.status === 'draft' || item.status === 'cancelled' ? ' muted' : ''}`}
+                            aria-label="Stáhnout PDF"
+                            title="PDF"
+                            data-tooltip={
+                              item.status === 'draft' || item.status === 'cancelled'
+                                ? 'PDF jen pro vystavené/uhrazené'
+                                : 'Export PDF'
+                            }
+                          >
+                            <PdfIcon />
+                          </button>
+                          <button
+                            onClick={() => {
+                              void onDelete(item.id);
+                            }}
+                            type="button"
+                            className="icon-button danger destructive"
+                            aria-label="Smazat doklad"
+                            title="Smazat"
+                            data-tooltip="Smazat doklad"
+                          >
+                            <DeleteIcon />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="pagination-row">
+              <span className="pagination-meta">
+                Strana {data.page} / {totalPages} | {data.total} položek
+              </span>
+              <div className="pagination-controls">
+                <label className="pagination-size">
+                  Na stránku
+                  <select
+                    aria-label="Počet položek na stránku"
+                    value={String(pageSize)}
+                    onChange={(event) =>
+                      setQuery({ pageSize: Number(event.target.value) as 10 | 20 | 50, page: 1 })
+                    }
+                  >
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                  </select>
+                </label>
+                <div className="pagination-nav">
+                  <button
+                    className="secondary"
+                    disabled={data.page <= 1}
+                    onClick={() => setQuery({ page: data.page - 1 })}
+                    type="button"
+                  >
+                    ←
+                  </button>
+                  <button
+                    className="secondary"
+                    disabled={data.page >= totalPages}
+                    onClick={() => setQuery({ page: data.page + 1 })}
+                    type="button"
+                  >
+                    →
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </section>
     </section>
   );
 }

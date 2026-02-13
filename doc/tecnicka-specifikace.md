@@ -499,6 +499,12 @@ Poznámka:
   - `AppLayout` obsahuje globální sidebar navigaci a topbar.
   - topbar má uživatelské menu (avatar + dropdown s akcí `Odhlásit`).
   - stránkové filtry/akce se renderují pouze v obsahu modulu, nikoliv v globální navigaci.
+- Layout hierarchy (Fáze 2):
+  - `page-head`: jednotná hlavička stránky (kicker + title + subtitle + page actions),
+  - `ui-section`: konzistentní obsahový panel pro logické bloky stránky,
+  - `ui-section-head`: lokální hlavička sekce pro kombinaci nadpisu a ovládacích prvků (filtry/sekční akce),
+  - `action-link`: link-styled CTA odpovídající vizuální logice tlačítek,
+  - `subject-form` a editor faktury používají sekční členění (`Základní údaje`, `Adresa`, `Položky`, ...).
 
 ## 8. Výpočty a formátování
 

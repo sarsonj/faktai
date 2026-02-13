@@ -58,7 +58,13 @@ export function SettingsSubjectPage() {
 
   return (
     <section className="card card-narrow">
-      <h1>Nastavení subjektu</h1>
+      <header className="page-head">
+        <div>
+          <p className="page-kicker">Nastavení</p>
+          <h1 className="page-title">Nastavení subjektu</h1>
+          <p className="page-subtitle">Správa identifikačních, bankovních a daňových údajů pro fakturaci.</p>
+        </div>
+      </header>
       {error && <p className="error">{error}</p>}
       {success && <p>{success}</p>}
       <SubjectForm

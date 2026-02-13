@@ -744,6 +744,12 @@ Sekundární obrazovky:
   - uživatelský profil vpravo (avatar/počáteční písmeno),
   - dropdown menu profilu s akcí `Odhlásit`.
 - Hlavní obsah:
+  - každá obrazovka začíná `page header` blokem:
+    - sekční štítek (kicker),
+    - název obrazovky,
+    - krátký popis kontextu stránky,
+    - stránkové akce vpravo (`page-actions`),
+  - obsah obrazovky je rozdělený do tematických panelů (`ui-section`) s lokálním nadpisem,
   - stránka modulu,
   - lokální akce/filtry stránky jsou pouze v obsahu modulu (nemísí se s globální navigací),
   - breadcrumb pouze na detailních obrazovkách (detail/editace faktury).
@@ -779,6 +785,8 @@ Sekundární obrazovky:
 7. Statusy dokladů jsou vizuálně odlišeny konzistentní sadou badge prvků.
 8. Rozhraní je responzivní a zachovává čitelnost na desktopu i mobilu.
 9. Globální navigace je vizuálně oddělená od lokálních filtrů a ovládacích prvků stránky.
+10. Dlouhé formuláře (např. subjekt, editor faktury) jsou členěny do logických sekcí místo jedné lineární plochy.
+11. Akční tlačítka stránky jsou seskupena v hlavičce nebo v patě relevantní sekce, ne mezi datovými bloky.
 
 ### 6.9 Globální stavy obrazovek
 1. `Loading`:
