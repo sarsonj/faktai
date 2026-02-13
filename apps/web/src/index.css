@@ -677,6 +677,7 @@ button:disabled {
 
 .icon-link,
 .icon-button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -703,10 +704,105 @@ button:disabled {
   padding: 0;
 }
 
-.table-actions .icon-button.secondary,
-.table-actions .icon-button.danger {
-  border-color: transparent;
+.table-actions .icon-button {
   box-shadow: none;
+}
+
+.icon-button.destructive {
+  border-color: rgba(190, 18, 60, 0.28);
+}
+
+.icon-button.muted {
+  border-color: #dbe6f2;
+  background: #f4f8fc;
+  color: #8ea1b7;
+  cursor: help;
+}
+
+.icon-button.muted:hover:not(:disabled) {
+  transform: none;
+  filter: none;
+  box-shadow: none;
+  background: #edf3f9;
+}
+
+.icon-link::after,
+.icon-button::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(4px);
+  border-radius: 8px;
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 4px 7px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.icon-link:hover::after,
+.icon-link:focus-visible::after,
+.icon-button:hover::after,
+.icon-button:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.pagination-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination-meta {
+  margin: 0;
+  color: #5e7289;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pagination-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: #5e7289;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.pagination-size select {
+  width: auto;
+  min-width: 64px;
+  border-radius: 9px;
+  padding: 5px 8px;
+  font-size: 0.82rem;
+}
+
+.pagination-nav {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.pagination-nav button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
 }
 
 .button-row {
@@ -827,6 +923,10 @@ button:disabled {
   .app-nav-link {
     min-height: 36px;
     padding: 7px 10px;
+  }
+
+  .pagination-row {
+    align-items: flex-start;
   }
 }
 

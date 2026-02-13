@@ -74,9 +74,9 @@ function CopyIcon() {
 function PdfIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M14 3v6h6" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M8.5 16h7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M12 4v10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="m8 10 4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 20h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
@@ -103,7 +103,7 @@ export function InvoicesPage() {
   const status = (STATUS_OPTIONS.includes(searchParams.get('status') as UiStatus)
     ? searchParams.get('status')
     : 'all') as UiStatus;
-  const q = searchParams.get('q') ?? '';
+  const q = '';
   const page = Number(searchParams.get('page') ?? '1') || 1;
   const pageSize = (Number(searchParams.get('pageSize') ?? '10') || 10) as 10 | 20 | 50;
 
@@ -128,7 +128,7 @@ export function InvoicesPage() {
     };
 
     void run();
-  }, [status, q, page, pageSize, refreshToken]);
+  }, [status, page, pageSize, refreshToken]);
 
   const totalPages = useMemo(() => {
     if (!data || data.total === 0) {
@@ -137,14 +137,11 @@ export function InvoicesPage() {
     return Math.ceil(data.total / data.pageSize);
   }, [data]);
 
-  const setQuery = (patch: Partial<{ status: UiStatus; q: string; page: number; pageSize: 10 | 20 | 50 }>) => {
+  const setQuery = (patch: Partial<{ status: UiStatus; page: number; pageSize: 10 | 20 | 50 }>) => {
     const next = new URLSearchParams(searchParams);
 
     if (patch.status !== undefined) {
       next.set('status', patch.status);
-    }
-    if (patch.q !== undefined) {
-      next.set('q', patch.q);
     }
     if (patch.page !== undefined) {
       next.set('page', String(patch.page));
@@ -153,9 +150,7 @@ export function InvoicesPage() {
       next.set('pageSize', String(patch.pageSize));
     }
 
-    if (!next.get('q')) {
-      next.delete('q');
-    }
+    next.delete('q');
     if (!next.get('status')) {
       next.set('status', 'all');
     }
@@ -217,21 +212,7 @@ export function InvoicesPage() {
       </div>
 
       <div className="toolbar-row">
-        <input
-          aria-label="Vyhledávání"
-          placeholder="Zadejte hledaný výraz"
-          value={q}
-          onChange={(event) => setQuery({ q: event.target.value, page: 1 })}
-        />
-        <select
-          aria-label="Počet položek"
-          value={String(pageSize)}
-          onChange={(event) => setQuery({ pageSize: Number(event.target.value) as 10 | 20 | 50, page: 1 })}
-        >
-          <option value="10">10</option>
-          <option value="20">20</option>
-          <option value="50">50</option>
-        </select>
+        <small>Zobrazeny jsou poslední doklady dle stavu. Fulltextové hledání je dočasně vypnuté.</small>
       </div>
 
       {loading && <p>Načítám faktury...</p>}
@@ -286,6 +267,7 @@ export function InvoicesPage() {
                         to={`/invoices/${item.id}/edit${listContext ? `?${listContext}` : ''}`}
                         aria-label="Upravit fakturu"
                         title="Upravit"
+                        data-tooltip="Upravit"
                       >
                         <EditIcon />
                       </Link>
@@ -294,32 +276,45 @@ export function InvoicesPage() {
                         to={`/invoices/${item.id}/copy${listContext ? `?${listContext}` : ''}`}
                         aria-label="Vytvořit kopii faktury"
                         title="Kopie"
+                        data-tooltip="Kopie"
                       >
                         <CopyIcon />
                       </Link>
                       <button
-                        disabled={item.status === 'draft' || item.status === 'cancelled'}
                         onClick={() => {
+                          if (item.status === 'draft' || item.status === 'cancelled') {
+                            setError('PDF lze exportovat jen u vystavené nebo uhrazené faktury.');
+                            return;
+                          }
                           void downloadInvoicePdf(item.id).catch((err: unknown) => {
                             setError(err instanceof Error ? err.message : 'Export PDF selhal');
                           });
                         }}
                         type="button"
-                        className="icon-button secondary"
+                        className={`icon-button secondary${item.status === 'draft' || item.status === 'cancelled' ? ' muted' : ''}`}
                         aria-label="Stáhnout PDF"
                         title="PDF"
+                        data-tooltip={
+                          item.status === 'draft' || item.status === 'cancelled'
+                            ? 'PDF jen pro vystavené/uhrazené'
+                            : 'Export PDF'
+                        }
                       >
                         <PdfIcon />
                       </button>
                       <button
-                        disabled={item.status !== 'draft'}
                         onClick={() => {
+                          if (item.status !== 'draft') {
+                            setError('Smazat lze pouze koncept faktury.');
+                            return;
+                          }
                           void onDelete(item.id);
                         }}
                         type="button"
-                        className="icon-button danger"
+                        className={`icon-button${item.status === 'draft' ? ' danger destructive' : ' muted'}`}
                         aria-label="Smazat koncept faktury"
                         title="Smazat"
+                        data-tooltip={item.status === 'draft' ? 'Smazat koncept' : 'Smazat lze jen koncept'}
                       >
                         <DeleteIcon />
                       </button>
@@ -330,20 +325,36 @@ export function InvoicesPage() {
             </tbody>
           </table>
 
-          <div className="toolbar-row">
-            <span>
-              Strana {data.page} z {totalPages} (celkem {data.total} položek)
+          <div className="pagination-row">
+            <span className="pagination-meta">
+              Strana {data.page} / {totalPages} | {data.total} položek
             </span>
-            <button disabled={data.page <= 1} onClick={() => setQuery({ page: data.page - 1 })} type="button">
-              Předchozí
-            </button>
-            <button
-              disabled={data.page >= totalPages}
-              onClick={() => setQuery({ page: data.page + 1 })}
-              type="button"
-            >
-              Další
-            </button>
+            <div className="pagination-controls">
+              <label className="pagination-size">
+                Na stránku
+                <select
+                  aria-label="Počet položek na stránku"
+                  value={String(pageSize)}
+                  onChange={(event) => setQuery({ pageSize: Number(event.target.value) as 10 | 20 | 50, page: 1 })}
+                >
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                </select>
+              </label>
+              <div className="pagination-nav">
+                <button disabled={data.page <= 1} onClick={() => setQuery({ page: data.page - 1 })} type="button">
+                  ←
+                </button>
+                <button
+                  disabled={data.page >= totalPages}
+                  onClick={() => setQuery({ page: data.page + 1 })}
+                  type="button"
+                >
+                  →
+                </button>
+              </div>
+            </div>
           </div>
         </>
       )}

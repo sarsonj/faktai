@@ -156,7 +156,6 @@ Poskytnout přehledný seznam vydaných faktur s rychlým vyhledáním, filtrov�
 - Hlavní obrazovka `Vydané faktury` dostupná z levé navigace.
 - Tabulkový seznam vydaných faktur.
 - Stránkování seznamu.
-- Fulltextové vyhledávání nad klíčovými poli faktury.
 - Rychlé stavové filtry (`Všechny`, `Uhrazené`, `Neuhrazené`, `Po splatnosti`).
 - Detail řádku s hlavními metadaty faktury.
 - Řádkové akce: `Upravit`, `Kopie`, `PDF`, `Smazat` (ikonové ovladače).
@@ -167,13 +166,13 @@ Poskytnout přehledný seznam vydaných faktur s rychlým vyhledáním, filtrov�
 - Uložitelné vlastní pohledy/sloupce.
 - Pokročilé kombinované filtrování (např. více stavů současně + intervaly částek).
 - Uživatelská personalizace pořadí sloupců.
+- Fulltextové vyhledávání je ve v1 dočasně vypnuto.
 
 ### 2.3 Navigace a tok uživatele
 1. Uživatel otevře položku `Vydané faktury` v hlavní navigaci.
 2. Systém zobrazí výchozí pohled `Všechny` se stránkou `1`.
 3. Uživatel může:
    - filtrovat podle stavu,
-   - hledat textem,
    - přejít na další stránku,
    - spustit akci nad konkrétní fakturou.
 4. Akce `Nová faktura` přesměruje na editor faktury (Scope 3).
@@ -185,7 +184,6 @@ Poskytnout přehledný seznam vydaných faktur s rychlým vyhledáním, filtrov�
 - Nadpis obrazovky: `Faktury vydané`.
 - Primární CTA: `Nová faktura`.
 - Blok rychlých filtrů (tabs/chips): `Všechny`, `Uhrazené`, `Neuhrazené`, `Po splatnosti`.
-- Vyhledávací pole: placeholder `Zadejte hledaný výraz`.
 - Tabulka výsledků.
 - Patička tabulky: `počet výsledků`, `stránkování`, `počet položek na stránku`.
 
