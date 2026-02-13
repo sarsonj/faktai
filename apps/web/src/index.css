@@ -1053,7 +1053,7 @@ button:disabled {
 }
 
 .invoice-list-table .col-doc {
-  width: 86px;
+  width: 104px;
 }
 
 .invoice-list-table .col-customer {
@@ -1061,19 +1061,19 @@ button:disabled {
 }
 
 .invoice-list-table .col-dates {
-  width: 156px;
+  width: 170px;
 }
 
 .invoice-list-table .col-amounts {
-  width: 154px;
+  width: 194px;
 }
 
 .invoice-list-table .col-status {
-  width: 102px;
+  width: 130px;
 }
 
 .invoice-list-table .col-actions {
-  width: 146px;
+  width: 154px;
 }
 
 .invoice-list-table .invoice-number-link,
@@ -1099,7 +1099,7 @@ button:disabled {
 
 .invoice-list-table .invoice-meta-row {
   display: grid;
-  grid-template-columns: 58px minmax(0, 1fr);
+  grid-template-columns: 62px minmax(0, 1fr);
   column-gap: 5px;
   align-items: baseline;
 }
@@ -1113,6 +1113,10 @@ button:disabled {
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+.invoice-list-table .cell-amounts .invoice-meta-row {
+  grid-template-columns: 56px minmax(0, 1fr);
 }
 
 .invoice-list-table .invoice-meta-value {
