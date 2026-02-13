@@ -1150,7 +1150,9 @@ button:disabled {
 
 .invoice-list-table .invoice-status-date {
   font-variant-numeric: tabular-nums;
-  padding-left: 10px;
+  margin-top: 1px;
+  padding-left: 0;
+  line-height: 1.22;
 }
 
 .invoice-list-table .cell-status .status-badge {
@@ -1159,6 +1161,12 @@ button:disabled {
 
 .invoice-list-table .cell-status {
   text-align: left;
+}
+
+.invoice-list-table .cell-status .invoice-cell-primary {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
 }
 
 .invoice-list-table .table-actions {
