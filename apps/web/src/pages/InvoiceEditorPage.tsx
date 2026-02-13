@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   createInvoice,
+  downloadInvoicePdf,
   getInvoice,
   issueInvoice,
   markInvoicePaid,
@@ -372,10 +373,25 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
         <div className="toolbar-row">
           <Link to={backHref}>Zpět na seznam</Link>
           {mode === 'edit' && invoice && <Link to={`/invoices/${invoice.id}${listQuery ? `?${listQuery}` : ''}`}>Detail faktury</Link>}
+          {mode === 'edit' && invoice && (
+            <button
+              type="button"
+              className="secondary"
+              disabled={invoice.status === 'draft' || invoice.status === 'cancelled'}
+              onClick={() => {
+                void downloadInvoicePdf(invoice.id).catch((err: unknown) => {
+                  setError(err instanceof Error ? err.message : 'Export PDF selhal');
+                });
+              }}
+            >
+              PDF
+            </button>
+          )}
         </div>
 
         {error && <p className="error">{error}</p>}
         {success && <p>{success}</p>}
+        {invoice && <p>Aktuální PDF verze: {invoice.pdfVersion}</p>}
 
         <div className="form-grid invoice-form-grid">
           <label>

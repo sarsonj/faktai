@@ -1,4 +1,4 @@
-import { apiRequest } from './lib-api';
+import { API_BASE_URL, ApiError, apiRequest } from './lib-api';
 import type { InvoiceDetail, InvoiceListResponse, InvoiceUpsertInput } from './types';
 
 export type ListInvoicesQuery = {
@@ -60,4 +60,25 @@ export async function deleteInvoice(invoiceId: string): Promise<void> {
   await apiRequest(`/invoices/${invoiceId}`, {
     method: 'DELETE',
   });
+}
+
+export async function downloadInvoicePdf(invoiceId: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/invoices/${invoiceId}/pdf`, {
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const maybeJson = await response
+      .json()
+      .catch(() => ({ message: `Request failed with ${response.status}` }));
+    throw new ApiError(
+      response.status,
+      maybeJson.message ?? `Request failed with ${response.status}`,
+    );
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank', 'noopener,noreferrer');
+  window.setTimeout(() => URL.revokeObjectURL(url), 5000);
 }

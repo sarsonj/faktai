@@ -9,8 +9,10 @@ import {
   Post,
   Query,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import type { RequestWithUser } from '../auth/session-auth.guard';
 import { ListInvoicesQueryDto } from './dto/list-invoices.query.dto';
@@ -26,11 +28,6 @@ export class InvoiceController {
   @Get()
   async listInvoices(@Req() request: RequestWithUser, @Query() query: ListInvoicesQueryDto) {
     return this.invoiceService.listInvoices(request.user!.id, query);
-  }
-
-  @Get(':id')
-  async getInvoice(@Req() request: RequestWithUser, @Param('id') id: string) {
-    return this.invoiceService.getInvoiceDetail(request.user!.id, id);
   }
 
   @Post()
@@ -64,6 +61,26 @@ export class InvoiceController {
     @Body() dto: MarkInvoicePaidDto,
   ) {
     return this.invoiceService.markInvoicePaid(request.user!.id, id, dto.paidAt);
+  }
+
+  @Get(':id/pdf')
+  async exportInvoicePdf(
+    @Req() request: RequestWithUser,
+    @Param('id') id: string,
+    @Res() response: Response,
+  ) {
+    const pdf = await this.invoiceService.exportInvoicePdf(request.user!.id, id);
+    response.setHeader('Content-Type', 'application/pdf');
+    response.setHeader(
+      'Content-Disposition',
+      `attachment; filename=\"${pdf.fileName}\"`,
+    );
+    response.send(pdf.content);
+  }
+
+  @Get(':id')
+  async getInvoice(@Req() request: RequestWithUser, @Param('id') id: string) {
+    return this.invoiceService.getInvoiceDetail(request.user!.id, id);
   }
 
   @Delete(':id')

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { deleteInvoice, listInvoices } from '../invoice-api';
+import { deleteInvoice, downloadInvoicePdf, listInvoices } from '../invoice-api';
 import { useAuth } from '../auth/AuthContext';
 import type { InvoiceListItem, InvoiceListResponse } from '../types';
 
@@ -236,6 +236,18 @@ export function InvoicesPage() {
                         <Link to={`/invoices/${item.id}${listContext ? `?${listContext}` : ''}`}>Zobrazit</Link>
                         <Link to={`/invoices/${item.id}/edit${listContext ? `?${listContext}` : ''}`}>Upravit</Link>
                         <Link to={`/invoices/${item.id}/copy${listContext ? `?${listContext}` : ''}`}>Kopie</Link>
+                        <button
+                          disabled={item.status === 'draft' || item.status === 'cancelled'}
+                          onClick={() => {
+                            void downloadInvoicePdf(item.id).catch((err: unknown) => {
+                              setError(err instanceof Error ? err.message : 'Export PDF selhal');
+                            });
+                          }}
+                          type="button"
+                          className="secondary"
+                        >
+                          PDF
+                        </button>
                         <button
                           disabled={item.status !== 'draft'}
                           onClick={() => {

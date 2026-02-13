@@ -43,6 +43,7 @@ model User {
   sessions            UserSession[]
   passwordResetTokens PasswordResetToken[]
   subject             Subject?
+  pdfExports          PdfExportMetadata[]
 }
 
 model UserSession {
@@ -117,11 +118,14 @@ model Invoice {
   totalWithoutVat     Decimal       @db.Decimal(15, 2)
   totalVat            Decimal       @db.Decimal(15, 2)
   totalWithVat        Decimal       @db.Decimal(15, 2)
+  pdfVersion          Int           @default(0)
+  pdfPayloadHash      String?
   paidAt              DateTime?
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
   subject             Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   items               InvoiceItem[]
+  pdfExports          PdfExportMetadata[]
 
   @@unique([subjectId, invoiceNumber])
   @@index([subjectId, issueDate(sort: Desc)])
@@ -155,4 +159,17 @@ model InvoiceNumberSequence {
   subject      Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
   @@unique([subjectId, periodYear])
+}
+
+model PdfExportMetadata {
+  id               String   @id @default(uuid())
+  invoiceId        String
+  exportedAt       DateTime @default(now())
+  exportedByUserId String
+  pdfVersion       Int
+  payloadHash      String
+  invoice          Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [exportedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId, exportedAt])
 }

@@ -114,6 +114,7 @@ export type InvoiceDetail = {
   totalWithoutVat: string;
   totalVat: string;
   totalWithVat: string;
+  pdfVersion: number;
   paidAt: string | null;
   items: InvoiceItem[];
 };

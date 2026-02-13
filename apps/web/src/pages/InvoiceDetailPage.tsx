@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { getInvoice, markInvoicePaid } from '../invoice-api';
+import { downloadInvoicePdf, getInvoice, markInvoicePaid } from '../invoice-api';
 import type { InvoiceDetail } from '../types';
 
 function formatDate(value: string): string {
@@ -109,6 +109,18 @@ export function InvoiceDetailPage() {
           <Link to={backHref}>Zpět na seznam</Link>
           <Link to={`/invoices/${invoice.id}/edit${listQuery ? `?${listQuery}` : ''}`}>Upravit</Link>
           <Link to={`/invoices/${invoice.id}/copy${listQuery ? `?${listQuery}` : ''}`}>Kopie</Link>
+          <button
+            type="button"
+            className="secondary"
+            disabled={invoice.status === 'draft' || invoice.status === 'cancelled'}
+            onClick={() => {
+              void downloadInvoicePdf(invoice.id).catch((err: unknown) => {
+                setError(err instanceof Error ? err.message : 'Export PDF selhal');
+              });
+            }}
+          >
+            PDF
+          </button>
           {(invoice.status === 'issued' || invoice.status === 'overdue') && (
             <button type="button" className="secondary" onClick={onMarkPaid}>
               Označit jako uhrazené
@@ -134,6 +146,9 @@ export function InvoiceDetailPage() {
           </p>
           <p>
             <strong>Uhrazena dne:</strong> {invoice.paidAt ? formatDate(invoice.paidAt) : '-'}
+          </p>
+          <p>
+            <strong>PDF verze:</strong> {invoice.pdfVersion}
           </p>
         </div>
 
