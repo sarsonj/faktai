@@ -533,8 +533,6 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
 
       {error && <p className="error">{error}</p>}
       {success && <p>{success}</p>}
-      {invoice && <p className="helper-text">Aktuální PDF verze: {invoice.pdfVersion}</p>}
-
       <section className="ui-section">
         <h2>Parametry dokladu</h2>
         <div className="form-grid invoice-form-grid">

@@ -348,9 +348,6 @@ export function InvoiceDetailPage() {
           <p>
             <strong>Uhrazena dne:</strong> {invoice.paidAt ? formatDate(invoice.paidAt) : '-'}
           </p>
-          <p>
-            <strong>PDF verze:</strong> {invoice.pdfVersion}
-          </p>
         </div>
       </section>
 
