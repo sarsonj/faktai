@@ -27,6 +27,9 @@ describe('AppController (e2e)', () => {
   it('/api/v1/health (GET)', () => {
     return request(app.getHttpServer())
       .get('/api/v1/health')
-      .expect(200);
+      .expect(200)
+      .expect((response) => {
+        expect(response.headers['x-request-id']).toBeDefined();
+      });
   });
 });

@@ -8,6 +8,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -40,6 +41,7 @@ export class AuthController {
   }
 
   @Post('register')
+  @Throttle({ auth: { limit: 6, ttl: 60_000 } })
   async register(
     @Body() dto: RegisterDto,
     @Req() request: Request,
@@ -57,6 +59,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
+  @Throttle({ auth: { limit: 8, ttl: 60_000 } })
   async login(
     @Body() dto: LoginDto,
     @Req() request: Request,
@@ -89,6 +92,7 @@ export class AuthController {
 
   @Post('forgot-password')
   @HttpCode(200)
+  @Throttle({ auth: { limit: 5, ttl: 60_000 } })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     await this.authService.forgotPassword(dto);
     return {
@@ -99,6 +103,7 @@ export class AuthController {
 
   @Post('reset-password')
   @HttpCode(200)
+  @Throttle({ auth: { limit: 5, ttl: 60_000 } })
   async resetPassword(@Body() dto: ResetPasswordDto) {
     await this.authService.resetPassword(dto);
     return { success: true };
