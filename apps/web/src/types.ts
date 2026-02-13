@@ -51,6 +51,14 @@ export type SubjectInput = {
 };
 
 export type InvoiceListStatus = 'draft' | 'issued' | 'paid' | 'cancelled' | 'overdue';
+export type PaymentMethod = 'bank_transfer';
+export type TaxClassification =
+  | 'domestic_standard'
+  | 'domestic_reverse_charge'
+  | 'eu_service'
+  | 'eu_goods'
+  | 'export_third_country'
+  | 'exempt_without_credit';
 
 export type InvoiceListItem = {
   id: string;
@@ -70,4 +78,68 @@ export type InvoiceListResponse = {
   total: number;
   page: number;
   pageSize: number;
+};
+
+export type InvoiceItem = {
+  id: string;
+  position: number;
+  description: string;
+  quantity: string;
+  unit: string;
+  unitPrice: string;
+  vatRate: number;
+  lineTotalWithoutVat: string;
+  lineVatAmount: string;
+  lineTotalWithVat: string;
+};
+
+export type InvoiceDetail = {
+  id: string;
+  invoiceNumber: string | null;
+  status: InvoiceListStatus;
+  variableSymbol: string;
+  issueDate: string;
+  taxableSupplyDate: string;
+  dueDate: string;
+  paymentMethod: PaymentMethod;
+  taxClassification: TaxClassification | null;
+  customerName: string;
+  customerIco: string | null;
+  customerDic: string | null;
+  customerStreet: string;
+  customerCity: string;
+  customerPostalCode: string;
+  customerCountryCode: string;
+  note: string | null;
+  totalWithoutVat: string;
+  totalVat: string;
+  totalWithVat: string;
+  paidAt: string | null;
+  items: InvoiceItem[];
+};
+
+export type InvoiceItemInput = {
+  description: string;
+  quantity: string;
+  unit: string;
+  unitPrice: string;
+  vatRate: number;
+};
+
+export type InvoiceUpsertInput = {
+  variableSymbol?: string;
+  issueDate?: string;
+  taxableSupplyDate?: string;
+  dueDate?: string;
+  paymentMethod?: PaymentMethod;
+  taxClassification?: TaxClassification;
+  customerName: string;
+  customerIco?: string;
+  customerDic?: string;
+  customerStreet: string;
+  customerCity: string;
+  customerPostalCode: string;
+  customerCountryCode: string;
+  note?: string;
+  items: InvoiceItemInput[];
 };

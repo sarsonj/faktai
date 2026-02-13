@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { listInvoices } from '../invoice-api';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { deleteInvoice, listInvoices } from '../invoice-api';
 import { useAuth } from '../auth/AuthContext';
 import type { InvoiceListItem, InvoiceListResponse } from '../types';
 
@@ -45,6 +45,7 @@ export function InvoicesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<InvoiceListResponse | null>(null);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   const status = (STATUS_OPTIONS.includes(searchParams.get('status') as UiStatus)
     ? searchParams.get('status')
@@ -74,7 +75,7 @@ export function InvoicesPage() {
     };
 
     void run();
-  }, [status, q, page, pageSize]);
+  }, [status, q, page, pageSize, refreshToken]);
 
   const totalPages = useMemo(() => {
     if (!data || data.total === 0) {
@@ -86,15 +87,31 @@ export function InvoicesPage() {
   const setQuery = (patch: Partial<{ status: UiStatus; q: string; page: number; pageSize: 10 | 20 | 50 }>) => {
     const next = new URLSearchParams(searchParams);
 
-    if (patch.status !== undefined) next.set('status', patch.status);
-    if (patch.q !== undefined) next.set('q', patch.q);
-    if (patch.page !== undefined) next.set('page', String(patch.page));
-    if (patch.pageSize !== undefined) next.set('pageSize', String(patch.pageSize));
+    if (patch.status !== undefined) {
+      next.set('status', patch.status);
+    }
+    if (patch.q !== undefined) {
+      next.set('q', patch.q);
+    }
+    if (patch.page !== undefined) {
+      next.set('page', String(patch.page));
+    }
+    if (patch.pageSize !== undefined) {
+      next.set('pageSize', String(patch.pageSize));
+    }
 
-    if (!next.get('q')) next.delete('q');
-    if (!next.get('status')) next.set('status', 'all');
-    if (!next.get('page')) next.set('page', '1');
-    if (!next.get('pageSize')) next.set('pageSize', '10');
+    if (!next.get('q')) {
+      next.delete('q');
+    }
+    if (!next.get('status')) {
+      next.set('status', 'all');
+    }
+    if (!next.get('page')) {
+      next.set('page', '1');
+    }
+    if (!next.get('pageSize')) {
+      next.set('pageSize', '10');
+    }
 
     setSearchParams(next);
   };
@@ -104,11 +121,39 @@ export function InvoicesPage() {
     navigate('/auth/login', { replace: true });
   };
 
+  const onDelete = async (invoiceId: string) => {
+    if (!window.confirm('Smazat fakturu? Tato akce je nevratná.')) {
+      return;
+    }
+
+    try {
+      await deleteInvoice(invoiceId);
+
+      if (data && data.items.length === 1 && page > 1) {
+        setQuery({ page: page - 1 });
+      } else {
+        setRefreshToken((current) => current + 1);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Smazání faktury selhalo');
+    }
+  };
+
+  const listContext = searchParams.toString();
+
   return (
     <main className="app-shell">
       <section className="card card-wide">
         <h1>Vydané faktury</h1>
         <p>Přihlášený uživatel: {me?.email}</p>
+
+        <div className="toolbar-row">
+          <Link to={`/invoices/new${listContext ? `?${listContext}` : ''}`}>Nová faktura</Link>
+          <Link to="/settings/subject">Nastavení subjektu</Link>
+          <button onClick={onLogout} type="button">
+            Odhlásit
+          </button>
+        </div>
 
         <div className="toolbar-row">
           {STATUS_OPTIONS.map((option) => (
@@ -118,7 +163,13 @@ export function InvoicesPage() {
               onClick={() => setQuery({ status: option, page: 1 })}
               type="button"
             >
-              {option === 'all' ? 'Všechny' : option === 'paid' ? 'Uhrazené' : option === 'unpaid' ? 'Neuhrazené' : 'Po splatnosti'}
+              {option === 'all'
+                ? 'Všechny'
+                : option === 'paid'
+                  ? 'Uhrazené'
+                  : option === 'unpaid'
+                    ? 'Neuhrazené'
+                    : 'Po splatnosti'}
             </button>
           ))}
         </div>
@@ -133,25 +184,22 @@ export function InvoicesPage() {
           <select
             aria-label="Počet položek"
             value={String(pageSize)}
-            onChange={(event) =>
-              setQuery({ pageSize: Number(event.target.value) as 10 | 20 | 50, page: 1 })
-            }
+            onChange={(event) => setQuery({ pageSize: Number(event.target.value) as 10 | 20 | 50, page: 1 })}
           >
             <option value="10">10</option>
             <option value="20">20</option>
             <option value="50">50</option>
           </select>
-          <Link to="/settings/subject">Nastavení subjektu</Link>
-          <button onClick={onLogout} type="button">
-            Odhlásit
-          </button>
         </div>
 
         {loading && <p>Načítám faktury...</p>}
         {error && <p className="error">{error}</p>}
 
         {!loading && !error && data && data.items.length === 0 && (
-          <p>Pro zadaný filtr nebyly nalezeny výsledky.</p>
+          <div>
+            <p>Pro zadaný filtr nebyly nalezeny výsledky.</p>
+            <Link to={`/invoices/new${listContext ? `?${listContext}` : ''}`}>Vystavit první fakturu</Link>
+          </div>
         )}
 
         {!loading && !error && data && data.items.length > 0 && (
@@ -168,6 +216,7 @@ export function InvoicesPage() {
                   <th>Cena bez DPH</th>
                   <th>Cena s DPH</th>
                   <th>Uhrazena dne</th>
+                  <th>Akce</th>
                 </tr>
               </thead>
               <tbody>
@@ -182,6 +231,23 @@ export function InvoicesPage() {
                     <td>{formatMoney(item.totalWithoutVat)}</td>
                     <td>{formatMoney(item.totalWithVat)}</td>
                     <td>{item.paidAt ? formatDate(item.paidAt) : '-'}</td>
+                    <td>
+                      <div className="table-actions">
+                        <Link to={`/invoices/${item.id}${listContext ? `?${listContext}` : ''}`}>Zobrazit</Link>
+                        <Link to={`/invoices/${item.id}/edit${listContext ? `?${listContext}` : ''}`}>Upravit</Link>
+                        <Link to={`/invoices/${item.id}/copy${listContext ? `?${listContext}` : ''}`}>Kopie</Link>
+                        <button
+                          disabled={item.status !== 'draft'}
+                          onClick={() => {
+                            void onDelete(item.id);
+                          }}
+                          type="button"
+                          className="danger"
+                        >
+                          Smazat
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -191,11 +257,7 @@ export function InvoicesPage() {
               <span>
                 Strana {data.page} z {totalPages} (celkem {data.total} položek)
               </span>
-              <button
-                disabled={data.page <= 1}
-                onClick={() => setQuery({ page: data.page - 1 })}
-                type="button"
-              >
+              <button disabled={data.page <= 1} onClick={() => setQuery({ page: data.page - 1 })} type="button">
                 Předchozí
               </button>
               <button

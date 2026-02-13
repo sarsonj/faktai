@@ -3,6 +3,9 @@ import { useAuth } from './auth/AuthContext';
 import { AuthLayout } from './components/AuthLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { InvoiceCopyPage } from './pages/InvoiceCopyPage';
+import { InvoiceDetailPage } from './pages/InvoiceDetailPage';
+import { InvoiceEditorPage } from './pages/InvoiceEditorPage';
 import { InvoicesPage } from './pages/InvoicesPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -52,6 +55,38 @@ function App() {
         element={
           <ProtectedRoute>
             <InvoicesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/invoices/new"
+        element={
+          <ProtectedRoute>
+            <InvoiceEditorPage mode="create" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/invoices/:invoiceId"
+        element={
+          <ProtectedRoute>
+            <InvoiceDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/invoices/:invoiceId/edit"
+        element={
+          <ProtectedRoute>
+            <InvoiceEditorPage mode="edit" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/invoices/:invoiceId/copy"
+        element={
+          <ProtectedRoute>
+            <InvoiceCopyPage />
           </ProtectedRoute>
         }
       />

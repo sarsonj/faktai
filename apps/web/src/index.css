@@ -59,6 +59,14 @@ select {
   font-size: 14px;
 }
 
+textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  width: 100%;
+}
+
 button {
   border: none;
   border-radius: 8px;
@@ -129,4 +137,60 @@ hr {
   border-bottom: 1px solid #e5e7eb;
   text-align: left;
   padding: 8px 6px;
+}
+
+.invoice-form-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-bottom: 16px;
+}
+
+.invoice-items-list {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.invoice-item-row {
+  display: grid;
+  grid-template-columns: 2.5fr 1fr 1fr 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.totals-box {
+  margin: 16px 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f1f5f9;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.table-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.danger {
+  background: #b91c1c;
+}
+
+.secondary {
+  background: #334155;
+}
+
+.wrap {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 980px) {
+  .invoice-item-row {
+    grid-template-columns: 1fr 1fr;
+  }
 }

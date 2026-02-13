@@ -23,6 +23,15 @@ enum PaymentMethod {
   bank_transfer
 }
 
+enum TaxClassification {
+  domestic_standard
+  domestic_reverse_charge
+  eu_service
+  eu_goods
+  export_third_country
+  exempt_without_credit
+}
+
 model User {
   id                  String               @id @default(uuid())
   email               String               @unique
@@ -82,6 +91,7 @@ model Subject {
   updatedAt                  DateTime                  @updatedAt
   user                       User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   invoices                   Invoice[]
+  numberSequences            InvoiceNumberSequence[]
 }
 
 model Invoice {
@@ -94,6 +104,7 @@ model Invoice {
   taxableSupplyDate   DateTime
   dueDate             DateTime
   paymentMethod       PaymentMethod @default(bank_transfer)
+  taxClassification   TaxClassification?
   customerName        String
   customerIco         String?
   customerDic         String?
@@ -116,6 +127,7 @@ model Invoice {
   @@index([subjectId, issueDate(sort: Desc)])
   @@index([subjectId, dueDate])
   @@index([subjectId, status])
+  @@index([subjectId, taxableSupplyDate])
 }
 
 model InvoiceItem {
@@ -133,4 +145,14 @@ model InvoiceItem {
   invoice             Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId, position])
+}
+
+model InvoiceNumberSequence {
+  id           String   @id @default(uuid())
+  subjectId    String
+  periodYear   Int
+  currentValue Int      @default(0)
+  subject      Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([subjectId, periodYear])
 }
