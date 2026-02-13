@@ -1,7 +1,7 @@
-# Funkční specifikace projektu SoloFaktura AI
+# Funkční specifikace projektu FakturAI
 
 ## 0. Stav dokumentu
-- Verze: `1.7`
+- Verze: `1.8`
 - Datum: `2026-02-13`
 - Stav: `Rozpracováno`
 - Aktuálně zpracovaný rozsah: `Scope 1-7`

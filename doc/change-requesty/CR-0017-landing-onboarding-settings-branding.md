@@ -43,7 +43,7 @@ Po stabilizaci klíčových toků je potřeba zlepšit vstupní dojem z produktu
 2. Onboarding subjektu je 3-krokový průvodce se samostatnými kroky a lokální validací.
 3. V onboardingu je dostupné načtení firmy z ARES a načtení adresy z veřejné databáze.
 4. `Nastavení subjektu` neobsahuje bloky `Načíst firmu z ARES` a `Načíst adresu`.
-5. Branding aplikace je sjednocen na nový název `SoloFaktura AI`.
+5. Branding aplikace je sjednocen na nový název `FakturAI`.
 6. Frontend build projde bez chyby.
 
 ## 5. Implementace a ověření

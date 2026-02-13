@@ -1,4 +1,4 @@
-# Implementační backlog projektu TappyFaktur
+# Implementační backlog projektu FakturAI
 
 ## 0. Stav dokumentu
 - Verze: `0.1`

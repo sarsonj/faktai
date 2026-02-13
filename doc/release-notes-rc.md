@@ -1,4 +1,4 @@
-# TappyFaktur Release Candidate 0.1.0-rc1
+# FakturAI Release Candidate 0.1.0-rc1
 
 Datum: 2026-02-13
 

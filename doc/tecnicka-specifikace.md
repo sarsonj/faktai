@@ -1,10 +1,10 @@
-# Technická specifikace projektu SoloFaktura AI
+# Technická specifikace projektu FakturAI
 
 ## 0. Stav dokumentu
-- Verze: `1.0`
+- Verze: `1.1`
 - Datum: `2026-02-13`
 - Stav: `Rozpracováno`
-- Vazba na funkční specifikaci: `doc/funkcni-specifikace.md` (verze `1.7`)
+- Vazba na funkční specifikaci: `doc/funkcni-specifikace.md` (verze `1.8`)
 
 ## 1. Technologický stack
 
