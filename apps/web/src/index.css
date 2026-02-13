@@ -1371,6 +1371,21 @@ button:disabled {
   text-align: right;
 }
 
+.invoice-address {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+  color: #223f59;
+  font-style: normal;
+  line-height: 1.35;
+}
+
+.invoice-address-name {
+  margin-bottom: 2px;
+  color: #162f47;
+  font-size: 1.02rem;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));

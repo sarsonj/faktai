@@ -373,11 +373,12 @@ export function InvoiceDetailPage() {
 
       <section className="ui-section">
         <h2>Odběratel</h2>
-        <p>{invoice.customerName}</p>
-        <p>{invoice.customerStreet}</p>
-        <p>
-          {invoice.customerPostalCode} {invoice.customerCity}, {invoice.customerCountryCode}
-        </p>
+        <address className="invoice-address">
+          <strong className="invoice-address-name">{invoice.customerName}</strong>
+          <span>{invoice.customerStreet}</span>
+          <span>{invoice.customerPostalCode} {invoice.customerCity}</span>
+          <span>{invoice.customerCountryCode}</span>
+        </address>
       </section>
 
       <section className="ui-section">
