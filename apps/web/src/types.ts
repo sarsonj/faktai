@@ -99,6 +99,8 @@ export type InvoiceListResponse = {
   total: number;
   page: number;
   pageSize: number;
+  year: number;
+  availableYears: number[];
 };
 
 export type InvoiceItem = {

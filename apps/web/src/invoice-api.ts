@@ -6,6 +6,7 @@ export type ListInvoicesQuery = {
   q: string;
   page: number;
   pageSize: 10 | 20 | 50;
+  year: number;
 };
 
 export async function listInvoices(query: ListInvoicesQuery): Promise<InvoiceListResponse> {
@@ -14,6 +15,7 @@ export async function listInvoices(query: ListInvoicesQuery): Promise<InvoiceLis
     q: query.q,
     page: String(query.page),
     pageSize: String(query.pageSize),
+    year: String(query.year),
   });
 
   return apiRequest<InvoiceListResponse>(`/invoices?${search.toString()}`);

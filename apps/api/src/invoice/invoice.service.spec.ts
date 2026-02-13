@@ -9,6 +9,7 @@ describe('InvoiceService', () => {
       count: jest.fn(),
       findMany: jest.fn(),
     },
+    $queryRaw: jest.fn(),
     $transaction: jest.fn(async (ops: Promise<unknown>[]) => Promise.all(ops)),
   } as any;
 
@@ -20,6 +21,7 @@ describe('InvoiceService', () => {
 
   it('returns empty list when user has no subject', async () => {
     prisma.subject.findUnique.mockResolvedValue(null);
+    prisma.$queryRaw.mockResolvedValue([]);
 
     const result = await service.listInvoices('user-1', {
       status: 'all',
@@ -29,10 +31,12 @@ describe('InvoiceService', () => {
 
     expect(result.total).toBe(0);
     expect(result.items).toEqual([]);
+    expect(result.availableYears).toEqual([]);
   });
 
   it('maps issued invoice older than today as overdue', async () => {
     prisma.subject.findUnique.mockResolvedValue({ id: 'subject-1' });
+    prisma.$queryRaw.mockResolvedValue([{ year: 2026 }, { year: 2025 }]);
     prisma.invoice.count.mockResolvedValue(1);
     prisma.invoice.findMany.mockResolvedValue([
       {
@@ -56,5 +60,31 @@ describe('InvoiceService', () => {
     });
 
     expect(result.items[0].status).toBe('overdue');
+    expect(result.availableYears).toEqual([2026, 2025]);
+  });
+
+  it('filters list by selected year', async () => {
+    prisma.subject.findUnique.mockResolvedValue({ id: 'subject-1' });
+    prisma.$queryRaw.mockResolvedValue([{ year: 2026 }, { year: 2025 }]);
+    prisma.invoice.count.mockResolvedValue(0);
+    prisma.invoice.findMany.mockResolvedValue([]);
+
+    await service.listInvoices('user-1', {
+      status: 'all',
+      page: 1,
+      pageSize: 10,
+      year: 2025,
+    });
+
+    expect(prisma.invoice.count).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          issueDate: expect.objectContaining({
+            gte: new Date(Date.UTC(2025, 0, 1)),
+            lt: new Date(Date.UTC(2026, 0, 1)),
+          }),
+        }),
+      }),
+    );
   });
 });

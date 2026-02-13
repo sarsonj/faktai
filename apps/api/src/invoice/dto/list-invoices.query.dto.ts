@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class ListInvoicesQueryDto {
   @IsOptional()
@@ -25,4 +25,11 @@ export class ListInvoicesQueryDto {
     message: 'Počet položek na stránce musí být 10, 20 nebo 50.',
   })
   pageSize?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  @IsInt({ message: 'Rok musí být celé číslo.' })
+  @Min(2000, { message: 'Rok musí být alespoň 2000.' })
+  @Max(2100, { message: 'Rok musí být nejvýše 2100.' })
+  year?: number;
 }

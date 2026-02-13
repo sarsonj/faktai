@@ -1212,6 +1212,8 @@ export class InvoiceService {
     const pageSize = query.pageSize ?? 10;
     const status = query.status ?? 'all';
     const q = query.q?.trim();
+    const currentYear = this.startOfToday().getUTCFullYear();
+    const year = query.year ?? currentYear;
 
     const subject = await this.prisma.subject.findUnique({ where: { userId } });
     if (!subject) {
@@ -1220,13 +1222,21 @@ export class InvoiceService {
         total: 0,
         page,
         pageSize,
+        year,
+        availableYears: [] as number[],
       };
     }
 
     const today = this.startOfToday();
+    const yearStart = new Date(Date.UTC(year, 0, 1));
+    const yearEnd = new Date(Date.UTC(year + 1, 0, 1));
 
     const where: Prisma.InvoiceWhereInput = {
       subjectId: subject.id,
+      issueDate: {
+        gte: yearStart,
+        lt: yearEnd,
+      },
     };
 
     if (status === 'paid') {
@@ -1246,6 +1256,16 @@ export class InvoiceService {
       ];
     }
 
+    const availableYearsRaw = await this.prisma.$queryRaw<Array<{ year: number }>>`
+      SELECT DISTINCT EXTRACT(YEAR FROM "issueDate")::int AS year
+      FROM "Invoice"
+      WHERE "subjectId" = ${subject.id}
+      ORDER BY year DESC
+    `;
+    const availableYears = availableYearsRaw
+      .map((row) => Number(row.year))
+      .filter((candidate) => Number.isInteger(candidate));
+
     const [total, rows] = await this.prisma.$transaction([
       this.prisma.invoice.count({ where }),
       this.prisma.invoice.findMany({
@@ -1261,6 +1281,8 @@ export class InvoiceService {
       total,
       page,
       pageSize,
+      year,
+      availableYears,
     };
   }
 

@@ -101,6 +101,7 @@ function DeleteIcon() {
 
 export function InvoicesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const currentYear = new Date().getFullYear();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -113,6 +114,11 @@ export function InvoicesPage() {
   const q = '';
   const page = Number(searchParams.get('page') ?? '1') || 1;
   const pageSize = (Number(searchParams.get('pageSize') ?? '10') || 10) as 10 | 20 | 50;
+  const selectedYearRaw = Number(searchParams.get('year') ?? String(currentYear));
+  const year =
+    Number.isInteger(selectedYearRaw) && selectedYearRaw >= 2000 && selectedYearRaw <= 2100
+      ? selectedYearRaw
+      : currentYear;
 
   useEffect(() => {
     const run = async () => {
@@ -125,6 +131,7 @@ export function InvoicesPage() {
           q,
           page,
           pageSize,
+          year,
         });
         setData(payload);
       } catch (err) {
@@ -135,7 +142,7 @@ export function InvoicesPage() {
     };
 
     void run();
-  }, [status, page, pageSize, refreshToken]);
+  }, [status, page, pageSize, refreshToken, year]);
 
   const totalPages = useMemo(() => {
     if (!data || data.total === 0) {
@@ -160,7 +167,14 @@ export function InvoicesPage() {
     return counts;
   }, [data]);
 
-  const setQuery = (patch: Partial<{ status: UiStatus; page: number; pageSize: 10 | 20 | 50 }>) => {
+  const yearOptions = useMemo(() => {
+    const merged = new Set<number>([year, ...(data?.availableYears ?? [])]);
+    return Array.from(merged).sort((a, b) => b - a);
+  }, [data?.availableYears, year]);
+
+  const setQuery = (
+    patch: Partial<{ status: UiStatus; page: number; pageSize: 10 | 20 | 50; year: number }>,
+  ) => {
     const next = new URLSearchParams(searchParams);
 
     if (patch.status !== undefined) {
@@ -172,6 +186,9 @@ export function InvoicesPage() {
     if (patch.pageSize !== undefined) {
       next.set('pageSize', String(patch.pageSize));
     }
+    if (patch.year !== undefined) {
+      next.set('year', String(patch.year));
+    }
 
     next.delete('q');
     if (!next.get('status')) {
@@ -182,6 +199,9 @@ export function InvoicesPage() {
     }
     if (!next.get('pageSize')) {
       next.set('pageSize', '10');
+    }
+    if (!next.get('year')) {
+      next.set('year', String(currentYear));
     }
 
     setSearchParams(next);
@@ -241,6 +261,20 @@ export function InvoicesPage() {
                 ))}
               </select>
             </label>
+            <label className="filter-inline">
+              Rok
+              <select
+                aria-label="Rok faktur"
+                value={String(year)}
+                onChange={(event) => setQuery({ year: Number(event.target.value), page: 1 })}
+              >
+                {yearOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         </div>
 
@@ -266,43 +300,56 @@ export function InvoicesPage() {
         {!loading && !error && data && data.items.length > 0 && (
           <>
             <div className="data-table-wrap">
-              <table className="invoice-table">
+              <table className="invoice-table invoice-list-table">
                 <thead>
                   <tr>
-                    <th>Číslo dokladu</th>
-                    <th>Stav</th>
-                    <th>Popis</th>
-                    <th>Odběratel</th>
-                    <th>Vystaveno</th>
-                    <th>Splatnost</th>
-                    <th>Cena bez DPH</th>
-                    <th>Cena s DPH</th>
-                    <th>Uhrazena dne</th>
-                    <th>Akce</th>
+                    <th className="col-doc">Doklad</th>
+                    <th className="col-customer">Odběratel a popis</th>
+                    <th className="col-dates">Termíny</th>
+                    <th className="col-amounts">Částky</th>
+                    <th className="col-status">Stav</th>
+                    <th className="col-actions">Akce</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.items.map((item) => (
                     <tr key={item.id}>
-                      <td>
+                      <td className="cell-doc">
                         <Link
                           className="invoice-number-link"
                           to={`/invoices/${item.id}${listContext ? `?${listContext}` : ''}`}
                         >
                           {item.invoiceNumber ?? 'Koncept'}
                         </Link>
+                        <div className="invoice-cell-secondary">
+                          {item.issueDate.slice(0, 4)}
+                        </div>
                       </td>
-                      <td>
-                        <span className={statusClassName(item.status)}>{statusLabel(item.status)}</span>
+                      <td className="cell-customer">
+                        <div className="invoice-cell-primary" title={item.customerName}>
+                          {item.customerName}
+                        </div>
+                        <div className="invoice-cell-secondary" title={item.description || '-'}>
+                          {item.description || '-'}
+                        </div>
                       </td>
-                      <td>{item.description || '-'}</td>
-                      <td>{item.customerName}</td>
-                      <td>{formatDate(item.issueDate)}</td>
-                      <td>{formatDate(item.dueDate)}</td>
-                      <td>{formatMoney(item.totalWithoutVat)}</td>
-                      <td>{formatMoney(item.totalWithVat)}</td>
-                      <td>{item.paidAt ? formatDate(item.paidAt) : '-'}</td>
-                      <td>
+                      <td className="cell-dates">
+                        <div className="invoice-cell-primary">Vystaveno: {formatDate(item.issueDate)}</div>
+                        <div className="invoice-cell-secondary">Splatnost: {formatDate(item.dueDate)}</div>
+                      </td>
+                      <td className="cell-amounts">
+                        <div className="invoice-cell-primary invoice-amount-main">{formatMoney(item.totalWithVat)}</div>
+                        <div className="invoice-cell-secondary invoice-amount-sub">Bez DPH: {formatMoney(item.totalWithoutVat)}</div>
+                      </td>
+                      <td className="cell-status">
+                        <div className="invoice-cell-primary">
+                          <span className={statusClassName(item.status)}>{statusLabel(item.status)}</span>
+                        </div>
+                        <div className="invoice-cell-secondary">
+                          Uhrazeno: {item.paidAt ? formatDate(item.paidAt) : '-'}
+                        </div>
+                      </td>
+                      <td className="cell-actions">
                         <div className="table-actions">
                           <Link
                             className="icon-link"

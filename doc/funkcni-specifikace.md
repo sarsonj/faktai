@@ -166,6 +166,7 @@ Poskytnout přehledný seznam vydaných faktur s rychlým vyhledáním, filtrov�
 - Tabulkový seznam vydaných faktur.
 - Stránkování seznamu.
 - Rychlé stavové filtry (`Všechny`, `Uhrazené`, `Neuhrazené`, `Po splatnosti`).
+- Filtr `Rok` (dropdown) s výchozím výběrem na aktuální rok.
 - Detail řádku s hlavními metadaty faktury.
 - Řádkové akce: `Upravit`, `Kopie`, `PDF`, `Smazat` (ikonové ovladače).
 - Trvalé zobrazení počtu položek a celkového počtu výsledků.
@@ -182,6 +183,7 @@ Poskytnout přehledný seznam vydaných faktur s rychlým vyhledáním, filtrov�
 2. Systém zobrazí výchozí pohled `Všechny` se stránkou `1`.
 3. Uživatel může:
    - filtrovat podle stavu,
+   - filtrovat podle roku,
    - přejít na další stránku,
    - spustit akci nad konkrétní fakturou.
 4. Akce `Nová faktura` přesměruje na editor faktury (Scope 3).
@@ -193,25 +195,23 @@ Poskytnout přehledný seznam vydaných faktur s rychlým vyhledáním, filtrov�
 - Nadpis obrazovky: `Vydané faktury`.
 - Primární CTA: `Nová faktura`.
 - Blok rychlého filtru stavu (dropdown): `Všechny`, `Uhrazené`, `Neuhrazené`, `Po splatnosti`.
+- Blok filtru `Rok` (dropdown): pouze roky, pro které existují doklady.
 - Rychlý statusový souhrn (pilulky): `Celkem`, `Koncepty`, `Neuhrazené`, `Po splatnosti`, `Uhrazené`.
 - Tabulka výsledků.
 - Patička tabulky: `počet výsledků`, `stránkování`, `počet položek na stránku`.
 
 #### 2.4.2 Sloupce tabulky
-1. `Číslo dokladu`
-2. `Stav`
-3. `Popis`
-4. `Odběratel`
-5. `Vystaveno`
-6. `Splatnost`
-7. `Cena bez DPH`
-8. `Cena s DPH`
-9. `Uhrazena dne`
-10. `Akce`
+1. `Doklad`
+2. `Odběratel a popis`
+3. `Termíny`
+4. `Částky`
+5. `Stav`
+6. `Akce`
 
 Poznámky:
 - `Číslo dokladu` je klikací odkaz na detail faktury.
-- `Cena bez DPH` a `Cena s DPH` jsou formátovány v měně CZK (`1 234,56 Kč`).
+- Každý řádek používá 2řádkový layout (hlavní informace + doplňková informace) pro lepší čitelnost bez horizontálního scrollu.
+- `Částky` jsou formátovány v měně CZK (`1 234,56 Kč`) a zarovnány doprava.
 - Datum je ve formátu `DD.MM.YYYY`.
 - `Stav` je zobrazen textově + barevným indikátorem.
 
@@ -254,14 +254,19 @@ Pravidla:
 - `Neuhrazené`: `status in (issued, overdue)`.
 - `Po splatnosti`: `status=overdue`.
 
-#### 2.6.3 Řazení
+#### 2.6.3 Filtr roku
+- Výchozí hodnota: aktuální rok.
+- Dropdown nabízí pouze roky, pro které existují doklady uživatele.
+- Při změně roku se stránka resetuje na `1`.
+
+#### 2.6.4 Řazení
 - Výchozí řazení: `issueDate desc`, sekundárně `invoiceNumber desc`.
 - V první verzi bez interaktivního přepínání řazení v hlavičce sloupců.
 
 ### 2.7 Stránkování
 - Výchozí velikost stránky: `10`.
 - Volby velikosti stránky: `10`, `20`, `50`.
-- Při změně filtru nebo hledání se stránka resetuje na `1`.
+- Při změně filtru (`stav`, `rok`) nebo hledání se stránka resetuje na `1`.
 - Pokud po smazání položky aktuální stránka zanikne, systém přejde na nejbližší předchozí existující stránku.
 
 ### 2.8 Funkční pravidla
@@ -281,21 +286,20 @@ Pravidla:
 ### 2.10 Akceptační kritéria (Scope 2)
 1. Uživatel vidí stránkovatelný seznam vydaných faktur.
 2. Filtr `Uhrazené`, `Neuhrazené`, `Po splatnosti` vrací správné záznamy.
-3. Vyhledávání vrací odpovídající faktury podle čísla, popisu a odběratele.
-4. Řádkové akce fungují pro každou fakturu dle oprávnění/stavu.
-5. Při návratu z detailu/editace je zachován kontext seznamu.
+3. Filtr `Rok` defaultně zobrazuje aktuální rok a nabízí pouze roky existujících dokladů.
+4. Vyhledávání vrací odpovídající faktury podle čísla, popisu a odběratele.
+5. Řádkové akce fungují pro každou fakturu dle oprávnění/stavu.
+6. Při návratu z detailu/editace je zachován kontext seznamu.
 
 ### 2.11 Potvrzená rozhodnutí
 1. Stav `draft` nemá vlastní samostatný filtr v horní liště.
 2. `Smazat` je fyzické smazání (hard delete).
-3. Sloupec `Uhrazena dne` se v první verzi zobrazuje.
+3. Výchozí filtr seznamu je aktuální rok.
 
-### 2.12 Rozšíření sloupců tabulky
-10. `Uhrazena dne`
-
-Pravidla:
-- Sloupec je vyplněn pouze pokud `status=paid`.
-- U neuhrazených faktur se zobrazuje `-`.
+### 2.12 Dvouřádkový layout řádku
+1. Každý sloupec může obsahovat primární a sekundární řádek informace.
+2. Dlouhé texty (`odběratel`, `popis`) jsou zkráceny s elipsou.
+3. Akce jsou ikonové a drží se na jednom řádku bez zalamování.
 
 ## 3. Scope 3 - Fakturační editor (nová, kopie, editace, smazání)
 

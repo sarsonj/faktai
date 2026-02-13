@@ -322,9 +322,15 @@ Backend validace:
 - `q=string`
 - `page=int`
 - `pageSize=10|20|50`
+- `year=int`
+
+`GET /invoices` response (rozšíření):
+- `year` (aktuálně aplikovaný rok filtru)
+- `availableYears[]` (roky, pro které má subjekt alespoň jeden doklad)
 
 Pravidla:
 - `DELETE` je povoleno pro všechny stavy faktury.
+- Výchozí `year` je aktuální rok (pokud není explicitně zadán).
 - `reserve-number` atomicky přidělí další číslo v roční řadě podle `issueDate`.
 - `issue` běží transakčně; číslo faktury doplní jen pokud historický draft číslo nemá.
 - `mark-paid` nastaví `status=paid` + `paid_at`.

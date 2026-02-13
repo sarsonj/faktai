@@ -1043,6 +1043,82 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
+.invoice-list-table {
+  table-layout: fixed;
+}
+
+.invoice-list-table th,
+.invoice-list-table td {
+  white-space: nowrap;
+}
+
+.invoice-list-table .col-doc {
+  width: 96px;
+}
+
+.invoice-list-table .col-customer {
+  width: 190px;
+}
+
+.invoice-list-table .col-dates {
+  width: 160px;
+}
+
+.invoice-list-table .col-amounts {
+  width: 140px;
+}
+
+.invoice-list-table .col-status {
+  width: 110px;
+}
+
+.invoice-list-table .col-actions {
+  width: 154px;
+}
+
+.invoice-list-table .invoice-number-link,
+.invoice-list-table .invoice-cell-primary,
+.invoice-list-table .invoice-cell-secondary {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.invoice-list-table .invoice-cell-primary {
+  color: #1f3e59;
+  font-size: 0.87rem;
+  font-weight: 700;
+}
+
+.invoice-list-table .invoice-cell-secondary {
+  margin-top: 4px;
+  color: #5d738a;
+  font-size: 0.77rem;
+  font-weight: 700;
+}
+
+.invoice-list-table .cell-amounts {
+  text-align: right;
+}
+
+.invoice-list-table .invoice-amount-main {
+  font-variant-numeric: tabular-nums;
+  color: #163a57;
+}
+
+.invoice-list-table .invoice-amount-sub {
+  font-variant-numeric: tabular-nums;
+}
+
+.invoice-list-table .cell-status .status-badge {
+  max-width: 100%;
+}
+
+.invoice-list-table .table-actions {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
+
 .invoice-form-grid {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
@@ -1670,6 +1746,11 @@ button:disabled {
     display: block;
     overflow-x: auto;
     white-space: nowrap;
+  }
+
+  .invoice-list-table {
+    display: table;
+    white-space: normal;
   }
 
   .app-topbar {

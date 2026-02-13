@@ -44,3 +44,4 @@
 | `CR-0025` | Refaktor vzhledu detailu faktury | `Implementováno` | `Should` |
 | `CR-0026` | Detail faktury: akce, pokročilé volby a konzistence layoutu | `Implementováno` | `Must` |
 | `CR-0027` | Zjednodušení akcí editoru faktury | `Implementováno` | `Must` |
+| `CR-0028` | Seznam faktur: dvouřádkový layout a filtr roku | `Implementováno` | `Must` |
