@@ -39,3 +39,4 @@
 | `CR-0020` | Globální hlavička a vyladění onboardingu | `Implementováno` | `Should` |
 | `CR-0021` | Stabilizace layoutu hlavičky a onboardingu | `Implementováno` | `Must` |
 | `CR-0022` | Číslování dokladů a zjednodušení VS | `Implementováno` | `Must` |
+| `CR-0023` | Fix regrese čísla faktury a UX nové faktury | `Implementováno` | `Must` |

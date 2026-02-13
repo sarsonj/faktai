@@ -30,6 +30,13 @@ export async function createInvoice(payload: InvoiceUpsertInput): Promise<Invoic
   });
 }
 
+export async function reserveInvoiceNumber(issueDate?: string): Promise<{ invoiceNumber: string }> {
+  return apiRequest<{ invoiceNumber: string }>('/invoices/reserve-number', {
+    method: 'POST',
+    body: issueDate ? { issueDate } : {},
+  });
+}
+
 export async function updateInvoice(invoiceId: string, payload: InvoiceUpsertInput): Promise<InvoiceDetail> {
   return apiRequest<InvoiceDetail>(`/invoices/${invoiceId}`, {
     method: 'PATCH',

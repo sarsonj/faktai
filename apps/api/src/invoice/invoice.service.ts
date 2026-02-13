@@ -217,11 +217,17 @@ export class InvoiceService {
     return parsed;
   }
 
-  private async getNextInvoiceNumber(
+  private async reserveNextInvoiceNumber(
     db: DbClient,
     subjectId: string,
     year: number,
   ): Promise<string> {
+    const sequenceWhere = {
+      subjectId_periodYear: {
+        subjectId,
+        periodYear: year,
+      },
+    };
     const yearPrefix = String(year);
     const numbers = await db.invoice.findMany({
       where: {
@@ -243,7 +249,42 @@ export class InvoiceService {
       }
     }
 
-    return this.formatInvoiceNumber(year, maxSequence + 1);
+    await db.invoiceNumberSequence.upsert({
+      where: sequenceWhere,
+      create: {
+        subjectId,
+        periodYear: year,
+        currentValue: maxSequence,
+      },
+      update: {},
+    });
+
+    await db.invoiceNumberSequence.updateMany({
+      where: {
+        subjectId,
+        periodYear: year,
+        currentValue: {
+          lt: maxSequence,
+        },
+      },
+      data: {
+        currentValue: maxSequence,
+      },
+    });
+
+    const next = await db.invoiceNumberSequence.update({
+      where: sequenceWhere,
+      data: {
+        currentValue: {
+          increment: 1,
+        },
+      },
+      select: {
+        currentValue: true,
+      },
+    });
+
+    return this.formatInvoiceNumber(year, next.currentValue);
   }
 
   private resolveVariableSymbol(dto: UpsertInvoiceDto, invoiceNumber: string): string {
@@ -267,6 +308,17 @@ export class InvoiceService {
 
     const target = JSON.stringify(error.meta?.target ?? '');
     return target.includes('subjectId') && target.includes('invoiceNumber');
+  }
+
+  async reserveInvoiceNumber(userId: string, issueDate?: string) {
+    const subject = await this.getSubjectByUserOrThrow(userId);
+    const targetDate = this.parseDateOnly(issueDate) ?? this.startOfToday();
+    const year = targetDate.getUTCFullYear();
+    const invoiceNumber = await this.prisma.$transaction((tx) =>
+      this.reserveNextInvoiceNumber(tx, subject.id, year),
+    );
+
+    return { invoiceNumber };
   }
 
   private computeInvoiceTotals(inputItems: InvoiceItemDto[]): ComputedItems {
@@ -1243,7 +1295,9 @@ export class InvoiceService {
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const invoiceNumber =
         explicitInvoiceNumber ??
-        (await this.getNextInvoiceNumber(this.prisma, subject.id, issueYear));
+        (await this.prisma.$transaction((tx) =>
+          this.reserveNextInvoiceNumber(tx, subject.id, issueYear),
+        ));
       const variableSymbol = this.resolveVariableSymbol(dto, invoiceNumber);
 
       try {
@@ -1310,20 +1364,14 @@ export class InvoiceService {
       subject,
       dto,
     );
-    const explicitInvoiceNumber = this.normalizeInvoiceNumber(dto.invoiceNumber);
     const issueYear = issueDate.getUTCFullYear();
-
-    if (explicitInvoiceNumber) {
-      this.validateInvoiceNumber(explicitInvoiceNumber, issueDate);
-    }
-
-    const needsAutoInvoiceNumber = !explicitInvoiceNumber && !current.invoiceNumber;
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const invoiceNumber =
-        explicitInvoiceNumber ??
         current.invoiceNumber ??
-        (await this.getNextInvoiceNumber(this.prisma, subject.id, issueYear));
+        (await this.prisma.$transaction((tx) =>
+          this.reserveNextInvoiceNumber(tx, subject.id, issueYear),
+        ));
       this.validateInvoiceNumber(invoiceNumber, issueDate);
 
       const variableSymbol = this.resolveVariableSymbol(dto, invoiceNumber);
@@ -1362,9 +1410,6 @@ export class InvoiceService {
         if (!this.isInvoiceNumberUniqueViolation(error)) {
           throw error;
         }
-        if (!needsAutoInvoiceNumber) {
-          throw new ConflictException('Invoice number already exists.');
-        }
       }
     }
 
@@ -1398,10 +1443,8 @@ export class InvoiceService {
     const issueYear = issueDate.getUTCFullYear();
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
-      const invoiceNumber = await this.getNextInvoiceNumber(
-        this.prisma,
-        subject.id,
-        issueYear,
+      const invoiceNumber = await this.prisma.$transaction((tx) =>
+        this.reserveNextInvoiceNumber(tx, subject.id, issueYear),
       );
 
       try {
@@ -1497,7 +1540,7 @@ export class InvoiceService {
           const issueYear = current.issueDate.getUTCFullYear();
           const invoiceNumber =
             current.invoiceNumber ??
-            (await this.getNextInvoiceNumber(tx, subject.id, issueYear));
+            (await this.reserveNextInvoiceNumber(tx, subject.id, issueYear));
           const variableSymbol =
             this.normalizeOptionalText(current.variableSymbol) ?? invoiceNumber;
 

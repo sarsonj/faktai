@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   createInvoice,
@@ -6,6 +6,7 @@ import {
   getInvoice,
   issueInvoice,
   markInvoicePaid,
+  reserveInvoiceNumber,
   updateInvoice,
   deleteInvoice,
 } from '../invoice-api';
@@ -204,7 +205,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   const [searchParams] = useSearchParams();
 
   const [state, setState] = useState<EditorState>(() => createDefaultState());
-  const [isVariableSymbolCustomized, setIsVariableSymbolCustomized] = useState(false);
+  const [reservingNumber, setReservingNumber] = useState(mode === 'create');
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [loading, setLoading] = useState(mode === 'edit');
   const [saving, setSaving] = useState(false);
@@ -214,6 +215,39 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   const [customerLookupLoading, setCustomerLookupLoading] = useState(false);
   const [customerLookupError, setCustomerLookupError] = useState<string | null>(null);
   const [customerLookupResults, setCustomerLookupResults] = useState<RegistryCompanyResult[]>([]);
+  const reserveRequestIdRef = useRef(0);
+
+  const reserveNumberForDate = useCallback(async (issueDate: string) => {
+    const requestId = reserveRequestIdRef.current + 1;
+    reserveRequestIdRef.current = requestId;
+    setReservingNumber(true);
+
+    try {
+      const { invoiceNumber } = await reserveInvoiceNumber(issueDate);
+      setState((current) => {
+        if (requestId !== reserveRequestIdRef.current) {
+          return current;
+        }
+
+        const shouldSyncVariableSymbol =
+          current.variableSymbol === '' || current.variableSymbol === current.invoiceNumber;
+
+        return {
+          ...current,
+          invoiceNumber,
+          variableSymbol: shouldSyncVariableSymbol ? invoiceNumber : current.variableSymbol,
+        };
+      });
+    } catch (err) {
+      if (requestId === reserveRequestIdRef.current) {
+        setError(err instanceof Error ? err.message : 'Přidělení čísla faktury selhalo');
+      }
+    } finally {
+      if (requestId === reserveRequestIdRef.current) {
+        setReservingNumber(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (mode !== 'create') {
@@ -223,27 +257,28 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
     const run = async () => {
       try {
         const subject = await getSubject();
+        const defaultState = createDefaultState(subject.defaultDueDays);
 
         setState((current) => {
           if (
             current.customerCountryCode !== 'CZ' ||
             current.items.length !== 1 ||
-            current.customerName ||
-            current.invoiceNumber ||
-            current.variableSymbol
+            current.customerName
           ) {
             return current;
           }
-          return createDefaultState(subject.defaultDueDays);
+          return defaultState;
         });
-        setIsVariableSymbolCustomized(false);
+
+        await reserveNumberForDate(defaultState.issueDate);
       } catch {
         // Defaults stay client-side if subject fetch fails.
+        await reserveNumberForDate(createDefaultState().issueDate);
       }
     };
 
     void run();
-  }, [mode]);
+  }, [mode, reserveNumberForDate]);
 
   useEffect(() => {
     if (mode !== 'edit' || !invoiceId) {
@@ -258,7 +293,6 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
         const payload = await getInvoice(invoiceId);
         setInvoice(payload);
         setState(fromInvoice(payload));
-        setIsVariableSymbolCustomized(payload.variableSymbol !== (payload.invoiceNumber ?? ''));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Načtení faktury selhalo');
       } finally {
@@ -303,7 +337,6 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
       const created = await createInvoice(payload);
       setInvoice(created);
       setState(fromInvoice(created));
-      setIsVariableSymbolCustomized(created.variableSymbol !== (created.invoiceNumber ?? ''));
       return created;
     }
 
@@ -314,7 +347,6 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
     const updated = await updateInvoice(invoiceId, payload);
     setInvoice(updated);
     setState(fromInvoice(updated));
-    setIsVariableSymbolCustomized(updated.variableSymbol !== (updated.invoiceNumber ?? ''));
     return updated;
   };
 
@@ -452,8 +484,17 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
       <header className="page-head">
         <div>
           <p className="page-kicker">Fakturace</p>
-          <h1 className="page-title">{mode === 'create' ? 'Nová faktura' : `Editace faktury ${invoice?.invoiceNumber ?? ''}`}</h1>
+          <h1 className="page-title">
+            {mode === 'create'
+              ? state.invoiceNumber
+                ? `Nová faktura ${state.invoiceNumber}`
+                : 'Nová faktura'
+              : `Editace faktury ${invoice?.invoiceNumber ?? ''}`}
+          </h1>
           <p className="page-subtitle">Vyplňte parametry dokladu, odběratele a položky faktury.</p>
+          {mode === 'create' && reservingNumber && (
+            <small>Přiděluji číslo dokladu...</small>
+          )}
         </div>
         <div className="page-actions">
           <Link className="action-link" to={backHref}>
@@ -489,30 +530,6 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
         <h2>Parametry dokladu</h2>
         <div className="form-grid invoice-form-grid">
           <label>
-            Číslo dokladu
-            <input
-              disabled={readOnly}
-              value={state.invoiceNumber}
-              onChange={(event) => {
-                const nextInvoiceNumber = event.target.value.replace(/\s+/g, '');
-                setState((current) => {
-                  const shouldSyncVariableSymbol =
-                    !isVariableSymbolCustomized || current.variableSymbol === current.invoiceNumber;
-
-                  return {
-                    ...current,
-                    invoiceNumber: nextInvoiceNumber,
-                    variableSymbol: shouldSyncVariableSymbol ? nextInvoiceNumber : current.variableSymbol,
-                  };
-                });
-
-                if (!isVariableSymbolCustomized) {
-                  setIsVariableSymbolCustomized(false);
-                }
-              }}
-            />
-          </label>
-          <label>
             Variabilní symbol
             <input
               disabled={readOnly}
@@ -520,7 +537,6 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
               onChange={(event) => {
                 const nextVariableSymbol = event.target.value.replace(/\s+/g, '');
                 setState((current) => ({ ...current, variableSymbol: nextVariableSymbol }));
-                setIsVariableSymbolCustomized(nextVariableSymbol !== state.invoiceNumber);
               }}
             />
           </label>
@@ -530,7 +546,17 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
               disabled={readOnly}
               type="date"
               value={state.issueDate}
-              onChange={(event) => setState((current) => ({ ...current, issueDate: event.target.value }))}
+              onChange={(event) => {
+                const nextIssueDate = event.target.value;
+                const currentYear = state.issueDate.slice(0, 4);
+                const nextYear = nextIssueDate.slice(0, 4);
+
+                setState((current) => ({ ...current, issueDate: nextIssueDate }));
+
+                if (mode === 'create' && currentYear !== nextYear) {
+                  void reserveNumberForDate(nextIssueDate);
+                }
+              }}
             />
           </label>
           <label>
@@ -785,11 +811,11 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
         <div className="button-row wrap">
           {!readOnly && (
             <>
-              <button disabled={saving} type="button" onClick={onSave}>
+              <button disabled={saving || reservingNumber} type="button" onClick={onSave}>
                 {saving ? 'Ukládám...' : mode === 'create' ? 'Uložit koncept' : 'Uložit'}
               </button>
               {mode === 'create' && (
-                <button disabled={saving} type="button" onClick={onIssue}>
+                <button disabled={saving || reservingNumber} type="button" onClick={onIssue}>
                   Vystavit fakturu
                 </button>
               )}
@@ -805,7 +831,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
               Označit jako uhrazené
             </button>
           )}
-          <button disabled={saving} type="button" className="secondary" onClick={() => navigate(backHref)}>
+          <button disabled={saving || reservingNumber} type="button" className="secondary" onClick={() => navigate(backHref)}>
             Zrušit
           </button>
         </div>

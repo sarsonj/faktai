@@ -353,7 +353,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 - Režim `create`:
   - při uložení nového dokladu se přidělí číslo faktury z roční řady `YYYYNN` (`YYYY` + pořadí v roce, např. `202601`),
   - pro jiný rok běží pořadí od `1`,
-  - číslo dokladu je editovatelné pole (unikátní v rámci subjektu),
+  - číslo dokladu není editovatelné pole; v UI je zobrazeno v nadpisu stránky (`Nová faktura {číslo}`),
   - variabilní symbol se předvyplní číslem dokladu, ale zůstává editovatelný,
   - `issueDate` default dnešní datum,
   - `dueDate` default `issueDate + defaultDueDays` (Scope 1, aktuálně 14 dní),
@@ -373,7 +373,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 | Pole | Povinné | Validace / pravidlo |
 |---|---|---|
 | `status` | Ano | enum `draft/issued/paid/overdue/cancelled` |
-| `invoiceNumber` | Ano | formát `YYYY` + pořadí (5-10 číslic), unikátní v rámci subjektu, editovatelné |
+| `invoiceNumber` | Ano | formát `YYYY` + pořadí (5-10 číslic), unikátní v rámci subjektu |
 | `variableSymbol` | Ano | 1-10 číslic; defaultně se předvyplní z `invoiceNumber`, ale je editovatelný |
 | `issueDate` | Ano | datum, nesmí být prázdné |
 | `taxableSupplyDate` | Ano | datum, default `issueDate` |

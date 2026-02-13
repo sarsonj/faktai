@@ -17,6 +17,7 @@ import { SessionAuthGuard } from '../auth/session-auth.guard';
 import type { RequestWithUser } from '../auth/session-auth.guard';
 import { ListInvoicesQueryDto } from './dto/list-invoices.query.dto';
 import { MarkInvoicePaidDto } from './dto/invoice-item.dto';
+import { ReserveInvoiceNumberDto } from './dto/reserve-invoice-number.dto';
 import { UpsertInvoiceDto } from './dto/upsert-invoice.dto';
 import { InvoiceService } from './invoice.service';
 
@@ -39,6 +40,14 @@ export class InvoiceController {
     @Body() dto: UpsertInvoiceDto,
   ) {
     return this.invoiceService.createDraft(request.user!.id, dto);
+  }
+
+  @Post('reserve-number')
+  async reserveInvoiceNumber(
+    @Req() request: RequestWithUser,
+    @Body() dto: ReserveInvoiceNumberDto,
+  ) {
+    return this.invoiceService.reserveInvoiceNumber(request.user!.id, dto.issueDate);
   }
 
   @Post(':id/copy')

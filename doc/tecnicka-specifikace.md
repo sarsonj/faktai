@@ -307,12 +307,13 @@ Backend validace:
 ### 5.3 Invoices (Scope 2 + 3)
 1. `GET /invoices`
 2. `POST /invoices` (create draft)
-3. `POST /invoices/:id/copy`
-4. `GET /invoices/:id`
-5. `PATCH /invoices/:id`
-6. `POST /invoices/:id/issue`
-7. `POST /invoices/:id/mark-paid`
-8. `DELETE /invoices/:id`
+3. `POST /invoices/reserve-number`
+4. `POST /invoices/:id/copy`
+5. `GET /invoices/:id`
+6. `PATCH /invoices/:id`
+7. `POST /invoices/:id/issue`
+8. `POST /invoices/:id/mark-paid`
+9. `DELETE /invoices/:id`
 
 `GET /invoices` query:
 - `status=all|paid|unpaid|overdue`
@@ -322,7 +323,8 @@ Backend validace:
 
 Pravidla:
 - `DELETE` je povoleno pro všechny stavy faktury.
-- `issue` běží transakčně včetně přidělení čísla faktury.
+- `reserve-number` atomicky přidělí další číslo v roční řadě podle `issueDate`.
+- `issue` běží transakčně; číslo faktury doplní jen pokud historický draft číslo nemá.
 - `mark-paid` nastaví `status=paid` + `paid_at`.
 - `customerIco` se před uložením normalizuje bez mezer.
 - FE může využít `GET /registry/company-search` pro předvyplnění odběratele.
@@ -394,13 +396,13 @@ Poznámka:
 1. Validace draftu.
 2. DB transakce:
    - update faktury na `issued`,
-   - pokud historický draft nemá `invoiceNumber`, dopočte se `max(YYYY*) + 1` pro rok `issueDate`,
+   - pokud historický draft nemá `invoiceNumber`, použije se stejná sekvenční logika jako v `reserve-number`,
    - `variableSymbol` se zachová (pokud je prázdný, doplní se `invoiceNumber`).
 3. Commit.
 
 ### 6.4.1 Editace vystavené faktury
 1. `PATCH /invoices/:id` je povoleno i pro stav `issued`.
-2. `invoiceNumber` je editovatelný, validuje se formát `YYYY` + pořadí a unikátnost v rámci subjektu.
+2. `invoiceNumber` není určeno k editaci z UI; backend při update zachovává existující číslo dokladu.
 3. `variableSymbol` se defaultně bere z `invoiceNumber`, ale pokud je odeslán explicitně, backend ho respektuje.
 4. Frontend po úspěšném `PATCH` v režimu edit přesměruje uživatele zpět na `/invoices` se stejným query stringem.
 
