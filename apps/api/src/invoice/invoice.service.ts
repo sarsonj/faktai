@@ -1787,7 +1787,7 @@ export class InvoiceService {
     const safeIco = this.sanitizeFileToken(supplier.ico || 'ICO');
     const safeInvoiceNumber = this.sanitizeFileToken(invoice.invoiceNumber ?? invoice.id);
     return {
-      fileName: `${safeIco}_${safeInvoiceNumber}.pdf`,
+      fileName: `faktura_${safeIco}_${safeInvoiceNumber}.pdf`,
       content: pdfBuffer,
     };
   }
