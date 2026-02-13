@@ -44,41 +44,29 @@ export function SettingsSubjectPage() {
   };
 
   if (loading) {
-    return (
-      <main className="app-shell">
-        <section className="card">Načítám subjekt...</section>
-      </main>
-    );
+    return <section className="card card-narrow">Načítám subjekt...</section>;
   }
 
   if (!subject) {
     return (
-      <main className="app-shell">
-        <section className="card">
-          <p className="error">Subjekt nebyl nalezen.</p>
-          <Link to="/onboarding/subject">Přejít na onboarding</Link>
-        </section>
-      </main>
+      <section className="card card-narrow">
+        <p className="error">Subjekt nebyl nalezen.</p>
+        <Link to="/onboarding/subject">Přejít na onboarding</Link>
+      </section>
     );
   }
 
   return (
-    <main className="app-shell">
-      <section className="card">
-        <h1>Nastavení subjektu</h1>
-        <div className="toolbar-row">
-          <Link to="/invoices">Vydané faktury</Link>
-          <Link to="/tax-reports">DPH podklady</Link>
-        </div>
-        {error && <p className="error">{error}</p>}
-        {success && <p>{success}</p>}
-        <SubjectForm
-          initial={subject}
-          loading={saving}
-          onSubmit={onSubmit}
-          submitLabel="Uložit změny"
-        />
-      </section>
-    </main>
+    <section className="card card-narrow">
+      <h1>Nastavení subjektu</h1>
+      {error && <p className="error">{error}</p>}
+      {success && <p>{success}</p>}
+      <SubjectForm
+        initial={subject}
+        loading={saving}
+        onSubmit={onSubmit}
+        submitLabel="Uložit změny"
+      />
+    </section>
   );
 }

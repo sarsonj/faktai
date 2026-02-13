@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
+import { AppLayout } from './components/AppLayout';
 import { AuthLayout } from './components/AuthLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
@@ -52,61 +53,20 @@ function App() {
         }
       />
       <Route
-        path="/invoices"
         element={
           <ProtectedRoute>
-            <InvoicesPage />
+            <AppLayout />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/invoices/new"
-        element={
-          <ProtectedRoute>
-            <InvoiceEditorPage mode="create" />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/invoices/:invoiceId"
-        element={
-          <ProtectedRoute>
-            <InvoiceDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/invoices/:invoiceId/edit"
-        element={
-          <ProtectedRoute>
-            <InvoiceEditorPage mode="edit" />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/invoices/:invoiceId/copy"
-        element={
-          <ProtectedRoute>
-            <InvoiceCopyPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings/subject"
-        element={
-          <ProtectedRoute>
-            <SettingsSubjectPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tax-reports"
-        element={
-          <ProtectedRoute>
-            <TaxReportsPage />
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route path="/invoices" element={<InvoicesPage />} />
+        <Route path="/invoices/new" element={<InvoiceEditorPage mode="create" />} />
+        <Route path="/invoices/:invoiceId" element={<InvoiceDetailPage />} />
+        <Route path="/invoices/:invoiceId/edit" element={<InvoiceEditorPage mode="edit" />} />
+        <Route path="/invoices/:invoiceId/copy" element={<InvoiceCopyPage />} />
+        <Route path="/settings/subject" element={<SettingsSubjectPage />} />
+        <Route path="/tax-reports" element={<TaxReportsPage />} />
+      </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

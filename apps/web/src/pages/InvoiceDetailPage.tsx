@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { downloadInvoicePdf, getInvoice, markInvoicePaid } from '../invoice-api';
+import { downloadInvoicePdf, getInvoice, issueInvoice, markInvoicePaid } from '../invoice-api';
 import type { InvoiceDetail } from '../types';
 
 function formatDate(value: string): string {
@@ -29,6 +29,23 @@ function statusLabel(status: InvoiceDetail['status']): string {
       return 'Storno';
     default:
       return status;
+  }
+}
+
+function statusClassName(status: InvoiceDetail['status']): string {
+  switch (status) {
+    case 'draft':
+      return 'status-badge status-draft';
+    case 'issued':
+      return 'status-badge status-issued';
+    case 'overdue':
+      return 'status-badge status-overdue';
+    case 'paid':
+      return 'status-badge status-paid';
+    case 'cancelled':
+      return 'status-badge status-cancelled';
+    default:
+      return 'status-badge';
   }
 }
 
@@ -79,31 +96,37 @@ export function InvoiceDetailPage() {
     }
   };
 
+  const onIssue = async () => {
+    if (!invoice) {
+      return;
+    }
+
+    try {
+      const issued = await issueInvoice(invoice.id);
+      setInvoice(issued);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Vystavení faktury selhalo');
+    }
+  };
+
   if (loading) {
-    return (
-      <main className="app-shell">
-        <section className="card card-wide">Načítám detail faktury...</section>
-      </main>
-    );
+    return <section className="card card-wide">Načítám detail faktury...</section>;
   }
 
   if (error || !invoice) {
     return (
-      <main className="app-shell">
-        <section className="card card-wide">
-          <p className="error">{error ?? 'Faktura nebyla nalezena.'}</p>
-          <button type="button" onClick={() => navigate(backHref)}>
-            Zpět na seznam
-          </button>
-        </section>
-      </main>
+      <section className="card card-wide">
+        <p className="error">{error ?? 'Faktura nebyla nalezena.'}</p>
+        <button type="button" onClick={() => navigate(backHref)}>
+          Zpět na seznam
+        </button>
+      </section>
     );
   }
 
   return (
-    <main className="app-shell">
-      <section className="card card-wide">
-        <h1>Detail faktury {invoice.invoiceNumber ?? '(koncept)'}</h1>
+    <section className="card card-wide">
+      <h1>Detail faktury {invoice.invoiceNumber ?? '(koncept)'}</h1>
 
         <div className="toolbar-row">
           <Link to={backHref}>Zpět na seznam</Link>
@@ -121,6 +144,11 @@ export function InvoiceDetailPage() {
           >
             PDF
           </button>
+          {invoice.status === 'draft' && (
+            <button type="button" onClick={onIssue}>
+              Vystavit fakturu
+            </button>
+          )}
           {(invoice.status === 'issued' || invoice.status === 'overdue') && (
             <button type="button" className="secondary" onClick={onMarkPaid}>
               Označit jako uhrazené
@@ -130,7 +158,7 @@ export function InvoiceDetailPage() {
 
         <div className="summary-grid">
           <p>
-            <strong>Stav:</strong> {statusLabel(invoice.status)}
+            <strong>Stav:</strong> <span className={statusClassName(invoice.status)}>{statusLabel(invoice.status)}</span>
           </p>
           <p>
             <strong>Variabilní symbol:</strong> {invoice.variableSymbol}
@@ -195,7 +223,6 @@ export function InvoiceDetailPage() {
             <strong>Celkem: {formatMoney(invoice.totalWithVat)}</strong>
           </p>
         </div>
-      </section>
-    </main>
+    </section>
   );
 }

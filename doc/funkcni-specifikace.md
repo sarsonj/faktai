@@ -1,7 +1,7 @@
 # Funkční specifikace projektu TappyFaktur
 
 ## 0. Stav dokumentu
-- Verze: `1.5`
+- Verze: `1.6`
 - Datum: `2026-02-13`
 - Stav: `Rozpracováno`
 - Aktuálně zpracovaný rozsah: `Scope 1-7`
@@ -159,7 +159,7 @@ Poskytnout přehledný seznam vydaných faktur s rychlým vyhledáním, filtrov�
 - Fulltextové vyhledávání nad klíčovými poli faktury.
 - Rychlé stavové filtry (`Všechny`, `Uhrazené`, `Neuhrazené`, `Po splatnosti`).
 - Detail řádku s hlavními metadaty faktury.
-- Řádkové akce: `Zobrazit`, `Upravit`, `Kopie`, `PDF`, `Smazat`.
+- Řádkové akce: `Upravit`, `Kopie`, `PDF`, `Smazat` (ikonové ovladače).
 - Trvalé zobrazení počtu položek a celkového počtu výsledků.
 
 #### Out of scope (pro další iterace)
@@ -201,12 +201,12 @@ Poskytnout přehledný seznam vydaných faktur s rychlým vyhledáním, filtrov�
 9. `Akce`
 
 Poznámky:
+- `Číslo dokladu` je klikací odkaz na detail faktury.
 - `Cena bez DPH` a `Cena s DPH` jsou formátovány v měně CZK (`1 234,56 Kč`).
 - Datum je ve formátu `DD.MM.YYYY`.
 - `Stav` je zobrazen textově + barevným indikátorem.
 
 #### 2.4.3 Řádkové akce
-- `Zobrazit`: otevře detail faktury.
 - `Upravit`: otevře editor faktury v režimu editace.
 - `Kopie`: vytvoří novou fakturu předvyplněnou z vybrané faktury.
 - `PDF`: stáhne/otevře PDF faktury.
@@ -328,14 +328,19 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 - `Poznámka`
 
 #### 3.4.2 Akce editoru
-- `Uložit koncept` (status `draft`)
-- `Vystavit fakturu` (status `issued`)
+- Režim `create`:
+  - `Uložit koncept` (status `draft`)
+  - `Vystavit fakturu` (status `issued`)
+- Režim `edit`:
+  - `Uložit` (uložení změn existující faktury)
+  - po úspěšném uložení návrat na seznam faktur se zachováním aktivních filtrů
 - `Zrušit` (návrat na seznam)
 - `Smazat` (pouze pro stav `draft`, hard delete)
 
 #### 3.4.3 Chování dle režimu
 - Režim `create`:
   - číslo faktury se přidělí až při `Vystavit fakturu`,
+  - při `Vystavit fakturu` se číslo faktury i variabilní symbol nastaví na stejnou hodnotu z roční číselné řady (`YYYYNN`, např. `202601`),
   - `issueDate` default dnešní datum,
   - `dueDate` default `issueDate + defaultDueDays` (Scope 1, aktuálně 14 dní),
   - dodavatel je předvyplněn ze subjektu.
@@ -355,7 +360,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 |---|---|---|
 | `status` | Ano | enum `draft/issued/paid/overdue/cancelled` |
 | `invoiceNumber` | Podmíněně | povinné pro `issued/paid/overdue`, unikátní v číselné řadě |
-| `variableSymbol` | Ano | 1-10 číslic, default dle nastavení subjektu |
+| `variableSymbol` | Ano | 1-10 číslic; při vystavení se automaticky nastaví na hodnotu čísla faktury z roční řady |
 | `issueDate` | Ano | datum, nesmí být prázdné |
 | `taxableSupplyDate` | Ano | datum, default `issueDate` |
 | `dueDate` | Ano | datum >= `issueDate` |
@@ -387,13 +392,16 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 
 ### 3.7 Funkční pravidla
 1. Fakturu lze vystavit jen pokud má všechny povinné údaje a alespoň 1 položku.
-2. Číslo faktury se přiděluje atomicky při přechodu do stavu `issued`.
-3. `overdue` se může počítat automaticky dávkou nebo při načtení (dle implementace), ale pravidlo je `dueDate < dnes` a `status != paid`.
-4. Hard delete je ve v1 povolen pouze u `draft`.
-5. Smazání `issued/paid/overdue` ve v1 není povoleno (kvůli návaznosti na účetní evidenci).
-6. Po vystavení se uloží snapshot dodavatele i odběratele pro historickou konzistenci.
-7. Faktura ve stavu `issued` je ve v1 plně editovatelná.
-8. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
+2. Číslo faktury se přiděluje atomicky při přechodu do stavu `issued` v roční řadě `YYYYNN`.
+3. Variabilní symbol se při vystavení nastaví na stejné číslo jako `invoiceNumber`.
+4. `overdue` se může počítat automaticky dávkou nebo při načtení (dle implementace), ale pravidlo je `dueDate < dnes` a `status != paid`.
+5. Hard delete je ve v1 povolen pouze u `draft`.
+6. Smazání `issued/paid/overdue` ve v1 není povoleno (kvůli návaznosti na účetní evidenci).
+7. Po vystavení se uloží snapshot dodavatele i odběratele pro historickou konzistenci.
+8. Faktura ve stavu `issued` je ve v1 plně editovatelná.
+9. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
+10. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
+11. Po `Uložit` v režimu `edit` se uživatel vrací na seznam faktur (`/invoices`) ve stejném kontextu filtrů/stránkování.
 
 ### 3.8 Stavy a chování UI
 - `Loading`: načítání editoru / faktury.
@@ -407,9 +415,10 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 1. Uživatel dokáže vytvořit koncept faktury a později jej dokončit.
 2. Uživatel dokáže vytvořit fakturu kopií existující faktury.
 3. Vystavení faktury vytvoří číslo dokladu; faktura ve stavu `issued` zůstává editovatelná.
-4. Výpočty součtů odpovídají položkám a sazbám DPH.
-5. Smazat lze pouze koncept faktury; pokus o smazání jiného stavu je zamítnut.
-6. Uživatel může vyhledat odběratele podle IČO i názvu a jedním klikem předvyplnit pole odběratele.
+4. Při vystavení faktury se `variableSymbol` automaticky nastaví na stejné číslo jako `invoiceNumber` (`YYYYNN`).
+5. Výpočty součtů odpovídají položkám a sazbám DPH.
+6. Smazat lze pouze koncept faktury; pokus o smazání jiného stavu je zamítnut.
+7. Uživatel může vyhledat odběratele podle IČO i názvu a jedním klikem předvyplnit pole odběratele.
 
 ### 3.10 Potvrzená rozhodnutí
 1. Faktura ve stavu `issued` je plně editovatelná.
@@ -524,6 +533,9 @@ Umožnit vygenerovat profesionální PDF faktury v českém formátu včetně QR
 3. Měna PDF je ve v1 vždy `CZK`.
 4. Částky se v PDF formátují v CZ zápisu (`1 234,56 Kč`).
 5. Pokud faktura obsahuje nevalidní data pro platební blok, uživatel dostane konkrétní validační chybu.
+6. PDF musí používat font s podporou české diakritiky.
+7. Textové bloky se nesmí vzájemně překrývat.
+8. Exportované PDF nesmí obsahovat nechtěné prázdné stránky.
 
 ### 4.8 Stavy a chování UI
 - `Generating`: krátký stav generování po kliknutí na `PDF`.
@@ -538,6 +550,7 @@ Umožnit vygenerovat profesionální PDF faktury v českém formátu včetně QR
 4. Při změně `issued` faktury a opětovném exportu se zvýší `pdfVersion`.
 5. Export `draft` faktury je zamítnut.
 6. Výstup PDF má čitelný blokový layout dle referenční šablony v dokumentaci.
+7. PDF je jednopage pro běžný doklad v1 a neobsahuje prázdné přidané stránky.
 
 ### 4.10 Potvrzená rozhodnutí
 1. Export `draft` faktury je ve v1 zakázán.
@@ -547,7 +560,7 @@ Umožnit vygenerovat profesionální PDF faktury v českém formátu včetně QR
 ## 5. Scope 5 - DPH podklady (XML pro datovou schránku)
 
 ### 5.1 Cíl
-Automaticky připravit podklady pro daňová podání z vydaných faktur tak, aby uživatel mohl za zvolené období vygenerovat XML soubory pro `Přiznání k DPH`, `Souhrnné hlášení` i `Kontrolní hlášení`.
+Automaticky připravit podklady pro daňová podání z vydaných faktur tak, aby uživatel mohl za zvolené období vygenerovat XML soubory pro `Přiznání k DPH` a `Kontrolní hlášení`.
 
 ### 5.2 Funkční rozsah
 #### In scope
@@ -556,10 +569,8 @@ Automaticky připravit podklady pro daňová podání z vydaných faktur tak, ab
 - Výpočet podkladových částek z faktur.
 - Generování XML:
   - `Přiznání k DPH`,
-  - `Souhrnné hlášení`,
   - `Kontrolní hlášení`.
-- Náhled souhrnných hodnot před exportem.
-- Verze a auditní stopa generovaných podkladů.
+- Přímý export XML bez mezikroku preview.
 
 #### Out of scope (pro další iterace)
 - Přímé odeslání do datové schránky (v1 pouze export XML).
@@ -570,13 +581,10 @@ Automaticky připravit podklady pro daňová podání z vydaných faktur tak, ab
 1. Uživatel otevře `DPH podklady`.
 2. Vybere typ podání:
    - `Přiznání k DPH`,
-   - `Souhrnné hlášení`,
    - `Kontrolní hlášení`.
-3. Vybere období (`rok` + `měsíc`/`čtvrtletí` dle režimu).
-4. Klikne `Vypočítat podklady`.
-5. Zobrazí se náhled vypočtených hodnot a počet zahrnutých faktur.
-6. Klikne `Export XML`.
-7. Systém stáhne XML soubor připravený pro podání.
+3. Vybere období (`rok` + konkrétní `měsíc` nebo `kvartál` dle režimu).
+4. Klikne `Export XML`.
+5. Systém stáhne XML soubor připravený pro podání.
 
 ### 5.4 Podmínky přístupu
 1. Modul je dostupný pouze pro subjekt s `isVatPayer=true`.
@@ -593,7 +601,7 @@ Automaticky připravit podklady pro daňová podání z vydaných faktur tak, ab
 5. Všechny výpočty běží nad aktuální verzí dat faktury v okamžiku výpočtu.
 
 ### 5.6 Daňová klasifikace faktury (pro výstupy DPH)
-Pro správné zařazení do přiznání, souhrnného hlášení a kontrolního hlášení je na faktuře evidováno pole `taxClassification`.
+Pro správné zařazení do přiznání a kontrolního hlášení je na faktuře evidováno pole `taxClassification`.
 
 Povolené hodnoty:
 - `domestic_standard` (tuzemské zdanitelné plnění),
@@ -606,7 +614,7 @@ Povolené hodnoty:
 Pravidla:
 1. `taxClassification` je povinné při vystavení faktury.
 2. `eu_service` a `eu_goods` vyžadují vyplněné DIČ odběratele.
-3. Klasifikace určuje, zda se faktura promítá do `Přiznání k DPH`, `Souhrnného hlášení`, `Kontrolního hlášení`, nebo do jejich kombinace.
+3. Klasifikace určuje, zda se faktura promítá do `Přiznání k DPH`, `Kontrolního hlášení`, nebo do jejich kombinace.
 
 ### 5.7 Výpočet podkladů
 
@@ -615,14 +623,7 @@ Pravidla:
 - Výstupem je datová struktura odpovídající řádkům přiznání (vnitřní mapování).
 - Částky se zaokrouhlují dle daňových pravidel na celé Kč při exportu tam, kde to schéma vyžaduje.
 
-#### 5.7.2 Souhrnné hlášení
-- Zahrnují se pouze relevantní EU plnění dle `taxClassification`.
-- Agregace probíhá minimálně podle:
-  - DIČ odběratele,
-  - kódu plnění,
-  - období.
-
-#### 5.7.3 Kontrolní hlášení
+#### 5.7.2 Kontrolní hlášení
 - Zahrnují se tuzemská zdanitelná plnění a další položky požadované strukturou kontrolního hlášení.
 - Výstup respektuje členění kontrolního hlášení podle oddílů a typů plnění.
 - Systém validuje povinné identifikační údaje partnera tam, kde je to pro daný oddíl nutné.
@@ -630,9 +631,10 @@ Pravidla:
 ### 5.8 XML export
 1. XML se generuje podle aktuálního technického schématu finanční správy podporovaného aplikací.
 2. Název souboru:
-   - `dph-priznani-YYYY-MM-vN.xml`,
-   - `souhrnne-hlaseni-YYYY-MM-vN.xml`,
-   - `kontrolni-hlaseni-YYYY-MM-vN.xml`.
+   - `${ICO}_DPH_${YEAR}${PERIOD}M|Q.xml`,
+   - `${ICO}_DPHKH_${YEAR}${PERIOD}M|Q.xml`.
+   - `PERIOD` je `01..12` pro měsíční periodu a `1..4` pro čtvrtletní periodu.
+   - příklad: `24755851_DPH_202601M.xml`, `24755851_DPHKH_20254Q.xml`.
 3. Export obsahuje:
    - identifikaci subjektu (IČO/DIČ),
    - období,
@@ -645,50 +647,45 @@ Pravidla:
    - `doc/examples/iDoklad_DPH3_2025Q04B`
    - `doc/examples/iDoklad_DPHKH_2025Q04B`
 
-### 5.9 Verze a auditní stopa podkladů
-1. Každý export vytvoří záznam `taxReportRun`.
-2. `taxReportRun` obsahuje minimálně:
-   - typ podání,
-   - období,
-   - čas generování,
-   - uživatele,
-   - verzi `runVersion`,
-   - hash exportovaného obsahu.
-3. Pokud dojde ke změně faktury v období a následnému novému exportu, `runVersion` se zvýší.
-4. Ve v1 se archivují metadata běhu a hash; samotný XML soubor se nearchivuje.
+### 5.9 Bez historie exportů (v1)
+1. XML soubory se ve v1 nearchivují.
+2. Export se vždy generuje z aktuálních dat v okamžiku požadavku.
+3. Historie exportů se v UI nezobrazuje.
 
 ### 5.10 Obrazovka `DPH podklady`
 
 #### 5.10.1 Prvky obrazovky
 - Výběr `Typ podání`.
+- Výběr `Perioda` (`Měsíc`/`Kvartál`) s defaultem z nastavení subjektu (`vatPeriodType`).
 - Výběr `Rok`.
-- Výběr `Období` (měsíc/čtvrtletí).
-- Tlačítko `Vypočítat podklady`.
-- Náhled souhrnu (karty/řádky hodnot).
+- Výběr `Měsíc` nebo `Kvartál` dle vybrané periody.
+- Výchozí hodnota období:
+  - při `Měsíc` je předchozí kalendářní měsíc,
+  - při `Kvartál` je předchozí kalendářní čtvrtletí.
 - Tlačítko `Export XML`.
-- Sekce `Historie exportů` (tabulka posledních běhů).
 
 #### 5.10.2 Stavy UI
-- `Empty`: před prvním výpočtem.
-- `Loading`: probíhá výpočet nebo export.
-- `Preview ready`: vypočtený náhled.
+- `Loading`: probíhá export.
 - `Validation error`: nevalidní vstup období nebo chybějící daňová klasifikace na fakturách.
 - `API error`: obecná chyba.
 - `Success`: XML soubor stažen.
 
 ### 5.11 Akceptační kritéria (Scope 5)
 1. Plátce DPH může vygenerovat XML pro `Přiznání k DPH` za zvolené období.
-2. Plátce DPH může vygenerovat XML pro `Souhrnné hlášení` za zvolené období.
-3. Plátce DPH může vygenerovat XML pro `Kontrolní hlášení` za zvolené období.
+2. Plátce DPH může vygenerovat XML pro `Kontrolní hlášení` za zvolené období.
+3. `Souhrnné hlášení` není ve v1 dostupné.
 4. Faktury `draft` nejsou nikdy zahrnuty do výpočtu.
-5. Při změně faktury v období a novém exportu se zvýší verze běhu.
-6. Neplátce DPH nemůže export spustit a vidí srozumitelný informační stav.
-7. XML `Přiznání k DPH` a `Kontrolní hlášení` je ve FU-compatible struktuře vět.
+5. Neplátce DPH nemůže export spustit a vidí srozumitelný informační stav.
+6. XML `Přiznání k DPH` a `Kontrolní hlášení` je ve FU-compatible struktuře vět.
+7. Název souboru exportu odpovídá formátu `${ICO}_DPH...` / `${ICO}_DPHKH...` podle typu podání.
+8. Perioda exportu se po načtení obrazovky předvyplní z nastavení subjektu (`vatPeriodType`) a jako hodnota použije předchozí měsíc/čtvrtletí.
 
 ### 5.12 Potvrzená rozhodnutí
 1. Ve v1 se podporuje měsíční i čtvrtletní období.
 2. `Kontrolní hlášení` je součástí v1.
-3. XML soubory se ve v1 nearchivují; aplikace je generuje vždy z aktuálních dat.
+3. `Souhrnné hlášení` není ve v1 součástí exportu.
+4. XML soubory se ve v1 nearchivují; aplikace je generuje vždy z aktuálních dat.
+5. Default perioda na obrazovce `DPH podklady` se řídí `vatPeriodType` subjektu.
 
 ## 6. Scope 6 - Globální navigace, struktura obrazovek a hlavní flow
 
@@ -747,16 +744,19 @@ Sekundární obrazovky:
   - `Nastavení subjektu`.
 - Horní lišta:
   - název aktuální sekce,
-  - rychlá akce dle kontextu (např. `Nová faktura` v sekci faktur).
+  - uživatelský profil vpravo (avatar/počáteční písmeno),
+  - dropdown menu profilu s akcí `Odhlásit`.
 - Hlavní obsah:
   - stránka modulu,
+  - lokální akce/filtry stránky jsou pouze v obsahu modulu (nemísí se s globální navigací),
   - breadcrumb pouze na detailních obrazovkách (detail/editace faktury).
 
 #### 6.6.2 Mobil
-- Horní lišta s `hamburger` menu:
+- Kompaktní horní navigační blok:
   - `Vydané faktury`,
   - `DPH podklady`,
   - `Nastavení subjektu`.
+- Vpravo v topbaru je avatar uživatele s dropdown menu `Odhlásit`.
 - Detailní stránky (`/invoices/:id`, editor) otevírané přes full-screen view s tlačítkem zpět.
 
 ### 6.7 Pravidla navigace mezi seznamem, detailem a editací
@@ -777,6 +777,11 @@ Sekundární obrazovky:
 2. Destruktivní akce (`Smazat`) vyžadují potvrzení.
 3. Všechny úspěšné akce mají toast potvrzení.
 4. Všechny API chyby mají user-readable zprávu + možnost opakovat akci.
+5. Aplikace používá jednotný vizuální základ (typografie, barvy, spacing, stavy komponent).
+6. Formulářové prvky mají konzistentní stavy `default/hover/focus/disabled`.
+7. Statusy dokladů jsou vizuálně odlišeny konzistentní sadou badge prvků.
+8. Rozhraní je responzivní a zachovává čitelnost na desktopu i mobilu.
+9. Globální navigace je vizuálně oddělená od lokálních filtrů a ovládacích prvků stránky.
 
 ### 6.9 Globální stavy obrazovek
 1. `Loading`:
@@ -818,6 +823,7 @@ Sekundární obrazovky:
 3. Návrat z detailu/editace faktury obnoví kontext seznamu.
 4. Mobilní i desktop navigace pokrývá stejné funkce.
 5. Při chybě API uživatel vždy obdrží srozumitelnou zpětnou vazbu.
+6. Vizuální jazyk hlavních obrazovek je konzistentní a používá jednotné stavy ovládacích prvků.
 
 ### 6.13 Potvrzená rozhodnutí
 1. Breadcrumb se ve v1 používá pouze na detailních stránkách.

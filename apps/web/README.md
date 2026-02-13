@@ -2,6 +2,16 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+## Local PDF QA tooling (macOS)
+
+For invoice PDF quality checks (layout, fonts, Czech diacritics), these CLI tools are available in the project environment:
+
+- `pdfinfo`, `pdffonts`, `pdftotext`, `pdftoppm` (from `poppler`)
+- `magick` and `magick compare` (from `imagemagick`)
+- `ghostscript`
+
+These are used to inspect embedded fonts, extract text for diacritics validation, render PDF pages to PNG, and run visual diffs against reference invoices.
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh

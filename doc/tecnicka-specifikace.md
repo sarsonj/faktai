@@ -1,10 +1,10 @@
 # Technická specifikace projektu TappyFaktur
 
 ## 0. Stav dokumentu
-- Verze: `0.7`
+- Verze: `0.9`
 - Datum: `2026-02-13`
 - Stav: `Rozpracováno`
-- Vazba na funkční specifikaci: `doc/funkcni-specifikace.md` (verze `1.3`)
+- Vazba na funkční specifikaci: `doc/funkcni-specifikace.md` (verze `1.6`)
 
 ## 1. Technologický stack
 
@@ -29,6 +29,16 @@
 - Testy backend: `Jest` + `Supertest`
 - Testy frontend: `Vitest` + `Testing Library`
 - E2E: `Playwright`
+
+### 1.3 Lokální tooling pro PDF QA (macOS/Homebrew)
+- V prostředí projektu jsou dostupné CLI nástroje pro kontrolu kvality PDF faktur:
+  - `poppler`: `pdfinfo`, `pdffonts`, `pdftotext`, `pdftoppm`
+  - `imagemagick`: `magick` (včetně `magick compare` pro vizuální diff)
+  - `ghostscript`: podpůrné renderovací utility pro práci s PDF/fonty
+- Tyto nástroje se používají při ladění vzhledu faktur, zejména pro:
+  - kontrolu vložených fontů a podpory české diakritiky,
+  - render PDF do PNG pro vizuální porovnání s referenčním vzorem,
+  - extrakci textu pro ověření, že se diakritika nedegraduje už při exportu.
 
 ## 2. Architektura systému
 
@@ -77,7 +87,6 @@ V1 běží synchronně přes REST API; samostatný worker/queue není povinný.
 - `APP_BASE_URL`
 - `INVOICE_NUMBER_FORMAT`
 - `XML_SCHEMA_DPH_VERSION`
-- `XML_SCHEMA_SH_VERSION`
 - `XML_SCHEMA_KH_VERSION`
 - `SESSION_SECRET`
 - `SESSION_TTL_HOURS`
@@ -144,7 +153,7 @@ Pravidla:
 - `user_id` FK -> users (1:1 v1)
 - Identita: `first_name`, `last_name`, `business_name`, `ico`, `dic`
 - Adresa: `street`, `city`, `postal_code`, `country_code`
-- DPH: `is_vat_payer`, `vat_registration_date`
+- DPH: `is_vat_payer`, `vat_registration_date`, `vat_period_type` (`month|quarter`, default `quarter`)
 - Banka: `bank_account_prefix`, `bank_account_number`, `bank_code`
 - Výchozí nastavení: `default_variable_symbol_type`, `default_variable_symbol_value`, `default_due_days`
 - Unikátní constraint: `user_id` (v1 jen 1 subjekt na účet)
@@ -218,7 +227,7 @@ Poznámka ke stavu `overdue`:
 #### 4.2.9 tax_report_runs
 - `id` UUID PK
 - `subject_id` FK
-- `report_type` enum: `vat_return | summary_statement | control_statement`
+- `report_type` enum: `vat_return | summary_statement | control_statement` (v1 používá jen `vat_return` a `control_statement`)
 - `period_type` enum: `month | quarter`
 - `period_year` int
 - `period_value` int
@@ -287,6 +296,7 @@ Pravidla:
 Backend validace:
 - IČO checksum.
 - DIČ povinné jen když `isVatPayer=true`.
+- `vatPeriodType` povoluje jen `month|quarter`.
 - Bankovní účet validace délky/povolených znaků.
 - normalizace vstupů (IČO/PSČ bez mezer, země uppercase).
 - lookup endpointy pro ARES a adresy:
@@ -334,10 +344,9 @@ Pravidla:
 ### 5.5 Tax reports (Scope 5)
 1. `POST /tax-reports/preview`
 2. `POST /tax-reports/export`
-3. `GET /tax-reports/runs`
 
 `POST /tax-reports/preview` vstup:
-- `reportType`: `vat_return|summary_statement|control_statement`
+- `reportType`: `vat_return|control_statement`
 - `periodType`: `month|quarter`
 - `year`
 - `value` (1-12 nebo 1-4)
@@ -345,9 +354,14 @@ Pravidla:
 `POST /tax-reports/export`:
 - stejné vstupy jako preview
 - odpověď: `application/xml`
-- současně se uloží záznam `tax_report_runs`.
+- soubor se vždy generuje z aktuálních dat (bez historie exportů v UI).
 - `vat_return` exportuje FU strukturu `Pisemnost/DPHDP3`.
 - `control_statement` exportuje FU strukturu `Pisemnost/DPHKH1`.
+- názvy souborů:
+  - `${ICO}_DPH_${YEAR}${PERIOD}M|Q.xml`
+  - `${ICO}_DPHKH_${YEAR}${PERIOD}M|Q.xml`
+  - `PERIOD=01..12` pro `month`, `PERIOD=1..4` pro `quarter`
+  - příklad: `24755851_DPH_202601M.xml`, `24755851_DPHKH_20254Q.xml`
 
 ## 6. Klíčové transakční scénáře
 
@@ -382,8 +396,14 @@ Poznámka:
    - lock sekvence (`FOR UPDATE`),
    - inkrement sekvence,
    - výpočet čísla faktury,
-   - update faktury na `issued`.
+   - update faktury na `issued`,
+   - `variableSymbol` je při vystavení vždy shodný s `invoiceNumber`.
 3. Commit.
+
+### 6.4.1 Editace vystavené faktury
+1. `PATCH /invoices/:id` je povoleno i pro stav `issued`.
+2. Pokud má faktura `invoiceNumber`, backend ignoruje ručně zadaný `variableSymbol` a nastaví jej na `invoiceNumber`.
+3. Frontend po úspěšném `PATCH` v režimu edit přesměruje uživatele zpět na `/invoices` se stejným query stringem.
 
 ### 6.5 Kopie faktury
 1. Načíst zdrojovou fakturu + položky.
@@ -416,14 +436,9 @@ Poznámka:
 1. Spočítat dataset pro období.
 2. Sestavit XML dle typu podání:
    - `vat_return` -> `DPHDP3` + `VetaD/VetaP/Veta1..Veta6`,
-   - `control_statement` -> `DPHKH1` + `VetaD/VetaP/VetaA4/VetaC`,
-   - `summary_statement` -> interní v1 struktura dle stávající mapy.
+   - `control_statement` -> `DPHKH1` + `VetaD/VetaP/VetaA4/VetaC`.
 3. Validovat proti XSD.
-4. Spočítat `dataset_hash`.
-5. Určit `run_version`:
-   - +1 pouze pokud se změnil hash proti poslednímu běhu stejného typu/období.
-6. Uložit `tax_report_runs` + `tax_report_run_entries`.
-7. Vrátit XML stream.
+4. Vrátit XML stream.
 
 ### 6.9 Registry lookup (ARES + adresa)
 1. FE odešle dotaz na interní `registry` endpoint.
@@ -450,6 +465,7 @@ Poznámka:
   - `/invoices/:invoiceId/copy`
   - `/tax-reports`
   - `/settings/subject`
+- Chráněné routy aplikace jsou seskupeny do společného layoutu (`AppLayout`) přes nested routing.
 
 ### 7.2 Stav a data
 - Server state: `TanStack Query`.
@@ -466,6 +482,23 @@ Poznámka:
 - Formulář položek: dynamické řádky.
 - Globální toast provider.
 - Confirm modal pro destruktivní akce.
+
+### 7.4 Design foundation (UI)
+- Design tokens jsou definované centrálně v `apps/web/src/index.css`:
+  - barvy (`--primary`, `--secondary`, `--danger`, neutrals),
+  - typografie (`--font-body`, `--font-heading`),
+  - spacing/radius/stíny.
+- Komponentní stavy:
+  - formulářové prvky: `default/hover/focus/disabled`,
+  - tlačítka: `primary/secondary/danger` + disabled,
+  - stavové badge pro faktury: `draft/issued/overdue/paid/cancelled`.
+- Responsivní pravidla:
+  - breakpointy pro mobil/tablet jsou řešené přes media query v globálním stylesheetu,
+  - tabulky mají mobilní fallback se scroll kontejnerem.
+- App shell:
+  - `AppLayout` obsahuje globální sidebar navigaci a topbar.
+  - topbar má uživatelské menu (avatar + dropdown s akcí `Odhlásit`).
+  - stránkové filtry/akce se renderují pouze v obsahu modulu, nikoliv v globální navigaci.
 
 ## 8. Výpočty a formátování
 
@@ -510,8 +543,7 @@ Poznámka:
 
 ### 10.2 Typy exportu v1
 1. `Přiznání k DPH`
-2. `Souhrnné hlášení`
-3. `Kontrolní hlášení`
+2. `Kontrolní hlášení`
 
 Mapování v1:
 1. `Přiznání k DPH` -> `Pisemnost/DPHDP3`
@@ -537,7 +569,6 @@ Mapování v1:
 
 ### 11.2 Auditní logika
 - `created_at`, `updated_at` na hlavních tabulkách.
-- `tax_report_runs` jako audit exportů.
 - `pdf_export_metadata` jako audit PDF exportů.
 - `user_sessions` a `password_reset_tokens` jako audit auth operací.
 
@@ -564,7 +595,7 @@ Mapování v1:
 - Invoice editor: lookup odběratele + ruční editace po předvyplnění.
 - Delete draft vs. zákaz delete issued.
 - PDF export a verze včetně layout smoke kontroly.
-- Tax report export + run versioning.
+- Tax report export (přímý export XML bez historie v UI).
 - Kontrola, že `vat_return` export obsahuje `DPHDP3` a `Veta1..Veta6`.
 - Kontrola, že `control_statement` export obsahuje `DPHKH1` a `VetaA4/VetaC`.
 
@@ -572,7 +603,7 @@ Mapování v1:
 - Registrace -> onboarding subjektu -> invoices landing.
 - Onboarding -> vytvoření faktury -> export PDF.
 - Seznam faktur: filtry + stránkování + návrat kontextu.
-- DPH podklady: preview + export XML.
+- DPH podklady: přímý export XML.
 
 ## 13. Nefunkční požadavky
 
@@ -591,7 +622,7 @@ Mapování v1:
 - Error tracking hook (Sentry-compatible).
 
 ## 14. Potvrzená rozhodnutí
-1. Číselná řada faktur používá formát `YYYYNNNN` (např. `20260001`).
+1. Číselná řada faktur používá formát `YYYYNN` (např. `202601`).
 2. V1 používá login (single-user bez autentizace se nepoužije).
 3. PDF renderer pro v1 je `pdfkit`.
 4. Registrace ve v1 nevyžaduje ověření e-mailu před prvním přihlášením.

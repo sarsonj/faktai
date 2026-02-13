@@ -22,3 +22,8 @@
 | `CR-0003` | Vyhledání odběratele při zadání faktury | `Ověřeno` | `Must` |
 | `CR-0004` | Redesign PDF vzhledu faktury | `Ověřeno` | `Must` |
 | `CR-0005` | FU XML export pro přiznání DPH a kontrolní hlášení | `Ověřeno` | `Must` |
+| `CR-0006` | Úpravy XML exportu, editoru faktur a kvality PDF | `Ověřeno` | `Must` |
+| `CR-0007` | Regresní opravy defaultů exportu, editoru a PDF sazeb | `Ověřeno` | `Must` |
+| `CR-0008` | UI roadmap + Fáze 1 design foundation | `Implementováno` | `Should` |
+| `CR-0009` | SaaS app shell: oddělená navigace a uživatelské menu | `Ke schválení` | `Must` |
+| `CR-0010` | Seznam faktur: ikonové akce a proklik čísla dokladu | `Implementováno` | `Should` |

@@ -27,10 +27,8 @@ export function InvoiceCopyPage() {
   }, [invoiceId, navigate, searchParams]);
 
   return (
-    <main className="app-shell">
-      <section className="card">
-        {error ? <p className="error">{error}</p> : <p>Vytvářím kopii faktury...</p>}
-      </section>
-    </main>
+    <section className="card">
+      {error ? <p className="error">{error}</p> : <p>Vytvářím kopii faktury...</p>}
+    </section>
   );
 }

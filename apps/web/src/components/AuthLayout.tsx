@@ -2,7 +2,7 @@ import { Link, Outlet } from 'react-router-dom';
 
 export function AuthLayout() {
   return (
-    <main className="app-shell">
+    <main className="app-shell auth-shell">
       <section className="card">
         <h1>TappyFaktur</h1>
         <p>Autentizace</p>
