@@ -486,6 +486,9 @@ Poznámka:
 - KPI karty v detailu faktury (`celkem`, `základ daně`, `DPH`).
 - Editor položek s průběžným výpočtem řádkového součtu.
 - Sticky action bar v editoru faktury (akce dostupné i při delším scrollu).
+- Auth layout (`auth-layout`) se dvěma zónami: informační panel + formulářový panel.
+- DPH export panel se souhrnnými kartami a výpočtem očekávaného názvu XML souboru.
+- Subject summary karty v onboardingu a nastavení subjektu.
 
 ### 7.4 Design foundation (UI)
 - Design tokens jsou definované centrálně v `apps/web/src/index.css`:
@@ -514,6 +517,10 @@ Poznámka:
   - `invoice-stats` poskytuje rychlý vizuální souhrn stavů v seznamu faktur,
   - `invoice-item-total` zobrazuje per-item částku s DPH v editoru,
   - `editor-action-bar` je sticky panel s primárními workflow akcemi.
+- Podpůrné moduly polish (Fáze 4):
+  - `auth-card`, `auth-layout`, `auth-aside`, `auth-panel` sjednocují vzhled auth sekce,
+  - `kpi-grid`/`kpi-card` jsou znovupoužité i v DPH podkladech a správě subjektu,
+  - karty se chovají responzivně a podporují zalamování delších hodnot (např. název XML souboru).
 
 ## 8. Výpočty a formátování
 

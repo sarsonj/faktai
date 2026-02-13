@@ -35,7 +35,12 @@ export function ResetPasswordPage() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="form-stack">
+    <form onSubmit={onSubmit} className="form-stack auth-form">
+      <div className="auth-form-head">
+        <h2>Nastavení nového hesla</h2>
+        <p>Heslo musí mít minimálně 8 znaků. Doporučená je delší heslová fráze.</p>
+      </div>
+
       <label>
         Nové heslo
         <input
@@ -55,9 +60,11 @@ export function ResetPasswordPage() {
           required
         />
       </label>
-      <button disabled={loading || !token} type="submit">
-        {loading ? 'Ukládám...' : 'Uložit nové heslo'}
-      </button>
+      <div className="auth-form-actions">
+        <button disabled={loading || !token} type="submit">
+          {loading ? 'Ukládám...' : 'Uložit nové heslo'}
+        </button>
+      </div>
       {result && <p>{result}</p>}
       {error && <p className="error">{error}</p>}
       {!token && <p className="error">Chybí reset token v URL.</p>}

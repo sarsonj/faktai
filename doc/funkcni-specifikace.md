@@ -46,6 +46,7 @@ Umožnit založení a správu profilu živnostníka (fakturačního subjektu), b
 Prvky obrazovky:
 - Nadpis: `Nastavení fakturačního subjektu`.
 - Stručné vysvětlení: bez vyplnění údajů nelze vystavit fakturu.
+- Přehledový blok kroků onboardingu (`Identifikace`, `Adresa a účet`, `Daňové nastavení`).
 - Jednostránkový formulář.
 - Blok `Načíst firmu z ARES`:
   - vstup `IČO nebo název firmy`,
@@ -661,6 +662,14 @@ Pravidla:
 - Výběr `Perioda` (`Měsíc`/`Kvartál`) s defaultem z nastavení subjektu (`vatPeriodType`).
 - Výběr `Rok`.
 - Výběr `Měsíc` nebo `Kvartál` dle vybrané periody.
+- Informační souhrn exportu:
+  - `IČO subjektu`,
+  - `Typ podání`,
+  - `Výchozí perioda`,
+  - `Očekávaný název exportovaného souboru`.
+- Rychlé akce období:
+  - `Předchozí období`,
+  - `Aktuální období`.
 - Výchozí hodnota období:
   - při `Měsíc` je předchozí kalendářní měsíc,
   - při `Kvartál` je předchozí kalendářní čtvrtletí.
@@ -873,11 +882,14 @@ Zajistit bezpečný vstup do aplikace, vytvoření uživatelského účtu a nav�
 
 #### 7.4.1 Přihlášení
 Prvky:
+- Auth layout se dvěma zónami:
+  - informační blok (co aplikace umí),
+  - formulářový panel.
 - Pole `E-mail`.
 - Pole `Heslo`.
 - Akce `Přihlásit se`.
 - Odkazy:
-  - `Nemáte účet? Registrovat`,
+  - `Registrace`,
   - `Zapomenuté heslo`.
 
 Pravidla:
@@ -886,10 +898,10 @@ Pravidla:
 
 #### 7.4.2 Registrace
 Prvky:
+- Stejný auth layout jako u přihlášení (informační blok + formulářový panel).
 - Pole `E-mail`.
 - Pole `Heslo`.
 - Pole `Potvrzení hesla`.
-- Souhlas s podmínkami (checkbox).
 - Akce `Vytvořit účet`.
 
 Pravidla:
@@ -899,6 +911,7 @@ Pravidla:
 
 #### 7.4.3 Zapomenuté heslo
 Prvky:
+- Stejný auth layout jako u přihlášení.
 - Pole `E-mail`.
 - Akce `Odeslat odkaz`.
 
@@ -908,6 +921,7 @@ Pravidla:
 
 #### 7.4.4 Nastavení nového hesla
 Prvky:
+- Stejný auth layout jako u přihlášení.
 - Pole `Nové heslo`.
 - Pole `Potvrzení hesla`.
 - Akce `Uložit nové heslo`.

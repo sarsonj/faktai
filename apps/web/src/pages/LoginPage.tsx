@@ -30,7 +30,12 @@ export function LoginPage() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="form-stack">
+    <form onSubmit={onSubmit} className="form-stack auth-form">
+      <div className="auth-form-head">
+        <h2>Přihlášení</h2>
+        <p>Použijte e-mail a heslo k pokračování do aplikace.</p>
+      </div>
+
       <label>
         E-mail
         <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" required />
@@ -45,10 +50,12 @@ export function LoginPage() {
         />
       </label>
       {error && <p className="error">{error}</p>}
-      <button disabled={loading} type="submit">
-        {loading ? 'Přihlašuji...' : 'Přihlásit se'}
-      </button>
-      <Link to="/auth/forgot-password">Zapomenuté heslo</Link>
+      <div className="auth-form-actions">
+        <button disabled={loading} type="submit">
+          {loading ? 'Přihlašuji...' : 'Přihlásit se'}
+        </button>
+        <Link to="/auth/forgot-password">Zapomenuté heslo</Link>
+      </div>
     </form>
   );
 }

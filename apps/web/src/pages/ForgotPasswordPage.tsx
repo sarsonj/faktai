@@ -25,14 +25,21 @@ export function ForgotPasswordPage() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="form-stack">
+    <form onSubmit={onSubmit} className="form-stack auth-form">
+      <div className="auth-form-head">
+        <h2>Zapomenuté heslo</h2>
+        <p>Zadejte e-mail a pošleme vám odkaz pro nastavení nového hesla.</p>
+      </div>
+
       <label>
         E-mail
         <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" required />
       </label>
-      <button disabled={loading} type="submit">
-        {loading ? 'Odesílám...' : 'Odeslat odkaz'}
-      </button>
+      <div className="auth-form-actions">
+        <button disabled={loading} type="submit">
+          {loading ? 'Odesílám...' : 'Odeslat odkaz'}
+        </button>
+      </div>
       {result && <p>{result}</p>}
     </form>
   );

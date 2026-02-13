@@ -28,7 +28,12 @@ export function RegisterPage() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="form-stack">
+    <form onSubmit={onSubmit} className="form-stack auth-form">
+      <div className="auth-form-head">
+        <h2>Registrace</h2>
+        <p>Vytvořte účet a pokračujte do onboardingu subjektu.</p>
+      </div>
+
       <label>
         E-mail
         <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" required />
@@ -53,9 +58,11 @@ export function RegisterPage() {
         />
       </label>
       {error && <p className="error">{error}</p>}
-      <button disabled={loading} type="submit">
-        {loading ? 'Vytvářím účet...' : 'Vytvořit účet'}
-      </button>
+      <div className="auth-form-actions">
+        <button disabled={loading} type="submit">
+          {loading ? 'Vytvářím účet...' : 'Vytvořit účet'}
+        </button>
+      </div>
     </form>
   );
 }

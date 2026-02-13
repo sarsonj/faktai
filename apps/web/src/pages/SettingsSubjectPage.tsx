@@ -56,6 +56,9 @@ export function SettingsSubjectPage() {
     );
   }
 
+  const subjectName = subject.businessName || `${subject.firstName} ${subject.lastName}`;
+  const bankAccount = `${subject.bankAccountPrefix ? `${subject.bankAccountPrefix}-` : ''}${subject.bankAccountNumber}/${subject.bankCode}`;
+
   return (
     <section className="card card-narrow">
       <header className="page-head">
@@ -67,6 +70,26 @@ export function SettingsSubjectPage() {
       </header>
       {error && <p className="error">{error}</p>}
       {success && <p>{success}</p>}
+      <section className="ui-section">
+        <div className="kpi-grid">
+          <article className="kpi-card">
+            <p>Subjekt</p>
+            <strong>{subjectName}</strong>
+          </article>
+          <article className="kpi-card">
+            <p>IČO / DIČ</p>
+            <strong>{subject.ico}{subject.dic ? ` / ${subject.dic}` : ''}</strong>
+          </article>
+          <article className="kpi-card">
+            <p>Režim DPH</p>
+            <strong>{subject.isVatPayer ? (subject.vatPeriodType === 'month' ? 'Plátce (měsíčně)' : 'Plátce (čtvrtletně)') : 'Neplátce'}</strong>
+          </article>
+          <article className="kpi-card">
+            <p>Bankovní účet</p>
+            <strong>{bankAccount}</strong>
+          </article>
+        </div>
+      </section>
       <SubjectForm
         initial={subject}
         loading={saving}
