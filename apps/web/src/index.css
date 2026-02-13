@@ -1045,11 +1045,17 @@ button:disabled {
 
 .invoice-list-table {
   table-layout: fixed;
+  min-width: 1010px;
 }
 
 .invoice-list-table th,
 .invoice-list-table td {
   white-space: nowrap;
+}
+
+.invoice-list-table th {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .invoice-list-table .col-doc {
@@ -1058,6 +1064,10 @@ button:disabled {
 
 .invoice-list-table .col-customer {
   width: auto;
+}
+
+.invoice-list-table .cell-customer {
+  min-width: 240px;
 }
 
 .invoice-list-table .col-dates {
