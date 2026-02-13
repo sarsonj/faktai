@@ -22,6 +22,7 @@ type FormState = {
   ico: string;
   dic: string;
   isVatPayer: boolean;
+  vatPeriodType: 'month' | 'quarter';
   vatRegistrationDate: string;
   street: string;
   city: string;
@@ -55,6 +56,7 @@ function toInitialState(initial?: SubjectProfile): FormState {
     ico: initial?.ico ?? '',
     dic: initial?.dic ?? '',
     isVatPayer: initial?.isVatPayer ?? false,
+    vatPeriodType: initial?.vatPeriodType ?? 'quarter',
     vatRegistrationDate: initial?.vatRegistrationDate?.slice(0, 10) ?? '',
     street: initial?.street ?? '',
     city: initial?.city ?? '',
@@ -107,6 +109,7 @@ export function SubjectForm({ initial, submitLabel, loading = false, onSubmit }:
       ico: state.ico,
       dic: state.dic || undefined,
       isVatPayer: state.isVatPayer,
+      vatPeriodType: state.vatPeriodType,
       vatRegistrationDate: state.vatRegistrationDate || undefined,
       street: state.street,
       city: state.city,
@@ -322,6 +325,22 @@ export function SubjectForm({ initial, submitLabel, loading = false, onSubmit }:
           }
           type="date"
         />
+      </label>
+      <label>
+        Periodicita DPH
+        <select
+          disabled={!state.isVatPayer}
+          value={state.vatPeriodType}
+          onChange={(event) =>
+            setState((current) => ({
+              ...current,
+              vatPeriodType: event.target.value as 'month' | 'quarter',
+            }))
+          }
+        >
+          <option value="month">Měsíční</option>
+          <option value="quarter">Čtvrtletní</option>
+        </select>
       </label>
       <label>
         Ulice

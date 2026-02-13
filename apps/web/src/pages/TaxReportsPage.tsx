@@ -1,19 +1,33 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { listTaxReportRuns, previewTaxReport, exportTaxReportXml } from '../tax-reports-api';
+import { exportTaxReportXml } from '../tax-reports-api';
 import { getSubject } from '../subject-api';
-import type {
-  TaxPeriodType,
-  TaxReportPreview,
-  TaxReportRequest,
-  TaxReportRun,
-  TaxReportType,
-} from '../types';
+import type { TaxPeriodType, TaxReportRequest, TaxReportType } from '../types';
 
 const REPORT_OPTIONS: Array<{ value: TaxReportType; label: string }> = [
   { value: 'vat_return', label: 'Přiznání k DPH' },
-  { value: 'summary_statement', label: 'Souhrnné hlášení' },
   { value: 'control_statement', label: 'Kontrolní hlášení' },
+];
+
+const MONTH_OPTIONS = [
+  { value: 1, label: '01 - leden' },
+  { value: 2, label: '02 - únor' },
+  { value: 3, label: '03 - březen' },
+  { value: 4, label: '04 - duben' },
+  { value: 5, label: '05 - květen' },
+  { value: 6, label: '06 - červen' },
+  { value: 7, label: '07 - červenec' },
+  { value: 8, label: '08 - srpen' },
+  { value: 9, label: '09 - září' },
+  { value: 10, label: '10 - říjen' },
+  { value: 11, label: '11 - listopad' },
+  { value: 12, label: '12 - prosinec' },
+];
+
+const QUARTER_OPTIONS = [
+  { value: 1, label: 'Q1 (1. čtvrtletí)' },
+  { value: 2, label: 'Q2 (2. čtvrtletí)' },
+  { value: 3, label: 'Q3 (3. čtvrtletí)' },
+  { value: 4, label: 'Q4 (4. čtvrtletí)' },
 ];
 
 function currentYear(): number {
@@ -24,15 +38,31 @@ function currentMonth(): number {
   return new Date().getMonth() + 1;
 }
 
+function previousPeriod(periodType: TaxPeriodType): { year: number; value: number } {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  if (periodType === 'month') {
+    const currentMonthValue = now.getMonth() + 1;
+    if (currentMonthValue === 1) {
+      return { year: currentYear - 1, value: 12 };
+    }
+    return { year: currentYear, value: currentMonthValue - 1 };
+  }
+
+  const currentQuarter = Math.floor(now.getMonth() / 3) + 1;
+  if (currentQuarter === 1) {
+    return { year: currentYear - 1, value: 4 };
+  }
+  return { year: currentYear, value: currentQuarter - 1 };
+}
+
 export function TaxReportsPage() {
   const [subjectLoading, setSubjectLoading] = useState(true);
   const [isVatPayer, setIsVatPayer] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [runsLoading, setRunsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<TaxReportPreview | null>(null);
-  const [runs, setRuns] = useState<TaxReportRun[]>([]);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const [form, setForm] = useState<TaxReportRequest>({
     reportType: 'vat_return',
@@ -41,19 +71,10 @@ export function TaxReportsPage() {
     value: currentMonth(),
   });
 
-  const maxValue = useMemo(() => (form.periodType === 'month' ? 12 : 4), [form.periodType]);
-
-  const reloadRuns = async () => {
-    setRunsLoading(true);
-    try {
-      const payload = await listTaxReportRuns();
-      setRuns(payload);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Načtení historie exportů selhalo');
-    } finally {
-      setRunsLoading(false);
-    }
-  };
+  const periodOptions = useMemo(
+    () => (form.periodType === 'month' ? MONTH_OPTIONS : QUARTER_OPTIONS),
+    [form.periodType],
+  );
 
   useEffect(() => {
     const run = async () => {
@@ -63,6 +84,14 @@ export function TaxReportsPage() {
       try {
         const subject = await getSubject();
         setIsVatPayer(subject.isVatPayer);
+        const subjectPeriodType = subject.vatPeriodType ?? 'quarter';
+        const previous = previousPeriod(subjectPeriodType);
+        setForm((current) => ({
+          ...current,
+          periodType: subjectPeriodType,
+          year: previous.year,
+          value: previous.value,
+        }));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Načtení subjektu selhalo');
       } finally {
@@ -71,31 +100,28 @@ export function TaxReportsPage() {
     };
 
     void run();
-    void reloadRuns();
   }, []);
 
-  const onPreview = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const payload = await previewTaxReport(form);
-      setPreview(payload);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Výpočet podkladů selhal');
-      setPreview(null);
-    } finally {
-      setLoading(false);
-    }
+  const onPeriodTypeChange = (periodType: TaxPeriodType) => {
+    setForm((current) => {
+      const options = periodType === 'month' ? MONTH_OPTIONS : QUARTER_OPTIONS;
+      const currentExists = options.some((item) => item.value === current.value);
+      return {
+        ...current,
+        periodType,
+        value: currentExists ? current.value : options[0].value,
+      };
+    });
   };
 
   const onExport = async () => {
     setExporting(true);
     setError(null);
+    setSuccess(null);
 
     try {
       await exportTaxReportXml(form);
-      await reloadRuns();
+      setSuccess('XML soubor byl vygenerován a stažen.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Export XML selhal');
     } finally {
@@ -104,164 +130,98 @@ export function TaxReportsPage() {
   };
 
   if (subjectLoading) {
-    return (
-      <main className="app-shell">
-        <section className="card">Načítám DPH podklady...</section>
-      </main>
-    );
+    return <section className="card">Načítám DPH podklady...</section>;
   }
 
   return (
-    <main className="app-shell">
-      <section className="card card-wide">
-        <h1>DPH podklady</h1>
-        <div className="toolbar-row">
-          <Link to="/invoices">Vydané faktury</Link>
-          <Link to="/settings/subject">Nastavení subjektu</Link>
+    <section className="card card-wide">
+      <h1>DPH podklady</h1>
+
+      {error && <p className="error">{error}</p>}
+      {success && <p>{success}</p>}
+
+      {!isVatPayer && (
+        <div>
+          <p>Subjekt není plátce DPH, export XML je zablokovaný.</p>
         </div>
+      )}
 
-        {error && <p className="error">{error}</p>}
-
-        {!isVatPayer && (
-          <div>
-            <p>Subjekt není plátce DPH, export XML je zablokovaný.</p>
-          </div>
-        )}
-
-        {isVatPayer && (
-          <>
-            <div className="form-grid invoice-form-grid">
-              <label>
-                Typ podání
-                <select
-                  value={form.reportType}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      reportType: event.target.value as TaxReportType,
-                    }))
-                  }
-                >
-                  {REPORT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Perioda
-                <select
-                  value={form.periodType}
-                  onChange={(event) => {
-                    const nextPeriod = event.target.value as TaxPeriodType;
-                    setForm((current) => ({
-                      ...current,
-                      periodType: nextPeriod,
-                      value: nextPeriod === 'month' ? Math.min(current.value, 12) : Math.min(current.value, 4),
-                    }));
-                  }}
-                >
-                  <option value="month">Měsíc</option>
-                  <option value="quarter">Čtvrtletí</option>
-                </select>
-              </label>
-
-              <label>
-                Rok
-                <input
-                  type="number"
-                  value={form.year}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      year: Number(event.target.value),
-                    }))
-                  }
-                />
-              </label>
-
-              <label>
-                Hodnota období
-                <input
-                  type="number"
-                  min={1}
-                  max={maxValue}
-                  value={form.value}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      value: Number(event.target.value),
-                    }))
-                  }
-                />
-              </label>
-            </div>
-
-            <div className="button-row">
-              <button type="button" disabled={loading} onClick={onPreview}>
-                {loading ? 'Počítám...' : 'Vypočítat podklady'}
-              </button>
-              <button
-                type="button"
-                disabled={exporting || !preview}
-                onClick={onExport}
+      {isVatPayer && (
+        <>
+          <div className="form-grid invoice-form-grid">
+            <label>
+              Typ podání
+              <select
+                value={form.reportType}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    reportType: event.target.value as TaxReportType,
+                  }))
+                }
               >
-                {exporting ? 'Exportuji...' : 'Export XML'}
-              </button>
-            </div>
+                {REPORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-            {preview && (
-              <div className="totals-box">
-                <p>
-                  <strong>Počet zahrnutých faktur:</strong> {preview.invoiceCount}
-                </p>
-                <p>
-                  <strong>Verze schématu:</strong> {preview.schemaVersion}
-                </p>
-                <p>
-                  <strong>Dataset hash:</strong> <code>{preview.datasetHash}</code>
-                </p>
-                <pre className="json-preview">{JSON.stringify(preview.summary, null, 2)}</pre>
-              </div>
-            )}
-          </>
-        )}
+            <label>
+              Perioda
+              <select
+                value={form.periodType}
+                onChange={(event) => onPeriodTypeChange(event.target.value as TaxPeriodType)}
+              >
+                <option value="month">Měsíc</option>
+                <option value="quarter">Čtvrtletí</option>
+              </select>
+            </label>
 
-        <h2>Historie exportů</h2>
-        {runsLoading && <p>Načítám historii...</p>}
-        {!runsLoading && runs.length === 0 && <p>Zatím nebyl spuštěn žádný export.</p>}
+            <label>
+              Rok
+              <input
+                type="number"
+                min={2000}
+                max={2100}
+                value={form.year}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    year: Number(event.target.value),
+                  }))
+                }
+              />
+            </label>
 
-        {!runsLoading && runs.length > 0 && (
-          <table className="invoice-table">
-            <thead>
-              <tr>
-                <th>Typ</th>
-                <th>Perioda</th>
-                <th>Verze běhu</th>
-                <th>Počet faktur</th>
-                <th>Generováno</th>
-              </tr>
-            </thead>
-            <tbody>
-              {runs.map((run) => (
-                <tr key={run.id}>
-                  <td>{REPORT_OPTIONS.find((option) => option.value === run.reportType)?.label ?? run.reportType}</td>
-                  <td>
-                    {run.periodType === 'month'
-                      ? `${run.periodYear}-${String(run.periodValue).padStart(2, '0')}`
-                      : `${run.periodYear} / Q${run.periodValue}`}
-                  </td>
-                  <td>{run.runVersion}</td>
-                  <td>{run.invoiceCount}</td>
-                  <td>{new Date(run.generatedAt).toLocaleString('cs-CZ')}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
-    </main>
+            <label>
+              {form.periodType === 'month' ? 'Měsíc' : 'Kvartál'}
+              <select
+                value={String(form.value)}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    value: Number(event.target.value),
+                  }))
+                }
+              >
+                {periodOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="button-row">
+            <button type="button" disabled={exporting} onClick={onExport}>
+              {exporting ? 'Exportuji...' : 'Export XML'}
+            </button>
+          </div>
+        </>
+      )}
+    </section>
   );
 }

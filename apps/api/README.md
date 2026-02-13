@@ -25,6 +25,16 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Local PDF QA tooling (macOS)
+
+For invoice PDF quality checks (layout, fonts, Czech diacritics), these CLI tools are available in the project environment:
+
+- `pdfinfo`, `pdffonts`, `pdftotext`, `pdftoppm` (from `poppler`)
+- `magick` and `magick compare` (from `imagemagick`)
+- `ghostscript`
+
+These are used to inspect embedded fonts, extract text for diacritics validation, render PDF pages to PNG, and run visual diffs against reference invoices.
+
 ## Project setup
 
 ```bash

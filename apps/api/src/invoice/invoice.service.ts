@@ -18,6 +18,8 @@ import Decimal from 'decimal.js';
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
 import { createHash } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { PrismaService } from '../prisma/prisma.service';
 import { ListInvoicesQueryDto } from './dto/list-invoices.query.dto';
 import { InvoiceItemDto } from './dto/invoice-item.dto';
@@ -106,6 +108,11 @@ type ComputedItems = {
   totalWithoutVat: string;
   totalVat: string;
   totalWithVat: string;
+};
+
+type PdfFontNames = {
+  regular: string;
+  bold: string;
 };
 
 @Injectable()
@@ -276,7 +283,7 @@ export class InvoiceService {
   }
 
   private formatInvoiceNumber(year: number, currentValue: number): string {
-    return `${year}${String(currentValue).padStart(4, '0')}`;
+    return `${year}${String(currentValue).padStart(2, '0')}`;
   }
 
   private mapListItem(row: Invoice): InvoiceListItem {
@@ -602,6 +609,62 @@ export class InvoiceService {
     }
   }
 
+  private resolvePdfFontNames(doc: PDFKit.PDFDocument): PdfFontNames {
+    const candidates = [
+      join(__dirname, '../../assets/fonts'),
+      join(process.cwd(), 'assets/fonts'),
+      join(process.cwd(), 'apps/api/assets/fonts'),
+    ];
+
+    for (const base of candidates) {
+      const regular = join(base, 'NotoSans-Regular.ttf');
+      const bold = join(base, 'NotoSans-Bold.ttf');
+      if (existsSync(regular) && existsSync(bold)) {
+        doc.registerFont('TappyFaktur-Regular', regular);
+        doc.registerFont('TappyFaktur-Bold', bold);
+        return {
+          regular: 'TappyFaktur-Regular',
+          bold: 'TappyFaktur-Bold',
+        };
+      }
+    }
+
+    return {
+      regular: 'Helvetica',
+      bold: 'Helvetica-Bold',
+    };
+  }
+
+  private cleanInlineText(value?: string | null): string {
+    if (!value) {
+      return '';
+    }
+    return value.replace(/\s+/g, ' ').trim();
+  }
+
+  private drawSingleLine(
+    doc: PDFKit.PDFDocument,
+    text: string,
+    x: number,
+    y: number,
+    width: number,
+    fontName: string,
+    fontSize = 9,
+    align: 'left' | 'right' | 'center' | 'justify' = 'left',
+    color = '#111111',
+  ): void {
+    doc
+      .font(fontName)
+      .fontSize(fontSize)
+      .fillColor(color)
+      .text(this.cleanInlineText(text), x, y, {
+        width,
+        align,
+        lineBreak: false,
+        ellipsis: true,
+      });
+  }
+
   private async renderPdf(input: {
     invoice: Invoice & { items: InvoiceItem[] };
     supplier: SupplierSnapshot;
@@ -610,7 +673,7 @@ export class InvoiceService {
   }): Promise<Buffer> {
     const doc = new PDFDocument({
       size: 'A4',
-      margin: 40,
+      margin: 36,
     });
 
     const chunks: Buffer[] = [];
@@ -624,48 +687,72 @@ export class InvoiceService {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
+      const fonts = this.resolvePdfFontNames(doc);
       const left = doc.page.margins.left;
       const top = doc.page.margins.top;
       const contentWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
       const right = left + contentWidth;
-      const mid = left + contentWidth / 2;
+      const colGap = 20;
+      const colWidth = (contentWidth - colGap) / 2;
+      const rightColX = left + colWidth + colGap;
+      const maxBodyBottom = doc.page.height - doc.page.margins.bottom - 132;
 
       const supplierName = input.supplier.businessName
         ? input.supplier.businessName
         : `${input.supplier.firstName} ${input.supplier.lastName}`;
       const invoiceNumber = input.invoice.invoiceNumber ?? input.invoice.id.slice(0, 8);
 
-      doc.fontSize(10).fillColor('#111111');
-      doc.font('Helvetica-Bold').text('Dodavatel', left, top);
-      doc.font('Helvetica').fontSize(9).text(supplierName, left, top + 16);
-      doc.text(input.supplier.street, left, top + 30);
-      doc.text(`${input.supplier.postalCode} ${input.supplier.city}`, left, top + 44);
-      doc.text(input.supplier.countryCode === 'CZ' ? 'Česká republika' : input.supplier.countryCode, left, top + 58);
-      doc.text(
+      this.drawSingleLine(doc, 'Dodavatel', left, top, colWidth, fonts.bold, 10);
+      this.drawSingleLine(doc, supplierName, left, top + 16, colWidth, fonts.regular);
+      this.drawSingleLine(doc, input.supplier.street, left, top + 30, colWidth, fonts.regular);
+      this.drawSingleLine(
+        doc,
+        `${input.supplier.postalCode} ${input.supplier.city}`,
+        left,
+        top + 44,
+        colWidth,
+        fonts.regular,
+      );
+      this.drawSingleLine(
+        doc,
+        input.supplier.countryCode === 'CZ' ? 'Česká republika' : input.supplier.countryCode,
+        left,
+        top + 58,
+        colWidth,
+        fonts.regular,
+      );
+      this.drawSingleLine(
+        doc,
         `IČ: ${input.supplier.ico}${input.supplier.dic ? `    DIČ: ${input.supplier.dic}` : ''}`,
         left,
         top + 74,
+        colWidth,
+        fonts.regular,
       );
 
-      doc.moveTo(mid - 10, top).lineTo(mid - 10, top + 170).strokeColor('#d9d9d9').stroke();
+      this.drawSingleLine(doc, 'Faktura - daňový doklad', rightColX, top + 4, colWidth - 104, fonts.bold, 16);
+      doc.rect(right - 94, top, 94, 28).fill('#eeeeee');
+      this.drawSingleLine(doc, invoiceNumber, right - 90, top + 8, 86, fonts.bold, 12, 'center');
+      this.drawPseudoBarcode(doc, right - 90, top + 34, 86, invoiceNumber);
 
-      doc.font('Helvetica-Bold').fontSize(16).text('Faktura - daňový doklad', mid + 20, top + 4);
-      doc.rect(right - 110, top, 90, 28).fill('#eeeeee');
-      doc.fillColor('#111111').font('Helvetica-Bold').fontSize(12).text(invoiceNumber, right - 80, top + 8);
-      this.drawPseudoBarcode(doc, right - 102, top + 34, 84, invoiceNumber);
-
-      doc.font('Helvetica-Bold').fontSize(10).text('Odběratel', mid + 20, top + 98);
-      doc.font('Helvetica').fontSize(9).text(input.invoice.customerName, mid + 20, top + 114);
-      doc.text(input.invoice.customerStreet, mid + 20, top + 128);
-      doc.text(
+      this.drawSingleLine(doc, 'Odběratel', rightColX, top + 98, colWidth, fonts.bold, 10);
+      this.drawSingleLine(doc, input.invoice.customerName, rightColX, top + 114, colWidth, fonts.regular);
+      this.drawSingleLine(doc, input.invoice.customerStreet, rightColX, top + 128, colWidth, fonts.regular);
+      this.drawSingleLine(
+        doc,
         `${input.invoice.customerPostalCode} ${input.invoice.customerCity}`,
-        mid + 20,
+        rightColX,
         top + 142,
+        colWidth,
+        fonts.regular,
       );
-      doc.text(
+      this.drawSingleLine(
+        doc,
         input.invoice.customerCountryCode === 'CZ' ? 'Česká republika' : input.invoice.customerCountryCode,
-        mid + 20,
+        rightColX,
         top + 156,
+        colWidth,
+        fonts.regular,
       );
       const customerIdLine = [
         input.invoice.customerIco ? `IČ: ${input.invoice.customerIco}` : '',
@@ -674,13 +761,12 @@ export class InvoiceService {
         .filter(Boolean)
         .join('    ');
       if (customerIdLine) {
-        doc.text(customerIdLine, mid + 20, top + 170);
+        this.drawSingleLine(doc, customerIdLine, rightColX, top + 170, colWidth, fonts.regular);
       }
 
-      let y = top + 205;
-      doc.font('Helvetica').fontSize(9);
-      doc.text('Způsob úhrady:', left, y);
-      doc.font('Helvetica-Bold').text('Převodem', left + 74, y);
+      let y = top + 204;
+      this.drawSingleLine(doc, 'Způsob úhrady:', left, y, 92, fonts.regular, 9);
+      this.drawSingleLine(doc, 'Převodem', left + 72, y, 120, fonts.bold, 9);
       y += 16;
 
       const paymentTableTop = y;
@@ -702,160 +788,298 @@ export class InvoiceService {
         .lineTo(right, paymentTableTop + 20)
         .stroke();
 
-      doc.font('Helvetica-Bold').fontSize(9);
-      doc.text('Bankovní účet', left + 6, paymentTableTop + 6);
-      doc.text('Symbol', left + col1Width + 6, paymentTableTop + 6);
-      doc.text('Datum', left + col1Width + col2Width + 6, paymentTableTop + 6);
+      this.drawSingleLine(doc, 'Bankovní účet', left + 6, paymentTableTop + 6, col1Width - 12, fonts.bold, 9);
+      this.drawSingleLine(doc, 'Symbol', left + col1Width + 6, paymentTableTop + 6, col2Width - 12, fonts.bold, 9);
+      this.drawSingleLine(doc, 'Datum', left + col1Width + col2Width + 6, paymentTableTop + 6, col3Width - 12, fonts.bold, 9);
 
-      doc.font('Helvetica').fontSize(9);
-      doc.text(this.formatSupplierBankAccount(input.supplier), left + 6, paymentTableTop + 28);
-      doc.text(`IBAN: ${input.iban}`, left + 6, paymentTableTop + 42);
-      doc.text('SWIFT: -', left + 6, paymentTableTop + 56);
-
-      doc.text('variabilní:', left + col1Width + 6, paymentTableTop + 28);
-      doc.font('Helvetica-Bold').text(input.invoice.variableSymbol, left + col1Width + 54, paymentTableTop + 28);
-      doc.font('Helvetica').text('konstantní:', left + col1Width + 6, paymentTableTop + 42);
-      doc.font('Helvetica-Bold').text('0308', left + col1Width + 54, paymentTableTop + 42);
-
-      doc.font('Helvetica').text('vystavení:', left + col1Width + col2Width + 6, paymentTableTop + 28);
-      doc.font('Helvetica-Bold').text(
-        this.formatDateCz(input.invoice.issueDate),
-        left + col1Width + col2Width + 56,
+      this.drawSingleLine(
+        doc,
+        this.formatSupplierBankAccount(input.supplier),
+        left + 6,
         paymentTableTop + 28,
+        col1Width - 12,
+        fonts.regular,
+        9,
       );
-      doc.font('Helvetica').text('splatnosti:', left + col1Width + col2Width + 6, paymentTableTop + 42);
-      doc.font('Helvetica-Bold').text(
+      this.drawSingleLine(doc, `IBAN: ${input.iban}`, left + 6, paymentTableTop + 42, col1Width - 12, fonts.regular, 9);
+      this.drawSingleLine(doc, 'SWIFT: FIOBCZPPXXX', left + 6, paymentTableTop + 56, col1Width - 12, fonts.regular, 9);
+
+      this.drawSingleLine(doc, 'variabilní:', left + col1Width + 6, paymentTableTop + 28, 52, fonts.regular, 9);
+      this.drawSingleLine(
+        doc,
+        input.invoice.variableSymbol,
+        left + col1Width + 58,
+        paymentTableTop + 28,
+        col2Width - 64,
+        fonts.bold,
+        9,
+      );
+      this.drawSingleLine(doc, 'konstantní:', left + col1Width + 6, paymentTableTop + 42, 52, fonts.regular, 9);
+      this.drawSingleLine(doc, '0308', left + col1Width + 58, paymentTableTop + 42, col2Width - 64, fonts.bold, 9);
+
+      this.drawSingleLine(doc, 'vystavení:', left + col1Width + col2Width + 6, paymentTableTop + 28, 52, fonts.regular, 9);
+      this.drawSingleLine(
+        doc,
+        this.formatDateCz(input.invoice.issueDate),
+        left + col1Width + col2Width + 58,
+        paymentTableTop + 28,
+        col3Width - 64,
+        fonts.bold,
+        9,
+      );
+      this.drawSingleLine(doc, 'splatnosti:', left + col1Width + col2Width + 6, paymentTableTop + 42, 52, fonts.regular, 9);
+      this.drawSingleLine(
+        doc,
         this.formatDateCz(input.invoice.dueDate),
-        left + col1Width + col2Width + 56,
+        left + col1Width + col2Width + 58,
         paymentTableTop + 42,
+        col3Width - 64,
+        fonts.bold,
+        9,
       );
-      doc.font('Helvetica').text('DUZP:', left + col1Width + col2Width + 6, paymentTableTop + 56);
-      doc.font('Helvetica-Bold').text(
+      this.drawSingleLine(doc, 'DUZP:', left + col1Width + col2Width + 6, paymentTableTop + 56, 52, fonts.regular, 9);
+      this.drawSingleLine(
+        doc,
         this.formatDateCz(input.invoice.taxableSupplyDate),
-        left + col1Width + col2Width + 56,
+        left + col1Width + col2Width + 58,
         paymentTableTop + 56,
+        col3Width - 64,
+        fonts.bold,
+        9,
       );
 
       y = paymentTableTop + paymentTableHeight + 14;
-      doc.font('Helvetica').fontSize(9).fillColor('#222222').text(
+      this.drawSingleLine(
+        doc,
         `Fakturujeme: ${input.invoice.note ?? input.invoice.items[0]?.description ?? ''}`,
         left,
         y,
+        contentWidth,
+        fonts.regular,
+        9,
+        'left',
+        '#222222',
       );
 
       y += 18;
       const itemHeaderHeight = 18;
       const itemRowHeight = 18;
-      const cols = [230, 52, 68, 44, 70, 58, 66];
+      const cols = [170, 50, 64, 40, 72, 62, 65];
       const itemHeaders = ['Označení dodávky', 'Počet m.j.', 'Cena za m.j.', 'DPH %', 'Bez DPH', 'DPH', 'Celkem'];
 
       doc.rect(left, y, contentWidth, itemHeaderHeight).fill('#f3f3f3');
-      doc.fillColor('#111111').font('Helvetica-Bold').fontSize(8);
       let cx = left + 4;
       for (let i = 0; i < itemHeaders.length; i += 1) {
-        doc.text(itemHeaders[i], cx, y + 6, { width: cols[i] - 8, align: i === 0 ? 'left' : 'right' });
+        this.drawSingleLine(
+          doc,
+          itemHeaders[i],
+          cx,
+          y + 6,
+          cols[i] - 8,
+          fonts.bold,
+          8,
+          i === 0 ? 'left' : 'right',
+        );
         cx += cols[i];
       }
       y += itemHeaderHeight;
       doc.moveTo(left, y).lineTo(right, y).strokeColor('#d4d4d4').stroke();
 
-      doc.font('Helvetica').fontSize(8.5).fillColor('#111111');
       const sortedItems = [...input.invoice.items].sort((a, b) => a.position - b.position);
+      let renderedItems = 0;
       for (const item of sortedItems) {
+        if (y + itemRowHeight > maxBodyBottom) {
+          break;
+        }
         cx = left + 4;
-        doc.text(item.description, cx, y + 5, { width: cols[0] - 8 });
+        this.drawSingleLine(doc, item.description, cx, y + 5, cols[0] - 8, fonts.regular, 8.5);
         cx += cols[0];
-        doc.text(item.quantity.toString(), cx, y + 5, { width: cols[1] - 8, align: 'right' });
+        this.drawSingleLine(doc, item.quantity.toString(), cx, y + 5, cols[1] - 8, fonts.regular, 8.5, 'right');
         cx += cols[1];
-        doc.text(item.unitPrice.toString(), cx, y + 5, { width: cols[2] - 8, align: 'right' });
+        this.drawSingleLine(doc, item.unitPrice.toString(), cx, y + 5, cols[2] - 8, fonts.regular, 8.5, 'right');
         cx += cols[2];
-        doc.text(String(item.vatRate), cx, y + 5, { width: cols[3] - 8, align: 'right' });
+        this.drawSingleLine(doc, String(item.vatRate), cx, y + 5, cols[3] - 8, fonts.regular, 8.5, 'right');
         cx += cols[3];
-        doc.text(this.formatMoney(item.lineTotalWithoutVat.toString()), cx, y + 5, { width: cols[4] - 8, align: 'right' });
+        this.drawSingleLine(
+          doc,
+          this.formatMoney(item.lineTotalWithoutVat.toString()),
+          cx,
+          y + 5,
+          cols[4] - 8,
+          fonts.regular,
+          8.5,
+          'right',
+        );
         cx += cols[4];
-        doc.text(this.formatMoney(item.lineVatAmount.toString()), cx, y + 5, { width: cols[5] - 8, align: 'right' });
+        this.drawSingleLine(
+          doc,
+          this.formatMoney(item.lineVatAmount.toString()),
+          cx,
+          y + 5,
+          cols[5] - 8,
+          fonts.regular,
+          8.5,
+          'right',
+        );
         cx += cols[5];
-        doc.font('Helvetica-Bold').text(this.formatMoney(item.lineTotalWithVat.toString()), cx, y + 5, {
-          width: cols[6] - 8,
-          align: 'right',
-        });
-        doc.font('Helvetica');
+        this.drawSingleLine(
+          doc,
+          this.formatMoney(item.lineTotalWithVat.toString()),
+          cx,
+          y + 5,
+          cols[6] - 8,
+          fonts.bold,
+          8.5,
+          'right',
+        );
+        y += itemRowHeight;
+        doc.moveTo(left, y).lineTo(right, y).strokeColor('#e5e5e5').stroke();
+        renderedItems += 1;
+      }
+
+      if (renderedItems < sortedItems.length && y + itemRowHeight <= maxBodyBottom) {
+        this.drawSingleLine(
+          doc,
+          `... a dalších ${sortedItems.length - renderedItems} položek`,
+          left + 6,
+          y + 5,
+          contentWidth - 12,
+          fonts.regular,
+          8.5,
+        );
         y += itemRowHeight;
         doc.moveTo(left, y).lineTo(right, y).strokeColor('#e5e5e5').stroke();
       }
 
       y += 10;
       doc.image(qrImage, left, y, { width: 95, height: 95 });
-      doc.font('Helvetica-Bold').fontSize(10).text('QR Platba+F', left + 2, y + 100);
+      this.drawSingleLine(doc, 'QR Platba+F', left + 2, y + 100, 100, fonts.bold, 10);
 
-      const vatTableX = left + 210;
+      const vatTableX = left + 190;
       const vatTableY = y + 8;
-      const vatTableW = contentWidth - 210;
+      const vatTableW = contentWidth - 190;
       const vatHeaderH = 16;
       const vatRowH = 16;
-      const vatCols = [80, 90, 90, vatTableW - 260];
+      const vatCols = [62, 88, 88, vatTableW - 238];
       doc.rect(vatTableX, vatTableY, vatTableW, vatHeaderH).fill('#f3f3f3');
-      doc.fillColor('#111111').font('Helvetica-Bold').fontSize(8);
       let vx = vatTableX + 4;
       for (const [index, heading] of ['Sazba DPH', 'Základ', 'Výše DPH', 'Celkem'].entries()) {
-        doc.text(heading, vx, vatTableY + 5, { width: vatCols[index] - 8, align: index === 0 ? 'left' : 'right' });
+        this.drawSingleLine(
+          doc,
+          heading,
+          vx,
+          vatTableY + 5,
+          vatCols[index] - 8,
+          fonts.bold,
+          8,
+          index === 0 ? 'left' : 'right',
+        );
         vx += vatCols[index];
       }
 
       const vatRows = this.buildVatRows(sortedItems);
       let vy = vatTableY + vatHeaderH;
-      doc.font('Helvetica').fontSize(8.5);
       for (const row of vatRows) {
         vx = vatTableX + 4;
-        doc.text(`${row.rate} %`, vx, vy + 5, { width: vatCols[0] - 8 });
+        this.drawSingleLine(doc, `${row.rate} %`, vx, vy + 5, vatCols[0] - 8, fonts.regular, 8.5);
         vx += vatCols[0];
-        doc.text(this.formatMoney(row.base), vx, vy + 5, { width: vatCols[1] - 8, align: 'right' });
+        this.drawSingleLine(doc, this.formatMoney(row.base), vx, vy + 5, vatCols[1] - 8, fonts.regular, 8.5, 'right');
         vx += vatCols[1];
-        doc.text(this.formatMoney(row.vat), vx, vy + 5, { width: vatCols[2] - 8, align: 'right' });
+        this.drawSingleLine(doc, this.formatMoney(row.vat), vx, vy + 5, vatCols[2] - 8, fonts.regular, 8.5, 'right');
         vx += vatCols[2];
-        doc.font('Helvetica-Bold').text(this.formatMoney(row.total), vx, vy + 5, {
-          width: vatCols[3] - 8,
-          align: 'right',
-        });
-        doc.font('Helvetica');
+        this.drawSingleLine(doc, this.formatMoney(row.total), vx, vy + 5, vatCols[3] - 8, fonts.bold, 8.5, 'right');
         vy += vatRowH;
         doc.moveTo(vatTableX, vy).lineTo(vatTableX + vatTableW, vy).strokeColor('#e5e5e5').stroke();
       }
 
       vx = vatTableX + 4;
-      doc.font('Helvetica-Bold').text('CELKEM', vx, vy + 5, { width: vatCols[0] - 8 });
+      this.drawSingleLine(doc, 'CELKEM', vx, vy + 5, vatCols[0] - 8, fonts.bold, 8.5);
       vx += vatCols[0];
-      doc.text(this.formatMoney(input.invoice.totalWithoutVat.toString()), vx, vy + 5, { width: vatCols[1] - 8, align: 'right' });
+      this.drawSingleLine(
+        doc,
+        this.formatMoney(input.invoice.totalWithoutVat.toString()),
+        vx,
+        vy + 5,
+        vatCols[1] - 8,
+        fonts.bold,
+        8.5,
+        'right',
+      );
       vx += vatCols[1];
-      doc.text(this.formatMoney(input.invoice.totalVat.toString()), vx, vy + 5, { width: vatCols[2] - 8, align: 'right' });
+      this.drawSingleLine(
+        doc,
+        this.formatMoney(input.invoice.totalVat.toString()),
+        vx,
+        vy + 5,
+        vatCols[2] - 8,
+        fonts.bold,
+        8.5,
+        'right',
+      );
       vx += vatCols[2];
-      doc.text(this.formatMoney(input.invoice.totalWithVat.toString()), vx, vy + 5, { width: vatCols[3] - 8, align: 'right' });
-
-      vy += vatRowH + 10;
-      doc.font('Helvetica-Bold').fontSize(14).text(
-        `Celkem k úhradě:  ${this.formatMoney(input.invoice.totalWithVat.toString())}`,
-        vatTableX,
-        vy,
-        { width: vatTableW, align: 'right' },
+      this.drawSingleLine(
+        doc,
+        this.formatMoney(input.invoice.totalWithVat.toString()),
+        vx,
+        vy + 5,
+        vatCols[3] - 8,
+        fonts.bold,
+        8.5,
+        'right',
       );
 
+      vy += vatRowH + 10;
+      this.drawSingleLine(
+        doc,
+        `Celkem k úhradě: ${this.formatMoney(input.invoice.totalWithVat.toString())}`,
+        vatTableX,
+        vy,
+        vatTableW,
+        fonts.bold,
+        14,
+        'right',
+      );
+
+      const noteY = Math.max(vy + 26, y + 120);
       if (input.invoice.note) {
-        doc.font('Helvetica').fontSize(9).fillColor('#333333').text(`Poznámka: ${input.invoice.note}`, left, Math.max(vy + 24, y + 118));
+        this.drawSingleLine(
+          doc,
+          `Poznámka: ${input.invoice.note}`,
+          left,
+          noteY,
+          contentWidth,
+          fonts.regular,
+          9,
+          'left',
+          '#333333',
+        );
       }
 
-      const footerY = doc.page.height - 42;
+      const footerY = doc.page.height - doc.page.margins.bottom - 16;
       doc.moveTo(left, footerY - 12).lineTo(right, footerY - 12).strokeColor('#d8d8d8').stroke();
-      doc.fillColor('#555555').font('Helvetica').fontSize(7.5);
-      doc.text(
+      this.drawSingleLine(
+        doc,
         `Vytiskl(a): ${input.supplier.firstName} ${input.supplier.lastName}, ${this.formatDateCz(new Date())}`,
         left,
         footerY,
+        200,
+        fonts.regular,
+        7.5,
+        'left',
+        '#555555',
       );
-      doc.text('Vystaveno v online fakturační službě iDoklad', left + 200, footerY, {
-        width: 220,
-        align: 'center',
-      });
-      doc.text('Strana 1/1', right - 70, footerY, { width: 70, align: 'right' });
+      this.drawSingleLine(
+        doc,
+        'Vystaveno v online fakturační službě iDoklad',
+        left + 200,
+        footerY,
+        220,
+        fonts.regular,
+        7.5,
+        'center',
+        '#555555',
+      );
+      this.drawSingleLine(doc, 'Strana 1/1', right - 70, footerY, 70, fonts.regular, 7.5, 'right', '#555555');
 
       doc.end();
     });
@@ -994,7 +1218,8 @@ export class InvoiceService {
       subject,
       dto,
     );
-    const variableSymbol = this.resolveVariableSymbol(subject, dto);
+    const draftVariableSymbol = this.resolveVariableSymbol(subject, dto);
+    const variableSymbol = current.invoiceNumber ?? draftVariableSymbol;
 
     const updated = await this.prisma.invoice.update({
       where: { id: current.id },
@@ -1172,6 +1397,7 @@ export class InvoiceService {
         data: {
           status: 'issued',
           invoiceNumber,
+          variableSymbol: invoiceNumber,
           supplierSnapshot: this.buildSupplierSnapshot(subject),
         },
       });

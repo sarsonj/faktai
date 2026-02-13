@@ -15,6 +15,7 @@ export type SubjectProfile = {
   ico: string;
   dic: string | null;
   isVatPayer: boolean;
+  vatPeriodType: 'month' | 'quarter';
   vatRegistrationDate: string | null;
   street: string;
   city: string;
@@ -37,6 +38,7 @@ export type SubjectInput = {
   ico: string;
   dic?: string;
   isVatPayer: boolean;
+  vatPeriodType?: 'month' | 'quarter';
   vatRegistrationDate?: string;
   street: string;
   city: string;
@@ -164,7 +166,7 @@ export type InvoiceUpsertInput = {
   items: InvoiceItemInput[];
 };
 
-export type TaxReportType = 'vat_return' | 'summary_statement' | 'control_statement';
+export type TaxReportType = 'vat_return' | 'control_statement';
 export type TaxPeriodType = 'month' | 'quarter';
 
 export type TaxReportRequest = {
@@ -183,16 +185,4 @@ export type TaxReportPreview = {
   invoiceCount: number;
   datasetHash: string;
   summary: Record<string, unknown>;
-};
-
-export type TaxReportRun = {
-  id: string;
-  reportType: TaxReportType;
-  periodType: TaxPeriodType;
-  periodYear: number;
-  periodValue: number;
-  runVersion: number;
-  datasetHash: string;
-  generatedAt: string;
-  invoiceCount: number;
 };

@@ -1,4 +1,4 @@
-import { DefaultVariableSymbolType } from '@prisma/client';
+import { DefaultVariableSymbolType, TaxPeriodType } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,
@@ -52,6 +52,12 @@ export class CreateSubjectDto {
   @IsOptional()
   @IsDateString({}, { message: 'Datum registrace DPH musí být platné datum.' })
   vatRegistrationDate?: string;
+
+  @IsOptional()
+  @IsEnum(TaxPeriodType, {
+    message: 'Periodicita DPH musí být month nebo quarter.',
+  })
+  vatPeriodType?: TaxPeriodType;
 
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString({ message: 'Ulice musí být text.' })

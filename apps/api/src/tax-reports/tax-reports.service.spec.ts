@@ -9,11 +9,6 @@ describe('TaxReportsService', () => {
     invoice: {
       findMany: jest.fn(),
     },
-    taxReportRun: {
-      findFirst: jest.fn(),
-      create: jest.fn(),
-      findMany: jest.fn(),
-    },
   } as any;
 
   const config = {
@@ -54,6 +49,7 @@ describe('TaxReportsService', () => {
       city: 'Horice',
       postalCode: '50801',
       countryCode: 'CZ',
+      ico: '77052030',
       dic: 'CZ7705203044',
     });
     prisma.invoice.findMany.mockResolvedValue([
@@ -103,6 +99,7 @@ describe('TaxReportsService', () => {
       city: 'Horice',
       postalCode: '50801',
       countryCode: 'CZ',
+      ico: '77052030',
       dic: 'CZ7705203044',
     });
     prisma.invoice.findMany.mockResolvedValue([
@@ -130,9 +127,6 @@ describe('TaxReportsService', () => {
         ],
       },
     ]);
-    prisma.taxReportRun.findFirst.mockResolvedValue(null);
-    prisma.taxReportRun.create.mockResolvedValue({ id: 'run-1' });
-
     const result = await service.export('user-1', {
       reportType: 'vat_return',
       periodType: 'quarter',
@@ -143,7 +137,7 @@ describe('TaxReportsService', () => {
     expect(result.xml).toContain('<Pisemnost');
     expect(result.xml).toContain('<DPHDP3');
     expect(result.xml).toContain('<Veta1');
-    expect(result.fileName).toContain('dph-priznani-2025-Q4-v1.xml');
+    expect(result.fileName).toContain('77052030_DPH_20254Q.xml');
   });
 
   it('exports control statement in FU structure', async () => {
@@ -156,6 +150,7 @@ describe('TaxReportsService', () => {
       city: 'Horice',
       postalCode: '50801',
       countryCode: 'CZ',
+      ico: '77052030',
       dic: 'CZ7705203044',
     });
     prisma.invoice.findMany.mockResolvedValue([
@@ -183,9 +178,6 @@ describe('TaxReportsService', () => {
         ],
       },
     ]);
-    prisma.taxReportRun.findFirst.mockResolvedValue(null);
-    prisma.taxReportRun.create.mockResolvedValue({ id: 'run-2' });
-
     const result = await service.export('user-1', {
       reportType: 'control_statement',
       periodType: 'quarter',
@@ -196,6 +188,22 @@ describe('TaxReportsService', () => {
     expect(result.xml).toContain('<DPHKH1');
     expect(result.xml).toContain('<VetaA4');
     expect(result.xml).toContain('<VetaC');
-    expect(result.fileName).toContain('kontrolni-hlaseni-2025-Q4-v1.xml');
+    expect(result.fileName).toContain('77052030_DPHKH_20254Q.xml');
+  });
+
+  it('rejects unsupported summary statement report type', async () => {
+    prisma.subject.findUnique.mockResolvedValue({
+      id: 'subject-1',
+      isVatPayer: true,
+    });
+
+    await expect(
+      service.export('user-1', {
+        reportType: 'summary_statement',
+        periodType: 'quarter',
+        year: 2025,
+        value: 4,
+      }),
+    ).rejects.toThrow('Souhrnné hlášení není ve verzi v1 podporováno.');
   });
 });

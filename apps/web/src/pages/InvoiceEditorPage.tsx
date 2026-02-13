@@ -107,8 +107,12 @@ function createDefaultState(defaultDueDays = 14, variableSymbol = ''): EditorSta
 }
 
 function fromInvoice(invoice: InvoiceDetail): EditorState {
+  const fixedVariableSymbol = invoice.status === 'draft'
+    ? invoice.variableSymbol
+    : (invoice.invoiceNumber ?? invoice.variableSymbol);
+
   return {
-    variableSymbol: invoice.variableSymbol,
+    variableSymbol: fixedVariableSymbol,
     issueDate: toDateInputValue(invoice.issueDate),
     taxableSupplyDate: toDateInputValue(invoice.taxableSupplyDate),
     dueDate: toDateInputValue(invoice.dueDate),
@@ -253,6 +257,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
 
   const totals = useMemo(() => calculateTotals(state.items), [state.items]);
   const readOnly = mode === 'edit' && invoice?.status === 'paid';
+  const variableSymbolReadOnly = readOnly || (mode === 'edit' && invoice?.status !== 'draft');
 
   const updateItem = (index: number, patch: Partial<EditorItemState>) => {
     setState((current) => ({
@@ -295,17 +300,19 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
     return updated;
   };
 
-  const onSaveDraft = async () => {
+  const onSave = async () => {
     setSaving(true);
     setError(null);
     setSuccess(null);
 
     try {
       const saved = await persistDraft();
-      setSuccess('Koncept byl uložen.');
+      setSuccess(mode === 'create' ? 'Koncept byl uložen.' : 'Faktura byla uložena.');
 
       if (mode === 'create') {
         navigate(`/invoices/${saved.id}/edit${listQuery ? `?${listQuery}` : ''}`, { replace: true });
+      } else {
+        navigate(backHref, { replace: true });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Uložení faktury selhalo');
@@ -413,17 +420,12 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   };
 
   if (loading) {
-    return (
-      <main className="app-shell">
-        <section className="card card-wide">Načítám fakturu...</section>
-      </main>
-    );
+    return <section className="card card-wide">Načítám fakturu...</section>;
   }
 
   return (
-    <main className="app-shell">
-      <section className="card card-wide">
-        <h1>{mode === 'create' ? 'Nová faktura' : `Editace faktury ${invoice?.invoiceNumber ?? ''}`}</h1>
+    <section className="card card-wide">
+      <h1>{mode === 'create' ? 'Nová faktura' : `Editace faktury ${invoice?.invoiceNumber ?? ''}`}</h1>
         <div className="toolbar-row">
           <Link to={backHref}>Zpět na seznam</Link>
           {mode === 'edit' && invoice && <Link to={`/invoices/${invoice.id}${listQuery ? `?${listQuery}` : ''}`}>Detail faktury</Link>}
@@ -451,7 +453,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
           <label>
             Variabilní symbol
             <input
-              disabled={readOnly}
+              disabled={variableSymbolReadOnly}
               value={state.variableSymbol}
               onChange={(event) => setState((current) => ({ ...current, variableSymbol: event.target.value }))}
             />
@@ -707,12 +709,14 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
         <div className="button-row wrap">
           {!readOnly && (
             <>
-              <button disabled={saving} type="button" onClick={onSaveDraft}>
-                {saving ? 'Ukládám...' : 'Uložit koncept'}
+              <button disabled={saving} type="button" onClick={onSave}>
+                {saving ? 'Ukládám...' : mode === 'create' ? 'Uložit koncept' : 'Uložit'}
               </button>
-              <button disabled={saving} type="button" onClick={onIssue}>
-                Vystavit fakturu
-              </button>
+              {mode === 'create' && (
+                <button disabled={saving} type="button" onClick={onIssue}>
+                  Vystavit fakturu
+                </button>
+              )}
             </>
           )}
           {mode === 'edit' && invoice?.status === 'draft' && (
@@ -729,7 +733,6 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
             Zrušit
           </button>
         </div>
-      </section>
-    </main>
+    </section>
   );
 }

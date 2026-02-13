@@ -76,6 +76,7 @@ export class SubjectService {
       ico: this.normalizeIco(dto.ico),
       dic: dto.dic,
       isVatPayer: dto.isVatPayer,
+      vatPeriodType: dto.vatPeriodType ?? 'quarter',
       vatRegistrationDate: dto.vatRegistrationDate
         ? new Date(dto.vatRegistrationDate)
         : null,
@@ -158,6 +159,7 @@ export class SubjectService {
             ? null
             : undefined,
         defaultVariableSymbolValue,
+        vatPeriodType: dto.vatPeriodType,
       },
     });
   }

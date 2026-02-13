@@ -16,7 +16,6 @@ import Decimal from 'decimal.js';
 import { createHash } from 'node:crypto';
 import { XMLBuilder, XMLValidator } from 'fast-xml-parser';
 import { PrismaService } from '../prisma/prisma.service';
-import { ListTaxRunsQueryDto } from './dto/list-tax-runs.query.dto';
 import { TaxReportRequestDto } from './dto/tax-report-request.dto';
 
 type InvoiceWithItems = Prisma.InvoiceGetPayload<{
@@ -69,6 +68,12 @@ export class TaxReportsService {
     }
 
     return dto;
+  }
+
+  private ensureSupportedReportType(reportType: TaxReportType): void {
+    if (reportType === 'summary_statement') {
+      throw new BadRequestException('Souhrnné hlášení není ve verzi v1 podporováno.');
+    }
   }
 
   private resolvePeriodRange(dto: TaxReportRequestDto): PeriodRange {
@@ -202,34 +207,6 @@ export class TaxReportsService {
     };
   }
 
-  private buildSummaryStatementSummary(invoices: InvoiceWithItems[]) {
-    const euInvoices = invoices.filter(
-      (invoice) =>
-        invoice.taxClassification === 'eu_service' ||
-        invoice.taxClassification === 'eu_goods',
-    );
-
-    const buckets = new Map<string, Decimal>();
-    for (const invoice of euInvoices) {
-      const customerDic = invoice.customerDic ?? 'UNKNOWN';
-      const key = `${customerDic}|${invoice.taxClassification}`;
-      const existing = buckets.get(key) ?? new Decimal(0);
-      buckets.set(key, existing.add(invoice.totalWithoutVat.toString()));
-    }
-
-    return {
-      entries: Array.from(buckets.entries()).map(([key, amount]) => {
-        const [customerDic, classification] = key.split('|');
-        return {
-          customerDic,
-          classification,
-          amount: amount.toFixed(2),
-        };
-      }),
-      invoiceCount: euInvoices.length,
-    };
-  }
-
   private buildControlStatementSummary(invoices: InvoiceWithItems[]) {
     const domesticInvoices = invoices.filter((invoice) =>
       invoice.taxClassification === 'domestic_standard' ||
@@ -250,16 +227,17 @@ export class TaxReportsService {
   }
 
   private getSchemaVersion(reportType: TaxReportType): string {
-    const byType: Record<TaxReportType, string> = {
+    const byType: Record<'vat_return' | 'control_statement', string> = {
       vat_return: this.config.get<string>('XML_SCHEMA_DPH_VERSION') ?? 'current',
-      summary_statement:
-        this.config.get<string>('XML_SCHEMA_SH_VERSION') ?? 'current',
       control_statement:
         this.config.get<string>('XML_SCHEMA_KH_VERSION') ?? 'current',
     };
 
     const whitelist = new Set(['current', 'v1']);
-    const selectedVersion = byType[reportType];
+    const selectedVersion =
+      reportType === 'vat_return'
+        ? byType.vat_return
+        : byType.control_statement;
 
     if (!whitelist.has(selectedVersion)) {
       throw new BadRequestException(`Unsupported XML schema version: ${selectedVersion}`);
@@ -580,52 +558,6 @@ export class TaxReportsService {
     return this.validateXmlContent(xml);
   }
 
-  private buildLegacyXml(subject: Subject, preview: TaxPreviewResult): string {
-    const builder = new XMLBuilder({
-      format: true,
-      ignoreAttributes: false,
-      suppressEmptyNode: true,
-    });
-
-    const xmlPayload = {
-      TaxReport: {
-        Metadata: {
-          ReportType: preview.reportType,
-          SchemaVersion: preview.schemaVersion,
-          PeriodType: preview.periodType,
-          Year: preview.year,
-          Value: preview.value,
-          Currency: 'CZK',
-          Subject: {
-            ICO: subject.ico,
-            DIC: subject.dic,
-          },
-        },
-        Summary: preview.summary,
-      },
-    };
-
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n${builder.build(xmlPayload)}`;
-    return this.validateXmlContent(xml);
-  }
-
-  private buildExportXml(
-    subject: Subject,
-    request: TaxReportRequestDto,
-    preview: TaxPreviewResult,
-    invoices: InvoiceWithItems[],
-  ): string {
-    if (request.reportType === 'vat_return') {
-      return this.buildFuVatReturnXml(subject, request, invoices);
-    }
-
-    if (request.reportType === 'control_statement') {
-      return this.buildFuControlStatementXml(subject, request, invoices);
-    }
-
-    return this.buildLegacyXml(subject, preview);
-  }
-
   private buildPreview(
     dto: TaxReportRequestDto,
     invoices: InvoiceWithItems[],
@@ -646,19 +578,6 @@ export class TaxReportsService {
       };
     }
 
-    if (dto.reportType === 'summary_statement') {
-      return {
-        reportType: dto.reportType,
-        periodType: dto.periodType,
-        year: dto.year,
-        value: dto.value,
-        schemaVersion,
-        invoiceCount: invoices.length,
-        datasetHash,
-        summary: this.buildSummaryStatementSummary(invoices),
-      };
-    }
-
     return {
       reportType: dto.reportType,
       periodType: dto.periodType,
@@ -671,27 +590,21 @@ export class TaxReportsService {
     };
   }
 
-  private getExportFileName(
-    request: TaxReportRequestDto,
-    runVersion: number,
-  ): string {
-    const prefixByType: Record<TaxReportType, string> = {
-      vat_return: 'dph-priznani',
-      summary_statement: 'souhrnne-hlaseni',
-      control_statement: 'kontrolni-hlaseni',
-    };
-
-    const suffix =
+  private getExportFileName(subject: Subject, request: TaxReportRequestDto): string {
+    const normalizedIco = subject.ico.replace(/\s+/g, '');
+    const reportTypePart = request.reportType === 'vat_return' ? 'DPH' : 'DPHKH';
+    const periodValue =
       request.periodType === 'month'
-        ? `${request.year}-${String(request.value).padStart(2, '0')}`
-        : `${request.year}-Q${request.value}`;
-
-    return `${prefixByType[request.reportType]}-${suffix}-v${runVersion}.xml`;
+        ? String(request.value).padStart(2, '0')
+        : String(request.value);
+    const periodPart = `${periodValue}${request.periodType === 'month' ? 'M' : 'Q'}`;
+    return `${normalizedIco}_${reportTypePart}_${request.year}${periodPart}.xml`;
   }
 
   async preview(userId: string, request: TaxReportRequestDto) {
     const subject = await this.getSubjectByUserOrThrow(userId);
     this.assertVatPayer(subject);
+    this.ensureSupportedReportType(request.reportType);
 
     const normalized = this.normalizePeriod(request);
     const range = this.resolvePeriodRange(normalized);
@@ -704,99 +617,21 @@ export class TaxReportsService {
   async export(userId: string, request: TaxReportRequestDto) {
     const subject = await this.getSubjectByUserOrThrow(userId);
     this.assertVatPayer(subject);
+    this.ensureSupportedReportType(request.reportType);
 
     const normalized = this.normalizePeriod(request);
     const range = this.resolvePeriodRange(normalized);
     const invoices = await this.getInvoicesForPeriod(subject.id, range);
 
     this.ensureClassifications(invoices);
-    const preview = this.buildPreview(normalized, invoices);
-    const xml = this.buildExportXml(subject, normalized, preview, invoices);
-
-    const latestRun = await this.prisma.taxReportRun.findFirst({
-      where: {
-        subjectId: subject.id,
-        reportType: normalized.reportType,
-        periodType: normalized.periodType,
-        periodYear: normalized.year,
-        periodValue: normalized.value,
-      },
-      orderBy: {
-        generatedAt: 'desc',
-      },
-    });
-
-    let runVersion = 1;
-    if (latestRun) {
-      runVersion =
-        latestRun.datasetHash === preview.datasetHash
-          ? latestRun.runVersion
-          : latestRun.runVersion + 1;
-    }
-
-    await this.prisma.taxReportRun.create({
-      data: {
-        subjectId: subject.id,
-        reportType: normalized.reportType,
-        periodType: normalized.periodType,
-        periodYear: normalized.year,
-        periodValue: normalized.value,
-        runVersion,
-        datasetHash: preview.datasetHash,
-        generatedByUserId: userId,
-        entries: {
-          create: invoices.map((invoice) => ({
-            invoiceId: invoice.id,
-            invoiceUpdatedAtSnapshot: invoice.updatedAt,
-          })),
-        },
-      },
-    });
+    const xml =
+      normalized.reportType === 'vat_return'
+        ? this.buildFuVatReturnXml(subject, normalized, invoices)
+        : this.buildFuControlStatementXml(subject, normalized, invoices);
 
     return {
-      fileName: this.getExportFileName(normalized, runVersion),
+      fileName: this.getExportFileName(subject, normalized),
       xml,
-      runVersion,
-      datasetHash: preview.datasetHash,
     };
-  }
-
-  async listRuns(userId: string, query: ListTaxRunsQueryDto) {
-    const subject = await this.getSubjectByUserOrThrow(userId);
-
-    const where: Prisma.TaxReportRunWhereInput = {
-      subjectId: subject.id,
-      reportType: query.reportType,
-      periodType: query.periodType,
-      periodYear: query.year,
-      periodValue: query.value,
-    };
-
-    const runs = await this.prisma.taxReportRun.findMany({
-      where,
-      orderBy: {
-        generatedAt: 'desc',
-      },
-      take: 50,
-      include: {
-        _count: {
-          select: {
-            entries: true,
-          },
-        },
-      },
-    });
-
-    return runs.map((run) => ({
-      id: run.id,
-      reportType: run.reportType,
-      periodType: run.periodType,
-      periodYear: run.periodYear,
-      periodValue: run.periodValue,
-      runVersion: run.runVersion,
-      datasetHash: run.datasetHash,
-      generatedAt: run.generatedAt.toISOString(),
-      invoiceCount: run._count.entries,
-    }));
   }
 }

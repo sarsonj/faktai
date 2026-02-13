@@ -1,24 +1,5 @@
-import { API_BASE_URL, ApiError, apiRequest } from './lib-api';
-import type { TaxReportPreview, TaxReportRequest, TaxReportRun } from './types';
-
-export async function previewTaxReport(payload: TaxReportRequest): Promise<TaxReportPreview> {
-  return apiRequest<TaxReportPreview>('/tax-reports/preview', {
-    method: 'POST',
-    body: payload,
-  });
-}
-
-export async function listTaxReportRuns(query: Partial<TaxReportRequest> = {}): Promise<TaxReportRun[]> {
-  const search = new URLSearchParams();
-
-  if (query.reportType) search.set('reportType', query.reportType);
-  if (query.periodType) search.set('periodType', query.periodType);
-  if (query.year) search.set('year', String(query.year));
-  if (query.value) search.set('value', String(query.value));
-
-  const suffix = search.toString();
-  return apiRequest<TaxReportRun[]>(`/tax-reports/runs${suffix ? `?${suffix}` : ''}`);
-}
+import { API_BASE_URL, ApiError } from './lib-api';
+import type { TaxReportRequest } from './types';
 
 export async function exportTaxReportXml(payload: TaxReportRequest): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/tax-reports/export`, {

@@ -89,6 +89,7 @@ model Subject {
   ico                        String                    @db.VarChar(8)
   dic                        String?
   isVatPayer                 Boolean
+  vatPeriodType              TaxPeriodType             @default(quarter)
   vatRegistrationDate        DateTime?
   street                     String
   city                       String
