@@ -305,8 +305,10 @@ export function InvoicesPage() {
                   <tr>
                     <th className="col-doc">Doklad</th>
                     <th className="col-customer">Odběratel a popis</th>
-                    <th className="col-dates">Termíny</th>
-                    <th className="col-amounts">Částky</th>
+                    <th className="col-issued">Vystaveno</th>
+                    <th className="col-due">Splatnost</th>
+                    <th className="col-total">Částka</th>
+                    <th className="col-base">Bez DPH</th>
                     <th className="col-status">Stav</th>
                     <th className="col-actions">Akce</th>
                   </tr>
@@ -330,30 +332,10 @@ export function InvoicesPage() {
                           {item.description || '-'}
                         </div>
                       </td>
-                      <td className="cell-dates">
-                        <div className="invoice-meta-row">
-                          <span className="invoice-meta-key">Vystaveno</span>
-                          <span className="invoice-meta-value">{formatDate(item.issueDate)}</span>
-                        </div>
-                        <div className="invoice-meta-row">
-                          <span className="invoice-meta-key">Splatnost</span>
-                          <span className="invoice-meta-value">{formatDate(item.dueDate)}</span>
-                        </div>
-                      </td>
-                      <td className="cell-amounts">
-                        <div className="invoice-meta-row">
-                          <span className="invoice-meta-key">Celkem</span>
-                          <span className="invoice-meta-value invoice-amount-main">
-                            {formatMoney(item.totalWithVat)}
-                          </span>
-                        </div>
-                        <div className="invoice-meta-row">
-                          <span className="invoice-meta-key">Bez DPH</span>
-                          <span className="invoice-meta-value invoice-amount-sub">
-                            {formatMoney(item.totalWithoutVat)}
-                          </span>
-                        </div>
-                      </td>
+                      <td className="cell-issued">{formatDate(item.issueDate)}</td>
+                      <td className="cell-due">{formatDate(item.dueDate)}</td>
+                      <td className="cell-total">{formatMoney(item.totalWithVat)}</td>
+                      <td className="cell-base">{formatMoney(item.totalWithoutVat)}</td>
                       <td className="cell-status">
                         <div className="invoice-cell-primary">
                           <span className={statusClassName(item.status)}>{statusLabel(item.status)}</span>

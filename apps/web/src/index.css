@@ -1045,7 +1045,7 @@ button:disabled {
 
 .invoice-list-table {
   table-layout: fixed;
-  min-width: 1010px;
+  min-width: 1180px;
 }
 
 .invoice-list-table th,
@@ -1067,15 +1067,23 @@ button:disabled {
 }
 
 .invoice-list-table .cell-customer {
-  min-width: 240px;
+  min-width: 250px;
 }
 
-.invoice-list-table .col-dates {
-  width: 170px;
+.invoice-list-table .col-issued {
+  width: 122px;
 }
 
-.invoice-list-table .col-amounts {
-  width: 194px;
+.invoice-list-table .col-due {
+  width: 122px;
+}
+
+.invoice-list-table .col-total {
+  width: 146px;
+}
+
+.invoice-list-table .col-base {
+  width: 138px;
 }
 
 .invoice-list-table .col-status {
@@ -1107,45 +1115,24 @@ button:disabled {
   font-weight: 700;
 }
 
-.invoice-list-table .invoice-meta-row {
-  display: grid;
-  grid-template-columns: 62px minmax(0, 1fr);
-  column-gap: 5px;
-  align-items: baseline;
-}
-
-.invoice-list-table .invoice-meta-row + .invoice-meta-row {
-  margin-top: 4px;
-}
-
-.invoice-list-table .invoice-meta-key {
-  color: #6a7f94;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.invoice-list-table .cell-amounts .invoice-meta-row {
-  grid-template-columns: 56px minmax(0, 1fr);
-}
-
-.invoice-list-table .invoice-meta-value {
+.invoice-list-table .cell-issued,
+.invoice-list-table .cell-due,
+.invoice-list-table .cell-total,
+.invoice-list-table .cell-base {
   color: #274660;
   font-size: 0.84rem;
   font-weight: 700;
+}
+
+.invoice-list-table .cell-total,
+.invoice-list-table .cell-base {
   text-align: right;
   font-variant-numeric: tabular-nums;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.invoice-list-table .invoice-amount-main {
+.invoice-list-table .cell-total {
   color: #163a57;
   font-weight: 800;
-}
-
-.invoice-list-table .invoice-amount-sub {
-  color: #274660;
 }
 
 .invoice-list-table .invoice-status-date {
