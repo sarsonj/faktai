@@ -28,7 +28,7 @@ export function LandingPage() {
         <SiteHeader />
         <section className="landing-hero">
           <p className="landing-kicker">{APP_SHORT_NAME}</p>
-          <h1>{APP_NAME}. Fakturace pro OSVČ, co chtějí mít rychle hotovo.</h1>
+          <h1>{APP_NAME} - fakturační systém, který naprogramovala kompletně AI</h1>
           <p className="landing-subtitle">
             Vystavíš fakturu, pohlídáš DPH a stáhneš XML pro finanční úřad bez zbytečného dramatu.
           </p>
@@ -57,7 +57,7 @@ export function LandingPage() {
         </section>
 
         <section className="landing-section">
-          <h2>Co je to za projekt</h2>
+          <h2>Dobré vědět...</h2>
           <p>
             Postaveno pomocí AI. Zdarma, bez záruky, ale s dobrými úmysly.
           </p>
