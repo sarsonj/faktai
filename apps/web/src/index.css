@@ -51,7 +51,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 36px 28px;
+  padding: 18px 28px 24px;
 }
 
 .page-stack {
@@ -61,15 +61,15 @@ body {
 }
 
 .auth-page-stack {
-  width: min(1160px, 100%);
+  width: min(1080px, 100%);
 }
 
 .auth-shell {
-  align-items: center;
+  align-items: flex-start;
 }
 
 .auth-card {
-  width: min(1040px, 100%);
+  width: 100%;
 }
 
 .auth-layout {
@@ -110,15 +110,6 @@ body {
   color: #5c7188;
   font-size: 0.88rem;
   font-weight: 700;
-}
-
-.landing-shell {
-  min-height: 100vh;
-  width: min(1120px, 100%);
-  margin: 0 auto;
-  padding: 34px 24px 40px;
-  display: grid;
-  gap: 16px;
 }
 
 .landing-hero {
@@ -233,11 +224,18 @@ body {
 }
 
 .app-brand {
+  display: inline-flex;
   margin-bottom: 18px;
+  color: #e2edf8;
+  text-decoration: none;
   font-family: var(--font-heading);
   font-size: 1.2rem;
   font-weight: 800;
   letter-spacing: -0.02em;
+}
+
+.app-brand:hover {
+  color: #f3f9ff;
 }
 
 .app-sidebar-caption {
@@ -303,6 +301,7 @@ body {
 
 .site-header {
   margin-bottom: 0;
+  min-height: 64px;
 }
 
 .site-header-left {
@@ -415,6 +414,10 @@ body {
   background: #ffffff;
   box-shadow: var(--shadow-card);
   padding: 12px;
+}
+
+.app-topbar-compact {
+  justify-content: flex-end;
 }
 
 .app-user-email {
@@ -1409,15 +1412,11 @@ button:disabled {
 
 @media (max-width: 1024px) {
   .app-shell {
-    padding: 22px 14px;
+    padding: 14px;
   }
 
   .page-stack {
     gap: 10px;
-  }
-
-  .landing-shell {
-    padding: 22px 14px 26px;
   }
 
   .app-frame {
@@ -1479,6 +1478,10 @@ button:disabled {
 }
 
 @media (max-width: 780px) {
+  .app-shell {
+    padding: 10px 10px 14px;
+  }
+
   .landing-hero {
     padding: 18px 14px;
     border-radius: 18px;

@@ -58,7 +58,7 @@ export function OnboardingSubjectPage() {
     <main className="app-shell">
       <div className="page-stack">
         <SiteHeader />
-        <section className="card">
+        <section className="card card-narrow">
           <header className="page-head">
             <div>
               <p className="page-kicker">Nastavení profilu</p>

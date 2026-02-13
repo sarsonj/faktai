@@ -1,7 +1,7 @@
 # Funkční specifikace projektu FakturAI
 
 ## 0. Stav dokumentu
-- Verze: `1.10`
+- Verze: `1.11`
 - Datum: `2026-02-13`
 - Stav: `Rozpracováno`
 - Aktuálně zpracovaný rozsah: `Scope 1-7`
@@ -760,9 +760,8 @@ Sekundární obrazovky:
   - `DPH podklady`,
   - `Nastavení subjektu`.
 - Horní lišta:
-  - název aktuální sekce,
-  - uživatelský profil vpravo (avatar/počáteční písmeno),
-  - dropdown menu profilu s akcí `Odhlásit`.
+  - v přihlášené části aplikace je kompaktní topbar pouze s uživatelským profilem vpravo (avatar/počáteční písmeno),
+  - dropdown menu profilu obsahuje akci `Odhlásit`.
 - Hlavní obsah:
   - každá obrazovka začíná `page header` blokem:
     - sekční štítek (kicker),
@@ -783,7 +782,8 @@ Sekundární obrazovky:
 - Detailní stránky (`/invoices/:id`, editor) otevírané přes full-screen view s tlačítkem zpět.
 
 #### 6.6.3 Globální hlavička
-- Na veřejných i přihlášených obrazovkách je viditelná hlavička s logem `FakturAI`.
+- Na veřejných a onboarding/auth obrazovkách je viditelná jednotná hlavička s logem `FakturAI`.
+- V přihlášené části s levým menu se hlavička v obsahu neduplikuje; logo zůstává v levém sidebaru.
 - Kliknutí na logo:
   - nepřihlášený uživatel -> `/`,
   - přihlášený uživatel s dokončeným subjektem -> `/invoices`,
@@ -791,6 +791,7 @@ Sekundární obrazovky:
 - Vpravo v hlavičce:
   - nepřihlášený uživatel -> `Přihlášení` + `Vytvořit účet`,
   - přihlášený uživatel -> avatar s menu a akcí `Odhlásit`.
+- Rozvržení veřejných/onboarding obrazovek používá sjednocený kontejner šířky, aby obsah mezi kroky „nelétal“.
 
 ### 6.7 Pravidla navigace mezi seznamem, detailem a editací
 1. Při přechodu ze seznamu na detail/editaci se uloží kontext seznamu:

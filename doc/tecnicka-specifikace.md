@@ -1,10 +1,10 @@
 # Technická specifikace projektu FakturAI
 
 ## 0. Stav dokumentu
-- Verze: `1.3`
+- Verze: `1.4`
 - Datum: `2026-02-13`
 - Stav: `Rozpracováno`
-- Vazba na funkční specifikaci: `doc/funkcni-specifikace.md` (verze `1.10`)
+- Vazba na funkční specifikaci: `doc/funkcni-specifikace.md` (verze `1.11`)
 
 ## 1. Technologický stack
 
@@ -509,10 +509,12 @@ Poznámka:
   - tabulky mají mobilní fallback se scroll kontejnerem.
 - App shell:
   - `AppLayout` obsahuje globální sidebar navigaci a topbar.
-  - topbar používá sdílenou komponentu `SiteHeader` (logo + sekce + uživatelské menu).
+  - v `AppLayout` je topbar kompaktní a obsahuje pouze uživatelské menu (avatar + dropdown).
+  - logo v přihlášené části je pouze v sidebaru (`app-brand`), ne v content topbaru.
   - stránkové filtry/akce se renderují pouze v obsahu modulu, nikoliv v globální navigaci.
 - Veřejné a onboarding obrazovky:
-  - používají stejnou komponentu `SiteHeader` pro konzistentní hlavičku (logo + auth akce / avatar).
+  - používají komponentu `SiteHeader` pro konzistentní hlavičku (logo + auth akce / avatar).
+  - sdílí jednotný layout kontejner (`page-stack`) pro stabilní šířku a vertikální odsazení.
 - Layout hierarchy (Fáze 2):
   - `page-head`: jednotná hlavička stránky (kicker + title + subtitle + page actions),
   - `ui-section`: konzistentní obsahový panel pro logické bloky stránky,
