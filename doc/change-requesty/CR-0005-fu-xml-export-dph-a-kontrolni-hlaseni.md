@@ -46,7 +46,7 @@ Stávající XML export má interní obecný formát a není přímo použiteln�
 - Mitigace: konzervativní mapování, fallback hodnoty a validační chyby pro zásadní nedostatky.
 
 ## 7. Implementace a ověření
-- Commit(y): doplní se po commitu.
+- Commit(y): `4a0c895`
 - Test plan:
   - export `vat_return` a kontrola struktury `DPHDP3`,
   - export `control_statement` a kontrola struktur `VetaA4` + `VetaC`,

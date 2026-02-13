@@ -42,7 +42,7 @@ Zákazník v UAT vyhodnotil stávající PDF faktury jako vizuálně slabé a h�
 - Mitigace: limitovat délky buněk a používat zalomení + konzervativní font sizing.
 
 ## 7. Implementace a ověření
-- Commit(y): doplní se po commitu.
+- Commit(y): `4a0c895`
 - Test plan:
   - export PDF pro `issued`,
   - kontrola čitelnosti bloků a tabulek,
