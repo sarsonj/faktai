@@ -1150,10 +1150,15 @@ button:disabled {
 
 .invoice-list-table .invoice-status-date {
   font-variant-numeric: tabular-nums;
+  padding-left: 10px;
 }
 
 .invoice-list-table .cell-status .status-badge {
   max-width: 100%;
+}
+
+.invoice-list-table .cell-status {
+  text-align: left;
 }
 
 .invoice-list-table .table-actions {
