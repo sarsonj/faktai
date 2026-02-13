@@ -21,7 +21,7 @@ Umožnit založení a správu profilu živnostníka (fakturačního subjektu), b
 - Vyhledání adresy z veřejné databáze a předvyplnění adresních polí.
 - Automatická normalizace vstupů (např. IČO bez mezer, PSČ bez mezer).
 - Blokace tvorby faktury do doby, než je profil kompletní.
-- Uložení výchozích fakturačních parametrů (bankovní účet, výchozí VS, splatnost).
+- Uložení výchozích fakturačních parametrů (bankovní účet, splatnost).
 
 #### Out of scope (pro další iterace)
 - Správa více živnostníků pod jedním uživatelem.
@@ -119,8 +119,6 @@ Pravidla:
 | `bankAccountPrefix` | Ne | 0-6 číslic | Prefix účtu |
 | `bankAccountNumber` | Ano | 2-10 číslic | Číslo účtu |
 | `bankCode` | Ano | přesně 4 číslice | Kód banky |
-| `defaultVariableSymbolType` | Ano | enum: `ico` / `custom` | Výchozí strategie VS |
-| `defaultVariableSymbolValue` | Podmíněně | povinné pokud typ `custom`, 1-10 číslic | Výchozí VS |
 | `defaultDueDays` | Ano | celé číslo 1-90 | Výchozí splatnost faktur |
 
 Poznámky:
@@ -353,8 +351,10 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 
 #### 3.4.3 Chování dle režimu
 - Režim `create`:
-  - číslo faktury se přidělí až při `Vystavit fakturu`,
-  - při `Vystavit fakturu` se číslo faktury i variabilní symbol nastaví na stejnou hodnotu z roční číselné řady (`YYYYNN`, např. `202601`),
+  - při uložení nového dokladu se přidělí číslo faktury z roční řady `YYYYNN` (`YYYY` + pořadí v roce, např. `202601`),
+  - pro jiný rok běží pořadí od `1`,
+  - číslo dokladu je editovatelné pole (unikátní v rámci subjektu),
+  - variabilní symbol se předvyplní číslem dokladu, ale zůstává editovatelný,
   - `issueDate` default dnešní datum,
   - `dueDate` default `issueDate + defaultDueDays` (Scope 1, aktuálně 14 dní),
   - dodavatel je předvyplněn ze subjektu.
@@ -373,8 +373,8 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 | Pole | Povinné | Validace / pravidlo |
 |---|---|---|
 | `status` | Ano | enum `draft/issued/paid/overdue/cancelled` |
-| `invoiceNumber` | Podmíněně | povinné pro `issued/paid/overdue`, unikátní v číselné řadě |
-| `variableSymbol` | Ano | 1-10 číslic; při vystavení se automaticky nastaví na hodnotu čísla faktury z roční řady |
+| `invoiceNumber` | Ano | formát `YYYY` + pořadí (5-10 číslic), unikátní v rámci subjektu, editovatelné |
+| `variableSymbol` | Ano | 1-10 číslic; defaultně se předvyplní z `invoiceNumber`, ale je editovatelný |
 | `issueDate` | Ano | datum, nesmí být prázdné |
 | `taxableSupplyDate` | Ano | datum, default `issueDate` |
 | `dueDate` | Ano | datum >= `issueDate` |
@@ -406,15 +406,16 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 
 ### 3.7 Funkční pravidla
 1. Fakturu lze vystavit jen pokud má všechny povinné údaje a alespoň 1 položku.
-2. Číslo faktury se přiděluje atomicky při přechodu do stavu `issued` v roční řadě `YYYYNN`.
-3. Variabilní symbol se při vystavení nastaví na stejné číslo jako `invoiceNumber`.
-4. `overdue` se může počítat automaticky dávkou nebo při načtení (dle implementace), ale pravidlo je `dueDate < dnes` a `status != paid`.
-5. Hard delete je ve v1 povolen i pro vystavené a uhrazené faktury.
-6. Po vystavení se uloží snapshot dodavatele i odběratele pro historickou konzistenci.
-7. Faktura ve stavu `issued` je ve v1 plně editovatelná.
-8. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
-9. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
-10. Po `Uložit` v režimu `edit` se uživatel vrací na seznam faktur (`/invoices`) ve stejném kontextu filtrů/stránkování.
+2. Nový doklad dostane při vytvoření číslo faktury `YYYYNN` jako `max(pořadí pro rok) + 1`; pro každý rok se čísluje zvlášť od `1`.
+3. Dvě faktury stejného subjektu nesmí mít stejné číslo faktury (server-side validace unikátnosti).
+4. Variabilní symbol se při založení faktury předvyplní hodnotou `invoiceNumber`, ale uživatel ho může změnit.
+5. `overdue` se může počítat automaticky dávkou nebo při načtení (dle implementace), ale pravidlo je `dueDate < dnes` a `status != paid`.
+6. Hard delete je ve v1 povolen i pro vystavené a uhrazené faktury.
+7. Po vystavení se uloží snapshot dodavatele i odběratele pro historickou konzistenci.
+8. Faktura ve stavu `issued` je ve v1 plně editovatelná.
+9. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
+10. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
+11. Po `Uložit` v režimu `edit` se uživatel vrací na seznam faktur (`/invoices`) ve stejném kontextu filtrů/stránkování.
 
 ### 3.8 Stavy a chování UI
 - `Loading`: načítání editoru / faktury.
@@ -427,8 +428,8 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 ### 3.9 Akceptační kritéria (Scope 3)
 1. Uživatel dokáže vytvořit koncept faktury a později jej dokončit.
 2. Uživatel dokáže vytvořit fakturu kopií existující faktury.
-3. Vystavení faktury vytvoří číslo dokladu; faktura ve stavu `issued` zůstává editovatelná.
-4. Při vystavení faktury se `variableSymbol` automaticky nastaví na stejné číslo jako `invoiceNumber` (`YYYYNN`).
+3. Vytvoření nového dokladu vždy přiřadí číslo dle `YYYYNN` a pro jiný rok se pořadí restartuje od `1`.
+4. `variableSymbol` je předvyplněn z čísla dokladu a lze ho ručně změnit.
 5. Výpočty součtů odpovídají položkám a sazbám DPH.
 6. Fakturu lze smazat ze seznamu faktur i mimo stav `draft`.
 7. Uživatel může vyhledat odběratele podle IČO i názvu a jedním klikem předvyplnit pole odběratele.

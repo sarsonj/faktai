@@ -34,6 +34,7 @@ type EditorItemState = {
 };
 
 type EditorState = {
+  invoiceNumber: string;
   variableSymbol: string;
   issueDate: string;
   taxableSupplyDate: string;
@@ -81,7 +82,7 @@ function normalizeIco(value: string): string {
   return value.replace(/\s+/g, '');
 }
 
-function createDefaultState(defaultDueDays = 14, variableSymbol = ''): EditorState {
+function createDefaultState(defaultDueDays = 14): EditorState {
   const issueDate = new Date();
   issueDate.setHours(0, 0, 0, 0);
 
@@ -89,7 +90,8 @@ function createDefaultState(defaultDueDays = 14, variableSymbol = ''): EditorSta
   dueDate.setDate(dueDate.getDate() + defaultDueDays);
 
   return {
-    variableSymbol,
+    invoiceNumber: '',
+    variableSymbol: '',
     issueDate: formatDate(issueDate),
     taxableSupplyDate: formatDate(issueDate),
     dueDate: formatDate(dueDate),
@@ -107,12 +109,9 @@ function createDefaultState(defaultDueDays = 14, variableSymbol = ''): EditorSta
 }
 
 function fromInvoice(invoice: InvoiceDetail): EditorState {
-  const fixedVariableSymbol = invoice.status === 'draft'
-    ? invoice.variableSymbol
-    : (invoice.invoiceNumber ?? invoice.variableSymbol);
-
   return {
-    variableSymbol: fixedVariableSymbol,
+    invoiceNumber: invoice.invoiceNumber ?? '',
+    variableSymbol: invoice.variableSymbol,
     issueDate: toDateInputValue(invoice.issueDate),
     taxableSupplyDate: toDateInputValue(invoice.taxableSupplyDate),
     dueDate: toDateInputValue(invoice.dueDate),
@@ -137,6 +136,7 @@ function fromInvoice(invoice: InvoiceDetail): EditorState {
 
 function toPayload(state: EditorState): InvoiceUpsertInput {
   return {
+    invoiceNumber: state.invoiceNumber || undefined,
     variableSymbol: state.variableSymbol || undefined,
     issueDate: state.issueDate,
     taxableSupplyDate: state.taxableSupplyDate,
@@ -204,6 +204,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   const [searchParams] = useSearchParams();
 
   const [state, setState] = useState<EditorState>(() => createDefaultState());
+  const [isVariableSymbolCustomized, setIsVariableSymbolCustomized] = useState(false);
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [loading, setLoading] = useState(mode === 'edit');
   const [saving, setSaving] = useState(false);
@@ -222,15 +223,20 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
     const run = async () => {
       try {
         const subject = await getSubject();
-        const defaultVs =
-          subject.defaultVariableSymbolType === 'ico' ? subject.ico : (subject.defaultVariableSymbolValue ?? '');
 
         setState((current) => {
-          if (current.customerCountryCode !== 'CZ' || current.items.length !== 1 || current.customerName) {
+          if (
+            current.customerCountryCode !== 'CZ' ||
+            current.items.length !== 1 ||
+            current.customerName ||
+            current.invoiceNumber ||
+            current.variableSymbol
+          ) {
             return current;
           }
-          return createDefaultState(subject.defaultDueDays, defaultVs);
+          return createDefaultState(subject.defaultDueDays);
         });
+        setIsVariableSymbolCustomized(false);
       } catch {
         // Defaults stay client-side if subject fetch fails.
       }
@@ -252,6 +258,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
         const payload = await getInvoice(invoiceId);
         setInvoice(payload);
         setState(fromInvoice(payload));
+        setIsVariableSymbolCustomized(payload.variableSymbol !== (payload.invoiceNumber ?? ''));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Načtení faktury selhalo');
       } finally {
@@ -267,7 +274,6 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
 
   const totals = useMemo(() => calculateTotals(state.items), [state.items]);
   const readOnly = mode === 'edit' && invoice?.status === 'paid';
-  const variableSymbolReadOnly = readOnly || (mode === 'edit' && invoice?.status !== 'draft');
 
   const updateItem = (index: number, patch: Partial<EditorItemState>) => {
     setState((current) => ({
@@ -297,6 +303,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
       const created = await createInvoice(payload);
       setInvoice(created);
       setState(fromInvoice(created));
+      setIsVariableSymbolCustomized(created.variableSymbol !== (created.invoiceNumber ?? ''));
       return created;
     }
 
@@ -307,6 +314,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
     const updated = await updateInvoice(invoiceId, payload);
     setInvoice(updated);
     setState(fromInvoice(updated));
+    setIsVariableSymbolCustomized(updated.variableSymbol !== (updated.invoiceNumber ?? ''));
     return updated;
   };
 
@@ -481,11 +489,39 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
         <h2>Parametry dokladu</h2>
         <div className="form-grid invoice-form-grid">
           <label>
+            Číslo dokladu
+            <input
+              disabled={readOnly}
+              value={state.invoiceNumber}
+              onChange={(event) => {
+                const nextInvoiceNumber = event.target.value.replace(/\s+/g, '');
+                setState((current) => {
+                  const shouldSyncVariableSymbol =
+                    !isVariableSymbolCustomized || current.variableSymbol === current.invoiceNumber;
+
+                  return {
+                    ...current,
+                    invoiceNumber: nextInvoiceNumber,
+                    variableSymbol: shouldSyncVariableSymbol ? nextInvoiceNumber : current.variableSymbol,
+                  };
+                });
+
+                if (!isVariableSymbolCustomized) {
+                  setIsVariableSymbolCustomized(false);
+                }
+              }}
+            />
+          </label>
+          <label>
             Variabilní symbol
             <input
-              disabled={variableSymbolReadOnly}
+              disabled={readOnly}
               value={state.variableSymbol}
-              onChange={(event) => setState((current) => ({ ...current, variableSymbol: event.target.value }))}
+              onChange={(event) => {
+                const nextVariableSymbol = event.target.value.replace(/\s+/g, '');
+                setState((current) => ({ ...current, variableSymbol: nextVariableSymbol }));
+                setIsVariableSymbolCustomized(nextVariableSymbol !== state.invoiceNumber);
+              }}
             />
           </label>
           <label>

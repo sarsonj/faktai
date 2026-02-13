@@ -38,3 +38,4 @@
 | `CR-0019` | Onboarding start s registrací a guard na dokončení subjektu | `Implementováno` | `Must` |
 | `CR-0020` | Globální hlavička a vyladění onboardingu | `Implementováno` | `Should` |
 | `CR-0021` | Stabilizace layoutu hlavičky a onboardingu | `Implementováno` | `Must` |
+| `CR-0022` | Číslování dokladů a zjednodušení VS | `Implementováno` | `Must` |

@@ -429,7 +429,7 @@ export function OnboardingSubjectWizard({
         <section className="ui-section">
           <h2>DPH a platební údaje</h2>
           <p className="helper-text">
-            Poslední krok. Výchozí variabilní symbol nastavíme automaticky podle IČO.
+            Poslední krok. Variabilní symbol se bude u nové faktury předvyplňovat podle čísla dokladu.
           </p>
 
           <div className="form-grid form-grid-two">

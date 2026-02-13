@@ -115,6 +115,8 @@ type PdfFontNames = {
   bold: string;
 };
 
+type DbClient = PrismaService | Prisma.TransactionClient;
+
 @Injectable()
 export class InvoiceService {
   constructor(private readonly prisma: PrismaService) {}
@@ -153,6 +155,13 @@ export class InvoiceService {
     return normalized.length > 0 ? normalized : null;
   }
 
+  private normalizeInvoiceNumber(value?: string): string | null {
+    if (!value) {
+      return null;
+    }
+    return value.replace(/\s+/g, '');
+  }
+
   private parseDateOnly(value?: string): Date | null {
     if (!value) {
       return null;
@@ -172,32 +181,92 @@ export class InvoiceService {
     return next;
   }
 
-  private resolveDefaultVariableSymbol(subject: Subject): string {
-    if (subject.defaultVariableSymbolType === 'ico') {
-      return subject.ico;
+  private validateInvoiceNumber(invoiceNumber: string, issueDate: Date): void {
+    if (!/^\d{5,10}$/.test(invoiceNumber)) {
+      throw new BadRequestException(
+        'Invoice number must have format YYYY + sequence (5-10 digits)',
+      );
     }
 
-    if (subject.defaultVariableSymbolValue) {
-      return subject.defaultVariableSymbolValue;
+    const issueYear = String(issueDate.getUTCFullYear());
+    if (!invoiceNumber.startsWith(issueYear)) {
+      throw new BadRequestException(
+        'Invoice number must start with invoice issue year',
+      );
     }
-
-    throw new BadRequestException(
-      'Subject does not have default variable symbol configured',
-    );
   }
 
-  private resolveVariableSymbol(
-    subject: Subject,
-    dto: UpsertInvoiceDto,
-  ): string {
+  private parseInvoiceSequenceForYear(
+    invoiceNumber: string | null,
+    year: number,
+  ): number | null {
+    if (!invoiceNumber) {
+      return null;
+    }
+
+    const match = invoiceNumber.match(new RegExp(`^${year}(\\d+)$`));
+    if (!match) {
+      return null;
+    }
+
+    const parsed = Number.parseInt(match[1], 10);
+    if (!Number.isFinite(parsed) || parsed < 1) {
+      return null;
+    }
+
+    return parsed;
+  }
+
+  private async getNextInvoiceNumber(
+    db: DbClient,
+    subjectId: string,
+    year: number,
+  ): Promise<string> {
+    const yearPrefix = String(year);
+    const numbers = await db.invoice.findMany({
+      where: {
+        subjectId,
+        invoiceNumber: {
+          startsWith: yearPrefix,
+        },
+      },
+      select: {
+        invoiceNumber: true,
+      },
+    });
+
+    let maxSequence = 0;
+    for (const item of numbers) {
+      const sequence = this.parseInvoiceSequenceForYear(item.invoiceNumber, year);
+      if (sequence && sequence > maxSequence) {
+        maxSequence = sequence;
+      }
+    }
+
+    return this.formatInvoiceNumber(year, maxSequence + 1);
+  }
+
+  private resolveVariableSymbol(dto: UpsertInvoiceDto, invoiceNumber: string): string {
     const explicit = this.normalizeOptionalText(dto.variableSymbol);
-    const candidate = explicit ?? this.resolveDefaultVariableSymbol(subject);
+    const candidate = explicit ?? invoiceNumber;
 
     if (!/^\d{1,10}$/.test(candidate)) {
       throw new BadRequestException('Variable symbol must have 1-10 digits');
     }
 
     return candidate;
+  }
+
+  private isInvoiceNumberUniqueViolation(error: unknown): boolean {
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError)) {
+      return false;
+    }
+    if (error.code !== 'P2002') {
+      return false;
+    }
+
+    const target = JSON.stringify(error.meta?.target ?? '');
+    return target.includes('subjectId') && target.includes('invoiceNumber');
   }
 
   private computeInvoiceTotals(inputItems: InvoiceItemDto[]): ComputedItems {
@@ -1164,38 +1233,61 @@ export class InvoiceService {
       subject,
       dto,
     );
-    const variableSymbol = this.resolveVariableSymbol(subject, dto);
+    const explicitInvoiceNumber = this.normalizeInvoiceNumber(dto.invoiceNumber);
+    const issueYear = issueDate.getUTCFullYear();
 
-    const created = await this.prisma.invoice.create({
-      data: {
-        subjectId: subject.id,
-        status: 'draft',
-        invoiceNumber: null,
-        variableSymbol,
-        issueDate,
-        taxableSupplyDate,
-        dueDate,
-        paymentMethod: dto.paymentMethod ?? 'bank_transfer',
-        taxClassification: dto.taxClassification,
-        customerName: dto.customerName.trim(),
-        customerIco: this.normalizeIco(dto.customerIco),
-        customerDic: this.normalizeOptionalText(dto.customerDic),
-        customerStreet: dto.customerStreet.trim(),
-        customerCity: dto.customerCity.trim(),
-        customerPostalCode: this.normalizePostalCode(dto.customerPostalCode),
-        customerCountryCode: dto.customerCountryCode,
-        note: this.normalizeOptionalText(dto.note),
-        supplierSnapshot: Prisma.JsonNull,
-        totalWithoutVat: computed.totalWithoutVat,
-        totalVat: computed.totalVat,
-        totalWithVat: computed.totalWithVat,
-        items: {
-          create: computed.items,
-        },
-      },
-    });
+    if (explicitInvoiceNumber) {
+      this.validateInvoiceNumber(explicitInvoiceNumber, issueDate);
+    }
 
-    return this.getInvoiceDetail(userId, created.id);
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const invoiceNumber =
+        explicitInvoiceNumber ??
+        (await this.getNextInvoiceNumber(this.prisma, subject.id, issueYear));
+      const variableSymbol = this.resolveVariableSymbol(dto, invoiceNumber);
+
+      try {
+        const created = await this.prisma.invoice.create({
+          data: {
+            subjectId: subject.id,
+            status: 'draft',
+            invoiceNumber,
+            variableSymbol,
+            issueDate,
+            taxableSupplyDate,
+            dueDate,
+            paymentMethod: dto.paymentMethod ?? 'bank_transfer',
+            taxClassification: dto.taxClassification,
+            customerName: dto.customerName.trim(),
+            customerIco: this.normalizeIco(dto.customerIco),
+            customerDic: this.normalizeOptionalText(dto.customerDic),
+            customerStreet: dto.customerStreet.trim(),
+            customerCity: dto.customerCity.trim(),
+            customerPostalCode: this.normalizePostalCode(dto.customerPostalCode),
+            customerCountryCode: dto.customerCountryCode,
+            note: this.normalizeOptionalText(dto.note),
+            supplierSnapshot: Prisma.JsonNull,
+            totalWithoutVat: computed.totalWithoutVat,
+            totalVat: computed.totalVat,
+            totalWithVat: computed.totalWithVat,
+            items: {
+              create: computed.items,
+            },
+          },
+        });
+
+        return this.getInvoiceDetail(userId, created.id);
+      } catch (error) {
+        if (!this.isInvoiceNumberUniqueViolation(error)) {
+          throw error;
+        }
+        if (explicitInvoiceNumber) {
+          throw new ConflictException('Invoice number already exists.');
+        }
+      }
+    }
+
+    throw new ConflictException('Failed to assign unique invoice number.');
   }
 
   async updateInvoice(
@@ -1218,37 +1310,65 @@ export class InvoiceService {
       subject,
       dto,
     );
-    const draftVariableSymbol = this.resolveVariableSymbol(subject, dto);
-    const variableSymbol = current.invoiceNumber ?? draftVariableSymbol;
+    const explicitInvoiceNumber = this.normalizeInvoiceNumber(dto.invoiceNumber);
+    const issueYear = issueDate.getUTCFullYear();
 
-    const updated = await this.prisma.invoice.update({
-      where: { id: current.id },
-      data: {
-        variableSymbol,
-        issueDate,
-        taxableSupplyDate,
-        dueDate,
-        paymentMethod: dto.paymentMethod ?? 'bank_transfer',
-        taxClassification: dto.taxClassification,
-        customerName: dto.customerName.trim(),
-        customerIco: this.normalizeIco(dto.customerIco),
-        customerDic: this.normalizeOptionalText(dto.customerDic),
-        customerStreet: dto.customerStreet.trim(),
-        customerCity: dto.customerCity.trim(),
-        customerPostalCode: this.normalizePostalCode(dto.customerPostalCode),
-        customerCountryCode: dto.customerCountryCode,
-        note: this.normalizeOptionalText(dto.note),
-        totalWithoutVat: computed.totalWithoutVat,
-        totalVat: computed.totalVat,
-        totalWithVat: computed.totalWithVat,
-        items: {
-          deleteMany: {},
-          create: computed.items,
-        },
-      },
-    });
+    if (explicitInvoiceNumber) {
+      this.validateInvoiceNumber(explicitInvoiceNumber, issueDate);
+    }
 
-    return this.getInvoiceDetail(userId, updated.id);
+    const needsAutoInvoiceNumber = !explicitInvoiceNumber && !current.invoiceNumber;
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const invoiceNumber =
+        explicitInvoiceNumber ??
+        current.invoiceNumber ??
+        (await this.getNextInvoiceNumber(this.prisma, subject.id, issueYear));
+      this.validateInvoiceNumber(invoiceNumber, issueDate);
+
+      const variableSymbol = this.resolveVariableSymbol(dto, invoiceNumber);
+
+      try {
+        const updated = await this.prisma.invoice.update({
+          where: { id: current.id },
+          data: {
+            invoiceNumber,
+            variableSymbol,
+            issueDate,
+            taxableSupplyDate,
+            dueDate,
+            paymentMethod: dto.paymentMethod ?? 'bank_transfer',
+            taxClassification: dto.taxClassification,
+            customerName: dto.customerName.trim(),
+            customerIco: this.normalizeIco(dto.customerIco),
+            customerDic: this.normalizeOptionalText(dto.customerDic),
+            customerStreet: dto.customerStreet.trim(),
+            customerCity: dto.customerCity.trim(),
+            customerPostalCode: this.normalizePostalCode(dto.customerPostalCode),
+            customerCountryCode: dto.customerCountryCode,
+            note: this.normalizeOptionalText(dto.note),
+            totalWithoutVat: computed.totalWithoutVat,
+            totalVat: computed.totalVat,
+            totalWithVat: computed.totalWithVat,
+            items: {
+              deleteMany: {},
+              create: computed.items,
+            },
+          },
+        });
+
+        return this.getInvoiceDetail(userId, updated.id);
+      } catch (error) {
+        if (!this.isInvoiceNumberUniqueViolation(error)) {
+          throw error;
+        }
+        if (!needsAutoInvoiceNumber) {
+          throw new ConflictException('Invoice number already exists.');
+        }
+      }
+    }
+
+    throw new ConflictException('Failed to assign unique invoice number.');
   }
 
   async copyInvoice(
@@ -1275,37 +1395,54 @@ export class InvoiceService {
       }));
 
     const computed = this.computeInvoiceTotals(copiedItems);
+    const issueYear = issueDate.getUTCFullYear();
 
-    const copied = await this.prisma.invoice.create({
-      data: {
-        subjectId: subject.id,
-        status: 'draft',
-        invoiceNumber: null,
-        variableSymbol: this.resolveDefaultVariableSymbol(subject),
-        issueDate,
-        taxableSupplyDate: issueDate,
-        dueDate,
-        paymentMethod: source.paymentMethod,
-        taxClassification: source.taxClassification,
-        customerName: source.customerName,
-        customerIco: source.customerIco,
-        customerDic: source.customerDic,
-        customerStreet: source.customerStreet,
-        customerCity: source.customerCity,
-        customerPostalCode: source.customerPostalCode,
-        customerCountryCode: source.customerCountryCode,
-        note: source.note,
-        supplierSnapshot: Prisma.JsonNull,
-        totalWithoutVat: computed.totalWithoutVat,
-        totalVat: computed.totalVat,
-        totalWithVat: computed.totalWithVat,
-        items: {
-          create: computed.items,
-        },
-      },
-    });
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const invoiceNumber = await this.getNextInvoiceNumber(
+        this.prisma,
+        subject.id,
+        issueYear,
+      );
 
-    return this.getInvoiceDetail(userId, copied.id);
+      try {
+        const copied = await this.prisma.invoice.create({
+          data: {
+            subjectId: subject.id,
+            status: 'draft',
+            invoiceNumber,
+            variableSymbol: invoiceNumber,
+            issueDate,
+            taxableSupplyDate: issueDate,
+            dueDate,
+            paymentMethod: source.paymentMethod,
+            taxClassification: source.taxClassification,
+            customerName: source.customerName,
+            customerIco: source.customerIco,
+            customerDic: source.customerDic,
+            customerStreet: source.customerStreet,
+            customerCity: source.customerCity,
+            customerPostalCode: source.customerPostalCode,
+            customerCountryCode: source.customerCountryCode,
+            note: source.note,
+            supplierSnapshot: Prisma.JsonNull,
+            totalWithoutVat: computed.totalWithoutVat,
+            totalVat: computed.totalVat,
+            totalWithVat: computed.totalWithVat,
+            items: {
+              create: computed.items,
+            },
+          },
+        });
+
+        return this.getInvoiceDetail(userId, copied.id);
+      } catch (error) {
+        if (!this.isInvoiceNumberUniqueViolation(error)) {
+          throw error;
+        }
+      }
+    }
+
+    throw new ConflictException('Failed to assign unique invoice number.');
   }
 
   private validateReadyToIssue(
@@ -1350,60 +1487,48 @@ export class InvoiceService {
 
     this.validateReadyToIssue(current);
 
-    await this.prisma.$transaction(async (tx) => {
-      const issueYear = current.issueDate.getUTCFullYear();
-      let invoiceNumber = current.invoiceNumber;
+    if (current.invoiceNumber) {
+      this.validateInvoiceNumber(current.invoiceNumber, current.issueDate);
+    }
 
-      if (!invoiceNumber) {
-        const sequenceWhere = {
-          subjectId_periodYear: {
-            subjectId: subject.id,
-            periodYear: issueYear,
-          },
-        };
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        await this.prisma.$transaction(async (tx) => {
+          const issueYear = current.issueDate.getUTCFullYear();
+          const invoiceNumber =
+            current.invoiceNumber ??
+            (await this.getNextInvoiceNumber(tx, subject.id, issueYear));
+          const variableSymbol =
+            this.normalizeOptionalText(current.variableSymbol) ?? invoiceNumber;
 
-        await tx.invoiceNumberSequence.upsert({
-          where: sequenceWhere,
-          create: {
-            subjectId: subject.id,
-            periodYear: issueYear,
-            currentValue: 0,
-          },
-          update: {},
-        });
-
-        const sequence = await tx.invoiceNumberSequence.update({
-          where: sequenceWhere,
-          data: {
-            currentValue: {
-              increment: 1,
+          await tx.invoice.update({
+            where: {
+              id: current.id,
             },
-          },
-          select: {
-            currentValue: true,
-          },
+            data: {
+              status: 'issued',
+              invoiceNumber,
+              variableSymbol,
+              supplierSnapshot: this.buildSupplierSnapshot(subject),
+            },
+          });
         });
-
-        invoiceNumber = this.formatInvoiceNumber(
-          issueYear,
-          sequence.currentValue,
-        );
+        return this.getInvoiceDetail(userId, invoiceId);
+      } catch (error) {
+        if (
+          this.isInvoiceNumberUniqueViolation(error) &&
+          !current.invoiceNumber
+        ) {
+          continue;
+        }
+        if (this.isInvoiceNumberUniqueViolation(error)) {
+          throw new ConflictException('Invoice number already exists.');
+        }
+        throw error;
       }
+    }
 
-      await tx.invoice.update({
-        where: {
-          id: current.id,
-        },
-        data: {
-          status: 'issued',
-          invoiceNumber,
-          variableSymbol: invoiceNumber,
-          supplierSnapshot: this.buildSupplierSnapshot(subject),
-        },
-      });
-    });
-
-    return this.getInvoiceDetail(userId, invoiceId);
+    throw new ConflictException('Failed to assign unique invoice number.');
   }
 
   async markInvoicePaid(

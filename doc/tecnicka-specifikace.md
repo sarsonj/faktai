@@ -393,21 +393,20 @@ Poznámka:
 ### 6.4 Vystavení faktury
 1. Validace draftu.
 2. DB transakce:
-   - lock sekvence (`FOR UPDATE`),
-   - inkrement sekvence,
-   - výpočet čísla faktury,
    - update faktury na `issued`,
-   - `variableSymbol` je při vystavení vždy shodný s `invoiceNumber`.
+   - pokud historický draft nemá `invoiceNumber`, dopočte se `max(YYYY*) + 1` pro rok `issueDate`,
+   - `variableSymbol` se zachová (pokud je prázdný, doplní se `invoiceNumber`).
 3. Commit.
 
 ### 6.4.1 Editace vystavené faktury
 1. `PATCH /invoices/:id` je povoleno i pro stav `issued`.
-2. Pokud má faktura `invoiceNumber`, backend ignoruje ručně zadaný `variableSymbol` a nastaví jej na `invoiceNumber`.
-3. Frontend po úspěšném `PATCH` v režimu edit přesměruje uživatele zpět na `/invoices` se stejným query stringem.
+2. `invoiceNumber` je editovatelný, validuje se formát `YYYY` + pořadí a unikátnost v rámci subjektu.
+3. `variableSymbol` se defaultně bere z `invoiceNumber`, ale pokud je odeslán explicitně, backend ho respektuje.
+4. Frontend po úspěšném `PATCH` v režimu edit přesměruje uživatele zpět na `/invoices` se stejným query stringem.
 
 ### 6.5 Kopie faktury
 1. Načíst zdrojovou fakturu + položky.
-2. Vytvořit novou `draft` fakturu bez `invoice_number`.
+2. Vytvořit novou `draft` fakturu s novým `invoice_number` dle roku (`max(YYYY*) + 1`).
 3. Přepočítat datumy (`issueDate=today`, `dueDate=+defaultDueDays`).
 4. Zkopírovat položky.
 

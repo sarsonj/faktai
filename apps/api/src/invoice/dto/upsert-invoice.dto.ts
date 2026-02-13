@@ -19,6 +19,16 @@ export class UpsertInvoiceDto {
     typeof value === 'string' ? value.replace(/\s+/g, '') : value,
   )
   @IsOptional()
+  @IsString({ message: 'Číslo faktury musí být text.' })
+  @Matches(/^\d{5,10}$/, {
+    message: 'Číslo faktury musí mít formát RRRR + pořadí (5 až 10 číslic).',
+  })
+  invoiceNumber?: string;
+
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.replace(/\s+/g, '') : value,
+  )
+  @IsOptional()
   @IsString({ message: 'Variabilní symbol musí být text.' })
   @Matches(/^\d{1,10}$/, {
     message: 'Variabilní symbol musí mít 1 až 10 číslic.',

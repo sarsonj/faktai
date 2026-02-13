@@ -149,6 +149,7 @@ export type InvoiceItemInput = {
 };
 
 export type InvoiceUpsertInput = {
+  invoiceNumber?: string;
   variableSymbol?: string;
   issueDate?: string;
   taxableSupplyDate?: string;

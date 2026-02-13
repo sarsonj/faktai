@@ -32,8 +32,6 @@ type FormState = {
   bankAccountPrefix: string;
   bankAccountNumber: string;
   bankCode: string;
-  defaultVariableSymbolType: 'ico' | 'custom';
-  defaultVariableSymbolValue: string;
   defaultDueDays: string;
 };
 
@@ -66,8 +64,6 @@ function toInitialState(initial?: SubjectProfile): FormState {
     bankAccountPrefix: initial?.bankAccountPrefix ?? '',
     bankAccountNumber: initial?.bankAccountNumber ?? '',
     bankCode: initial?.bankCode ?? '',
-    defaultVariableSymbolType: initial?.defaultVariableSymbolType ?? 'ico',
-    defaultVariableSymbolValue: initial?.defaultVariableSymbolValue ?? '',
     defaultDueDays: String(initial?.defaultDueDays ?? 14),
   };
 }
@@ -106,8 +102,6 @@ export function SubjectForm({
     setState(toInitialState(initial));
   }, [initial]);
 
-  const isCustomVs = state.defaultVariableSymbolType === 'custom';
-
   const payload = useMemo<SubjectInput>(() => {
     return {
       firstName: state.firstName,
@@ -125,8 +119,8 @@ export function SubjectForm({
       bankAccountPrefix: state.bankAccountPrefix || undefined,
       bankAccountNumber: state.bankAccountNumber,
       bankCode: state.bankCode,
-      defaultVariableSymbolType: state.defaultVariableSymbolType,
-      defaultVariableSymbolValue: state.defaultVariableSymbolValue || undefined,
+      defaultVariableSymbolType: 'ico',
+      defaultVariableSymbolValue: undefined,
       defaultDueDays: Number(state.defaultDueDays),
     };
   }, [state]);
@@ -432,32 +426,6 @@ export function SubjectForm({
               value={state.bankCode}
               onChange={(event) => setState((current) => ({ ...current, bankCode: event.target.value }))}
               required
-            />
-          </label>
-          <label>
-            Strategie VS
-            <select
-              value={state.defaultVariableSymbolType}
-              onChange={(event) =>
-                setState((current) => ({
-                  ...current,
-                  defaultVariableSymbolType: event.target.value as 'ico' | 'custom',
-                }))
-              }
-            >
-              <option value="ico">Použít IČO</option>
-              <option value="custom">Vlastní</option>
-            </select>
-          </label>
-          <label>
-            Výchozí VS
-            <input
-              disabled={!isCustomVs}
-              value={state.defaultVariableSymbolValue}
-              onChange={(event) =>
-                setState((current) => ({ ...current, defaultVariableSymbolValue: event.target.value }))
-              }
-              required={isCustomVs}
             />
           </label>
           <label>
