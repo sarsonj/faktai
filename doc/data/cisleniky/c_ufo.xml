@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="UTF-8"?><Ciselnik Nazev="ufo" Dotaz="C%3dufo" Verze="47.6.00668">
+<Veta c_ufo="551" nazu_ufo="Finanční ředitelství pro hlavní město Prahu" nazu_predl="hlavní město Prahu" ufo_predl="pro" c_komit="" k_bank="" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="\ ">
+</Veta>
+<Veta c_ufo="288" nazu_ufo="Finanční úřad Brno I" nazu_predl="Brno I" ufo_predl="" c_komit="97629621" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3001">
+</Veta>
+<Veta c_ufo="140" nazu_ufo="Finanční úřad Plzeň-jih" nazu_predl="Plzeň-jih" ufo_predl="" c_komit="7625361" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2303">
+</Veta>
+<Veta c_ufo="458" nazu_ufo="Finanční úřad pro Královéhradecký kraj" nazu_predl="Královéhradecký kraj" ufo_predl="pro" c_komit="77626511" k_bank="710" d_vzniku="2013-01-01" d_zaniku="" k_ufo_vema="2700">
+</Veta>
+<Veta c_ufo="10" nazu_ufo="Finanční úřad pro Prahu 10" nazu_predl="Prahu 10" ufo_predl="pro" c_komit="7622101" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2010">
+</Veta>
+<Veta c_ufo="9" nazu_ufo="Finanční úřad pro Prahu 9" nazu_predl="Prahu 9" ufo_predl="pro" c_komit="7623091" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2009">
+</Veta>
+<Veta c_ufo="283" nazu_ufo="Finanční úřad v Blansku" nazu_predl="Blansku" ufo_predl="v" c_komit="7627631" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3006">
+</Veta>
+<Veta c_ufo="298" nazu_ufo="Finanční úřad v Břeclavi" nazu_predl="Břeclavi" ufo_predl="v" c_komit="7621651" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3008">
+</Veta>
+<Veta c_ufo="369" nazu_ufo="Finanční úřad v Českém Těšíně" nazu_predl="Českém Těšíně" ufo_predl="v" c_komit="37621791" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3206">
+</Veta>
+<Veta c_ufo="223" nazu_ufo="Finanční úřad v Havlíčkově Brodě" nazu_predl="Havlíčkově Brodě" ufo_predl="v" c_komit="97622681" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2903">
+</Veta>
+<Veta c_ufo="239" nazu_ufo="Finanční úřad v Hořicích" nazu_predl="Hořicích" ufo_predl="v" c_komit="67622541" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2705">
+</Veta>
+<Veta c_ufo="224" nazu_ufo="Finanční úřad v Chotěboři" nazu_predl="Chotěboři" ufo_predl="v" c_komit="77621681" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2905">
+</Veta>
+<Veta c_ufo="259" nazu_ufo="Finanční úřad v Jilemnici" nazu_predl="Jilemnici" ufo_predl="v" c_komit="77620451" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2605">
+</Veta>
+<Veta c_ufo="34" nazu_ufo="Finanční úřad v Kolíně" nazu_predl="Kolíně" ufo_predl="v" c_komit="7629151" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2111">
+</Veta>
+<Veta c_ufo="320" nazu_ufo="Finanční úřad v Kroměříži" nazu_predl="Kroměříži" ufo_predl="v" c_komit="7620691" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3304">
+</Veta>
+<Veta c_ufo="380" nazu_ufo="Finanční úřad v Litovli" nazu_predl="Litovli" ufo_predl="v" c_komit="27622811" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3105">
+</Veta>
+<Veta c_ufo="48" nazu_ufo="Finanční úřad v Mladé Boleslavi" nazu_predl="Mladé Boleslavi" ufo_predl="v" c_komit="7620181" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2115">
+</Veta>
+<Veta c_ufo="45" nazu_ufo="Finanční úřad v Neratovicích" nazu_predl="Neratovicích" ufo_predl="v" c_komit="27624171" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2117">
+</Veta>
+<Veta c_ufo="371" nazu_ufo="Finanční úřad v Orlové" nazu_predl="Orlové" ufo_predl="v" c_komit="67628791" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3217">
+</Veta>
+<Veta c_ufo="202" nazu_ufo="Finanční úřad v Podbořanech" nazu_predl="Podbořanech" ufo_predl="v" c_komit="27625481" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2511">
+</Veta>
+<Veta c_ufo="63" nazu_ufo="Finanční úřad v Příbrami" nazu_predl="Příbrami" ufo_predl="v" c_komit="7624211" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2120">
+</Veta>
+<Veta c_ufo="66" nazu_ufo="Finanční úřad v Sedlčanech" nazu_predl="Sedlčanech" ufo_predl="v" c_komit="57621211" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2123">
+</Veta>
+<Veta c_ufo="188" nazu_ufo="Finanční úřad v Tanvaldě" nazu_predl="Tanvaldě" ufo_predl="v" c_komit="17628451" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2608">
+</Veta>
+<Veta c_ufo="364" nazu_ufo="Finanční úřad v Třinci" nazu_predl="Třinci" ufo_predl="v" c_komit="87621781" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3218">
+</Veta>
+<Veta c_ufo="275" nazu_ufo="Finanční úřad v Žamberku" nazu_predl="Žamberku" ufo_predl="v" c_komit="67625611" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2811">
+</Veta>
+<Veta c_ufo="31" nazu_ufo="Finanční úřad ve Slaném" nazu_predl="Slaném" ufo_predl="ve" c_komit="27622141" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2124">
+</Veta>
+<Veta c_ufo="353" nazu_ufo="Finanční úřad ve Velkém Meziříčí" nazu_predl="Velkém Meziříčí" ufo_predl="ve" c_komit="37622751" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2913">
+</Veta>
+<Veta c_ufo="274" nazu_ufo="Finanční úřad ve Vysokém Mýtě" nazu_predl="Vysokém Mýtě" ufo_predl="ve" c_komit="47624611" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2810">
+</Veta>
+<Veta c_ufo="557" nazu_ufo="Finanční ředitelství v Brně" nazu_predl="Brně" ufo_predl="v" c_komit="" k_bank="" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="\ ">
+</Veta>
+<Veta c_ufo="289" nazu_ufo="Finanční úřad Brno II" nazu_predl="Brno II" ufo_predl="" c_komit="47621621" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3002">
+</Veta>
+<Veta c_ufo="145" nazu_ufo="Finanční úřad Plzeň-sever" nazu_predl="Plzeň-sever" ufo_predl="" c_komit="7622371" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2302">
+</Veta>
+<Veta c_ufo="457" nazu_ufo="Finanční úřad pro Liberecký kraj" nazu_predl="Liberecký kraj" ufo_predl="pro" c_komit="77628461" k_bank="710" d_vzniku="2013-01-01" d_zaniku="" k_ufo_vema="2600">
+</Veta>
+<Veta c_ufo="2" nazu_ufo="Finanční úřad pro Prahu 2" nazu_predl="Prahu 2" ufo_predl="pro" c_komit="7622021" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2002">
+</Veta>
+<Veta c_ufo="452" nazu_ufo="Finanční úřad pro Středočeský kraj" nazu_predl="Středočeský kraj" ufo_predl="pro" c_komit="77628111" k_bank="710" d_vzniku="2013-01-01" d_zaniku="" k_ufo_vema="2100">
+</Veta>
+<Veta c_ufo="106" nazu_ufo="Finanční úřad v Blatné" nazu_predl="Blatné" ufo_predl="v" c_komit="47624291" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2202">
+</Veta>
+<Veta c_ufo="342" nazu_ufo="Finanční úřad v Bučovicích" nazu_predl="Bučovicích" ufo_predl="v" c_komit="27622731" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3009">
+</Veta>
+<Veta c_ufo="77" nazu_ufo="Finanční úřad v Českých Budějovicích" nazu_predl="Českých Budějovicích" ufo_predl="v" c_komit="7629231" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2201">
+</Veta>
+<Veta c_ufo="235" nazu_ufo="Finanční úřad v Hlinsku" nazu_predl="Hlinsku" ufo_predl="v" c_komit="37629531" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2802">
+</Veta>
+<Veta c_ufo="27" nazu_ufo="Finanční úřad v Hořovicích" nazu_predl="Hořovicích" ufo_predl="v" c_komit="27625131" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2109">
+</Veta>
+<Veta c_ufo="233" nazu_ufo="Finanční úřad v Chrudimi" nazu_predl="Chrudimi" ufo_predl="v" c_komit="7622531" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2804">
+</Veta>
+<Veta c_ufo="86" nazu_ufo="Finanční úřad v Jindřichově Hradci" nazu_predl="Jindřichově Hradci" ufo_predl="v" c_komit="7623251" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2205">
+</Veta>
+<Veta c_ufo="326" nazu_ufo="Finanční úřad v Konici" nazu_predl="Konici" ufo_predl="v" c_komit="67624811" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3104">
+</Veta>
+<Veta c_ufo="38" nazu_ufo="Finanční úřad v Kutné Hoře" nazu_predl="Kutné Hoře" ufo_predl="v" c_komit="7626161" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2113">
+</Veta>
+<Veta c_ufo="207" nazu_ufo="Finanční úřad v Litvínově" nazu_predl="Litvínově" ufo_predl="v" c_komit="27622491" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2508">
+</Veta>
+<Veta c_ufo="50" nazu_ufo="Finanční úřad v Mnichově Hradišti" nazu_predl="Mnichově Hradišti" ufo_predl="v" c_komit="47622181" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2116">
+</Veta>
+<Veta c_ufo="240" nazu_ufo="Finanční úřad v Nové Pace" nazu_predl="Nové Pace" ufo_predl="v" c_komit="47621541" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2710">
+</Veta>
+<Veta c_ufo="129" nazu_ufo="Finanční úřad v Ostrově" nazu_predl="Ostrově" ufo_predl="v" c_komit="17626341" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2406">
+</Veta>
+<Veta c_ufo="55" nazu_ufo="Finanční úřad v Poděbradech" nazu_predl="Poděbradech" ufo_predl="v" c_komit="27629191" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2119">
+</Veta>
+<Veta c_ufo="69" nazu_ufo="Finanční úřad v Rakovníku" nazu_predl="Rakovníku" ufo_predl="v" c_komit="7621221" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2121">
+</Veta>
+<Veta c_ufo="258" nazu_ufo="Finanční úřad v Semilech" nazu_predl="Semilech" ufo_predl="v" c_komit="97621451" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2607">
+</Veta>
+<Veta c_ufo="317" nazu_ufo="Finanční úřad v Telči" nazu_predl="Telči" ufo_predl="v" c_komit="27624681" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2911">
+</Veta>
+<Veta c_ufo="260" nazu_ufo="Finanční úřad v Turnově" nazu_predl="Turnově" ufo_predl="v" c_komit="87626451" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2609">
+</Veta>
+<Veta c_ufo="203" nazu_ufo="Finanční úřad v Žatci" nazu_predl="Žatci" ufo_predl="v" c_komit="47626481" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2515">
+</Veta>
+<Veta c_ufo="343" nazu_ufo="Finanční úřad ve Slavkově u Brna" nazu_predl="Slavkově u Brna" ufo_predl="ve" c_komit="37628731" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3016">
+</Veta>
+<Veta c_ufo="311" nazu_ufo="Finanční úřad ve Veselí nad Moravou" nazu_predl="Veselí nad Moravou" ufo_predl="ve" c_komit="37622671" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3018">
+</Veta>
+<Veta c_ufo="341" nazu_ufo="Finanční úřad ve Vyškově" nazu_predl="Vyškově" ufo_predl="ve" c_komit="7621731" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3019">
+</Veta>
+<Veta c_ufo="553" nazu_ufo="Finanční ředitelství v Českých Budějovicích" nazu_predl="Českých Budějovicích" ufo_predl="v" c_komit="" k_bank="" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="\ ">
+</Veta>
+<Veta c_ufo="290" nazu_ufo="Finanční úřad Brno III" nazu_predl="Brno III" ufo_predl="" c_komit="37626621" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3003">
+</Veta>
+<Veta c_ufo="60" nazu_ufo="Finanční úřad Praha-západ" nazu_predl="Praha-západ" ufo_predl="" c_komit="97629111" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2102">
+</Veta>
+<Veta c_ufo="463" nazu_ufo="Finanční úřad pro Moravskoslezský kraj" nazu_predl="Moravskoslezský kraj" ufo_predl="pro" c_komit="77621761" k_bank="710" d_vzniku="2013-01-01" d_zaniku="" k_ufo_vema="3200">
+</Veta>
+<Veta c_ufo="3" nazu_ufo="Finanční úřad pro Prahu 3" nazu_predl="Prahu 3" ufo_predl="pro" c_komit="27623101" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2003">
+</Veta>
+<Veta c_ufo="456" nazu_ufo="Finanční úřad pro Ústecký kraj" nazu_predl="Ústecký kraj" ufo_predl="pro" c_komit="77621411" k_bank="710" d_vzniku="2013-01-01" d_zaniku="" k_ufo_vema="2500">
+</Veta>
+<Veta c_ufo="141" nazu_ufo="Finanční úřad v Blovicích" nazu_predl="Blovicích" ufo_predl="v" c_komit="27626361" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2304">
+</Veta>
+<Veta c_ufo="352" nazu_ufo="Finanční úřad v Bystřici nad Pernštejnem" nazu_predl="Bystřici nad Pernštejnem" ufo_predl="v" c_komit="17621751" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2902">
+</Veta>
+<Veta c_ufo="87" nazu_ufo="Finanční úřad v Dačicích" nazu_predl="Dačicích" ufo_predl="v" c_komit="17629251" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2204">
+</Veta>
+<Veta c_ufo="385" nazu_ufo="Finanční úřad v Hlučíně" nazu_predl="Hlučíně" ufo_predl="v" c_komit="17624821" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3211">
+</Veta>
+<Veta c_ufo="228" nazu_ufo="Finanční úřad v Hradci Králové" nazu_predl="Hradci Králové" ufo_predl="v" c_komit="7628511" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2701">
+</Veta>
+<Veta c_ufo="294" nazu_ufo="Finanční úřad v Ivančicích" nazu_predl="Ivančicích" ufo_predl="v" c_komit="57621641" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3012">
+</Veta>
+<Veta c_ufo="183" nazu_ufo="Finanční úřad v Kadani" nazu_predl="Kadani" ufo_predl="v" c_komit="27626441" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2505">
+</Veta>
+<Veta c_ufo="376" nazu_ufo="Finanční úřad v Kopřivnici" nazu_predl="Kopřivnici" ufo_predl="v" c_komit="47626801" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3213">
+</Veta>
+<Veta c_ufo="310" nazu_ufo="Finanční úřad v Kyjově" nazu_predl="Kyjově" ufo_predl="v" c_komit="47628671" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3013">
+</Veta>
+<Veta c_ufo="201" nazu_ufo="Finanční úřad v Lounech" nazu_predl="Lounech" ufo_predl="v" c_komit="7624481" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2509">
+</Veta>
+<Veta c_ufo="265" nazu_ufo="Finanční úřad v Moravské Třebové" nazu_predl="Moravské Třebové" ufo_predl="v" c_komit="37622591" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2806">
+</Veta>
+<Veta c_ufo="175" nazu_ufo="Finanční úřad v Novém Boru" nazu_predl="Novém Boru" ufo_predl="v" c_komit="47622421" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2606">
+</Veta>
+<Veta c_ufo="305" nazu_ufo="Finanční úřad v Otrokovicích" nazu_predl="Otrokovicích" ufo_predl="v" c_komit="37625661" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3306">
+</Veta>
+<Veta c_ufo="101" nazu_ufo="Finanční úřad v Prachaticích" nazu_predl="Prachaticích" ufo_predl="v" c_komit="7625281" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2209">
+</Veta>
+<Veta c_ufo="150" nazu_ufo="Finanční úřad v Rokycanech" nazu_predl="Rokycanech" ufo_predl="v" c_komit="97629381" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2312">
+</Veta>
+<Veta c_ufo="111" nazu_ufo="Finanční úřad v Soběslavi" nazu_predl="Soběslavi" ufo_predl="v" c_komit="27622301" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2210">
+</Veta>
+<Veta c_ufo="210" nazu_ufo="Finanční úřad v Teplicích" nazu_predl="Teplicích" ufo_predl="v" c_komit="7620501" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2514">
+</Veta>
+<Veta c_ufo="79" nazu_ufo="Finanční úřad v Týně nad Vltavou" nazu_predl="Týně nad Vltavou" ufo_predl="v" c_komit="37625231" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2215">
+</Veta>
+<Veta c_ufo="189" nazu_ufo="Finanční úřad v Železném Brodě" nazu_predl="Železném Brodě" ufo_predl="v" c_komit="37629451" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2610">
+</Veta>
+<Veta c_ufo="105" nazu_ufo="Finanční úřad ve Strakonicích" nazu_predl="Strakonicích" ufo_predl="ve" c_komit="7622291" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2211">
+</Veta>
+<Veta c_ufo="102" nazu_ufo="Finanční úřad ve Vimperku" nazu_predl="Vimperku" ufo_predl="ve" c_komit="27626281" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2216">
+</Veta>
+<Veta c_ufo="303" nazu_ufo="Finanční úřad ve Zlíně" nazu_predl="Zlíně" ufo_predl="ve" c_komit="7629661" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3301">
+</Veta>
+<Veta c_ufo="556" nazu_ufo="Finanční ředitelství v Hradci Králové" nazu_predl="Hradci Králové" ufo_predl="v" c_komit="" k_bank="" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="\ ">
+</Veta>
+<Veta c_ufo="291" nazu_ufo="Finanční úřad Brno IV" nazu_predl="Brno IV" ufo_predl="" c_komit="67622621" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3004">
+</Veta>
+<Veta c_ufo="451" nazu_ufo="Finanční úřad pro hlavní město Prahu" nazu_predl="hlavní město Prahu" ufo_predl="pro" c_komit="77628031" k_bank="710" d_vzniku="2013-01-01" d_zaniku="" k_ufo_vema="2000">
+</Veta>
+<Veta c_ufo="462" nazu_ufo="Finanční úřad pro Olomoucký kraj" nazu_predl="Olomoucký kraj" ufo_predl="pro" c_komit="47623811" k_bank="710" d_vzniku="2013-01-01" d_zaniku="" k_ufo_vema="3100">
+</Veta>
+<Veta c_ufo="4" nazu_ufo="Finanční úřad pro Prahu 4" nazu_predl="Prahu 4" ufo_predl="pro" c_komit="7627041" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2004">
+</Veta>
+<Veta c_ufo="464" nazu_ufo="Finanční úřad pro Zlínský kraj" nazu_predl="Zlínský kraj" ufo_predl="pro" c_komit="47620661" k_bank="710" d_vzniku="2013-01-01" d_zaniku="" k_ufo_vema="3300">
+</Veta>
+<Veta c_ufo="368" nazu_ufo="Finanční úřad v Bohumíně" nazu_predl="Bohumíně" ufo_predl="v" c_komit="27626791" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3204">
+</Veta>
+<Veta c_ufo="321" nazu_ufo="Finanční úřad v Bystřici pod Hostýnem" nazu_predl="Bystřici pod Hostýnem" ufo_predl="v" c_komit="47622691" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3302">
+</Veta>
+<Veta c_ufo="178" nazu_ufo="Finanční úřad v Děčíně" nazu_predl="Děčíně" ufo_predl="v" c_komit="7628431" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2503">
+</Veta>
+<Veta c_ufo="309" nazu_ufo="Finanční úřad v Hodoníně" nazu_predl="Hodoníně" ufo_predl="v" c_komit="7626671" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3010">
+</Veta>
+<Veta c_ufo="394" nazu_ufo="Finanční úřad v Hranicích" nazu_predl="Hranicích" ufo_predl="v" c_komit="47628831" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3102">
+</Veta>
+<Veta c_ufo="187" nazu_ufo="Finanční úřad v Jablonci nad Nisou" nazu_predl="Jablonci nad Nisou" ufo_predl="v" c_komit="7622451" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2604">
+</Veta>
+<Veta c_ufo="83" nazu_ufo="Finanční úřad v Kaplici" nazu_predl="Kaplici" ufo_predl="v" c_komit="17621241" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2206">
+</Veta>
+<Veta c_ufo="255" nazu_ufo="Finanční úřad v Kostelci nad Orlicí" nazu_predl="Kostelci nad Orlicí" ufo_predl="v" c_komit="37628571" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2708">
+</Veta>
+<Veta c_ufo="225" nazu_ufo="Finanční úřad v Ledči nad Sázavou" nazu_predl="Ledči nad Sázavou" ufo_predl="v" c_komit="87627681" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2906">
+</Veta>
+<Veta c_ufo="304" nazu_ufo="Finanční úřad v Luhačovicích" nazu_predl="Luhačovicích" ufo_predl="v" c_komit="17624661" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3305">
+</Veta>
+<Veta c_ufo="348" nazu_ufo="Finanční úřad v Moravském Krumlově" nazu_predl="Moravském Krumlově" ufo_predl="v" c_komit="37625741" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3015">
+</Veta>
+<Veta c_ufo="230" nazu_ufo="Finanční úřad v Novém Bydžově" nazu_predl="Novém Bydžově" ufo_predl="v" c_komit="37624511" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2711">
+</Veta>
+<Veta c_ufo="94" nazu_ufo="Finanční úřad v Pacově" nazu_predl="Pacově" ufo_predl="v" c_komit="87620711" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2909">
+</Veta>
+<Veta c_ufo="12" nazu_ufo="Finanční úřad v Praze - Modřanech" nazu_predl="Praze - Modřanech" ufo_predl="v" c_komit="17622041" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2012">
+</Veta>
+<Veta c_ufo="198" nazu_ufo="Finanční úřad v Roudnici nad Labem" nazu_predl="Roudnici nad Labem" ufo_predl="v" c_komit="27628471" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2512">
+</Veta>
+<Veta c_ufo="155" nazu_ufo="Finanční úřad v Sokolově" nazu_predl="Sokolově" ufo_predl="v" c_komit="7627391" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2407">
+</Veta>
+<Veta c_ufo="295" nazu_ufo="Finanční úřad v Tišnově" nazu_predl="Tišnově" ufo_predl="v" c_komit="47626641" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3017">
+</Veta>
+<Veta c_ufo="338" nazu_ufo="Finanční úřad v Uherském Brodě" nazu_predl="Uherském Brodě" ufo_predl="v" c_komit="47626721" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3308">
+</Veta>
+<Veta c_ufo="269" nazu_ufo="Finanční úřad ve Dvoře Králové nad Labem" nazu_predl="Dvoře Králové nad Labem" ufo_predl="ve" c_komit="27626601" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2704">
+</Veta>
+<Veta c_ufo="162" nazu_ufo="Finanční úřad ve Stříbře" nazu_predl="Stříbře" ufo_predl="ve" c_komit="37622401" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2314">
+</Veta>
+<Veta c_ufo="22" nazu_ufo="Finanční úřad ve Vlašimi" nazu_predl="Vlašimi" ufo_predl="ve" c_komit="47629121" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2125">
+</Veta>
+<Veta c_ufo="346" nazu_ufo="Finanční úřad ve Znojmě" nazu_predl="Znojmě" ufo_predl="ve" c_komit="7629741" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3020">
+</Veta>
+<Veta c_ufo="558" nazu_ufo="Finanční ředitelství v Ostravě" nazu_predl="Ostravě" ufo_predl="v" c_komit="8028761" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="\ ">
+</Veta>
+<Veta c_ufo="293" nazu_ufo="Finanční úřad Brno-venkov" nazu_predl="Brno-venkov" ufo_predl="" c_komit="7624641" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3005">
+</Veta>
+<Veta c_ufo="453" nazu_ufo="Finanční úřad pro Jihočeský kraj" nazu_predl="Jihočeský kraj" ufo_predl="pro" c_komit="77627231" k_bank="710" d_vzniku="2013-01-01" d_zaniku="" k_ufo_vema="2200">
+</Veta>
+<Veta c_ufo="459" nazu_ufo="Finanční úřad pro Pardubický kraj" nazu_predl="Pardubický kraj" ufo_predl="pro" c_komit="77622561" k_bank="710" d_vzniku="2013-01-01" d_zaniku="" k_ufo_vema="2800">
+</Veta>
+<Veta c_ufo="5" nazu_ufo="Finanční úřad pro Prahu 5" nazu_predl="Prahu 5" ufo_predl="pro" c_komit="7624051" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2005">
+</Veta>
+<Veta c_ufo="124" nazu_ufo="Finanční úřad v Aši" nazu_predl="Aši" ufo_predl="v" c_komit="17629331" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2402">
+</Veta>
+<Veta c_ufo="284" nazu_ufo="Finanční úřad v Boskovicích" nazu_predl="Boskovicích" ufo_predl="v" c_komit="47629631" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3007">
+</Veta>
+<Veta c_ufo="39" nazu_ufo="Finanční úřad v Čáslavi" nazu_predl="Čáslavi" ufo_predl="v" c_komit="17621161" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2106">
+</Veta>
+<Veta c_ufo="254" nazu_ufo="Finanční úřad v Dobrušce" nazu_predl="Dobrušce" ufo_predl="v" c_komit="27622571" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2703">
+</Veta>
+<Veta c_ufo="322" nazu_ufo="Finanční úřad v Holešově" nazu_predl="Holešově" ufo_predl="v" c_komit="27621691" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3303">
+</Veta>
+<Veta c_ufo="92" nazu_ufo="Finanční úřad v Humpolci" nazu_predl="Humpolci" ufo_predl="v" c_komit="27628711" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2904">
+</Veta>
+<Veta c_ufo="245" nazu_ufo="Finanční úřad v Jaroměři" nazu_predl="Jaroměři" ufo_predl="v" c_komit="47629551" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2706">
+</Veta>
+<Veta c_ufo="128" nazu_ufo="Finanční úřad v Karlových Varech" nazu_predl="Karlových Varech" ufo_predl="v" c_komit="7620341" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2401">
+</Veta>
+<Veta c_ufo="146" nazu_ufo="Finanční úřad v Kralovicích" nazu_predl="Kralovicích" ufo_predl="v" c_komit="47624371" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2309">
+</Veta>
+<Veta c_ufo="192" nazu_ufo="Finanční úřad v Liberci" nazu_predl="Liberci" ufo_predl="v" c_komit="97629461" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2601">
+</Veta>
+<Veta c_ufo="125" nazu_ufo="Finanční úřad v Mariánských Lázních" nazu_predl="Mariánských Lázních" ufo_predl="v" c_komit="27624331" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2405">
+</Veta>
+<Veta c_ufo="332" nazu_ufo="Finanční úřad v Moravských Budějovicích" nazu_predl="Moravských Budějovicích" ufo_predl="v" c_komit="77625711" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2907">
+</Veta>
+<Veta c_ufo="374" nazu_ufo="Finanční úřad v Novém Jičíně" nazu_predl="Novém Jičíně" ufo_predl="v" c_komit="7624801" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3215">
+</Veta>
+<Veta c_ufo="248" nazu_ufo="Finanční úřad v Pardubicích" nazu_predl="Pardubicích" ufo_predl="v" c_komit="7624561" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2801">
+</Veta>
+<Veta c_ufo="325" nazu_ufo="Finanční úřad v Prostějově" nazu_predl="Prostějově" ufo_predl="v" c_komit="97620811" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3106">
+</Veta>
+<Veta c_ufo="404" nazu_ufo="Finanční úřad v Rožnově pod Radhoštěm" nazu_predl="Rožnově pod Radhoštěm" ufo_predl="v" c_komit="77627661" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3307">
+</Veta>
+<Veta c_ufo="135" nazu_ufo="Finanční úřad v Sušici" nazu_predl="Sušici" ufo_predl="v" c_komit="27629351" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2315">
+</Veta>
+<Veta c_ufo="78" nazu_ufo="Finanční úřad v Trhových Svinech" nazu_predl="Trhových Svinech" ufo_predl="v" c_komit="17624231" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2213">
+</Veta>
+<Veta c_ufo="336" nazu_ufo="Finanční úřad v Uherském Hradišti" nazu_predl="Uherském Hradišti" ufo_predl="v" c_komit="7624721" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3309">
+</Veta>
+<Veta c_ufo="362" nazu_ufo="Finanční úřad ve Frýdku-Místku" nazu_predl="Frýdku-Místku" ufo_predl="ve" c_komit="7628781" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3207">
+</Veta>
+<Veta c_ufo="263" nazu_ufo="Finanční úřad ve Svitavách" nazu_predl="Svitavách" ufo_predl="ve" c_komit="7626591" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2808">
+</Veta>
+<Veta c_ufo="107" nazu_ufo="Finanční úřad ve Vodňanech" nazu_predl="Vodňanech" ufo_predl="ve" c_komit="37629291" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2217">
+</Veta>
+<Veta c_ufo="351" nazu_ufo="Finanční úřad ve Žďáru nad Sázavou" nazu_predl="Žďáru nad Sázavou" ufo_predl="ve" c_komit="7626751" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2914">
+</Veta>
+<Veta c_ufo="554" nazu_ufo="Finanční ředitelství v Plzni" nazu_predl="Plzni" ufo_predl="v" c_komit="" k_bank="" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="\ ">
+</Veta>
+<Veta c_ufo="388" nazu_ufo="Finanční úřad Ostrava I" nazu_predl="Ostrava I" ufo_predl="" c_komit="7623761" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3201">
+</Veta>
+<Veta c_ufo="461" nazu_ufo="Finanční úřad pro Jihomoravský kraj" nazu_predl="Jihomoravský kraj" ufo_predl="pro" c_komit="77628621" k_bank="710" d_vzniku="2013-01-01" d_zaniku="" k_ufo_vema="3000">
+</Veta>
+<Veta c_ufo="454" nazu_ufo="Finanční úřad pro Plzeňský kraj" nazu_predl="Plzeňský kraj" ufo_predl="pro" c_komit="77627311" k_bank="710" d_vzniku="2013-01-01" d_zaniku="" k_ufo_vema="2300">
+</Veta>
+<Veta c_ufo="6" nazu_ufo="Finanční úřad pro Prahu 6" nazu_predl="Prahu 6" ufo_predl="pro" c_komit="7621061" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2006">
+</Veta>
+<Veta c_ufo="21" nazu_ufo="Finanční úřad v Benešově" nazu_predl="Benešově" ufo_predl="v" c_komit="7627121" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2103">
+</Veta>
+<Veta c_ufo="57" nazu_ufo="Finanční úřad v Brandýse n.L.-Staré Boleslavi" nazu_predl="Brandýse n.L.-Staré Boleslavi" ufo_predl="v" c_komit="57624201" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2105">
+</Veta>
+<Veta c_ufo="172" nazu_ufo="Finanční úřad v České Lípě" nazu_predl="České Lípě" ufo_predl="v" c_komit="7620421" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2602">
+</Veta>
+<Veta c_ufo="65" nazu_ufo="Finanční úřad v Dobříši" nazu_predl="Dobříši" ufo_predl="v" c_komit="47626211" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2108">
+</Veta>
+<Veta c_ufo="249" nazu_ufo="Finanční úřad v Holicích" nazu_predl="Holicích" ufo_predl="v" c_komit="57621561" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2803">
+</Veta>
+<Veta c_ufo="299" nazu_ufo="Finanční úřad v Hustopečích" nazu_predl="Hustopečích" ufo_predl="v" c_komit="27622651" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3011">
+</Veta>
+<Veta c_ufo="399" nazu_ufo="Finanční úřad v Jeseníku" nazu_predl="Jeseníku" ufo_predl="v" c_komit="7628861" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3103">
+</Veta>
+<Veta c_ufo="367" nazu_ufo="Finanční úřad v Karviné" nazu_predl="Karviné" ufo_predl="v" c_komit="7625791" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3212">
+</Veta>
+<Veta c_ufo="44" nazu_ufo="Finanční úřad v Kralupech nad Vltavou" nazu_predl="Kralupech nad Vltavou" ufo_predl="v" c_komit="47625171" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2112">
+</Veta>
+<Veta c_ufo="197" nazu_ufo="Finanční úřad v Libochovicích" nazu_predl="Libochovicích" ufo_predl="v" c_komit="47629471" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2506">
+</Veta>
+<Veta c_ufo="43" nazu_ufo="Finanční úřad v Mělníce" nazu_predl="Mělníce" ufo_predl="v" c_komit="7623171" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2114">
+</Veta>
+<Veta c_ufo="206" nazu_ufo="Finanční úřad v Mostě" nazu_predl="Mostě" ufo_predl="v" c_komit="7621491" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2510">
+</Veta>
+<Veta c_ufo="53" nazu_ufo="Finanční úřad v Nymburku" nazu_predl="Nymburku" ufo_predl="v" c_komit="7628191" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2118">
+</Veta>
+<Veta c_ufo="91" nazu_ufo="Finanční úřad v Pelhřimově" nazu_predl="Pelhřimově" ufo_predl="v" c_komit="97626711" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2910">
+</Veta>
+<Veta c_ufo="250" nazu_ufo="Finanční úřad v Přelouči" nazu_predl="Přelouči" ufo_predl="v" c_komit="47626561" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2807">
+</Veta>
+<Veta c_ufo="179" nazu_ufo="Finanční úřad v Rumburku" nazu_predl="Rumburku" ufo_predl="v" c_komit="27629431" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2513">
+</Veta>
+<Veta c_ufo="398" nazu_ufo="Finanční úřad v Šumperku" nazu_predl="Šumperku" ufo_predl="v" c_komit="7623841" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3109">
+</Veta>
+<Veta c_ufo="268" nazu_ufo="Finanční úřad v Trutnově" nazu_predl="Trutnově" ufo_predl="v" c_komit="7625601" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2713">
+</Veta>
+<Veta c_ufo="214" nazu_ufo="Finanční úřad v Ústí nad Labem" nazu_predl="Ústí nad Labem" ufo_predl="v" c_komit="7623411" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2501">
+</Veta>
+<Veta c_ufo="193" nazu_ufo="Finanční úřad ve Frýdlantě" nazu_predl="Frýdlantě" ufo_predl="ve" c_komit="37626461" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2603">
+</Veta>
+<Veta c_ufo="381" nazu_ufo="Finanční úřad ve Šternberku" nazu_predl="Šternberku" ufo_predl="ve" c_komit="37628811" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3108">
+</Veta>
+<Veta c_ufo="23" nazu_ufo="Finanční úřad ve Voticích" nazu_predl="Voticích" ufo_predl="ve" c_komit="57624121" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2126">
+</Veta>
+<Veta c_ufo="0" nazu_ufo="Generální finanční ředitelství" nazu_predl="MF ČR" ufo_predl="pro" c_komit="11122011" k_bank="710" d_vzniku="2011-01-01" d_zaniku="" k_ufo_vema="7000">
+</Veta>
+<Veta c_ufo="552" nazu_ufo="Finanční ředitelství v Praze" nazu_predl="Praze" ufo_predl="v" c_komit="" k_bank="" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="\ ">
+</Veta>
+<Veta c_ufo="389" nazu_ufo="Finanční úřad Ostrava II" nazu_predl="Ostrava II" ufo_predl="" c_komit="27624761" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3202">
+</Veta>
+<Veta c_ufo="455" nazu_ufo="Finanční úřad pro Karlovarský kraj" nazu_predl="Karlovarský kraj" ufo_predl="pro" c_komit="77629341" k_bank="710" d_vzniku="2013-01-01" d_zaniku="" k_ufo_vema="2400">
+</Veta>
+<Veta c_ufo="11" nazu_ufo="Finanční úřad pro Prahu - Jižní Město" nazu_predl="Prahu - Jižní Město" ufo_predl="pro" c_komit="27628041" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2011">
+</Veta>
+<Veta c_ufo="7" nazu_ufo="Finanční úřad pro Prahu 7" nazu_predl="Prahu 7" ufo_predl="pro" c_komit="7629071" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2007">
+</Veta>
+<Veta c_ufo="26" nazu_ufo="Finanční úřad v Berouně" nazu_predl="Berouně" ufo_predl="v" c_komit="7624131" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2104">
+</Veta>
+<Veta c_ufo="244" nazu_ufo="Finanční úřad v Broumově" nazu_predl="Broumově" ufo_predl="v" c_komit="57624551" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2702">
+</Veta>
+<Veta c_ufo="35" nazu_ufo="Finanční úřad v Českém Brodě" nazu_predl="Českém Brodě" ufo_predl="v" c_komit="37625151" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2107">
+</Veta>
+<Veta c_ufo="118" nazu_ufo="Finanční úřad v Domažlicích" nazu_predl="Domažlicích" ufo_predl="v" c_komit="7626321" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2305">
+</Veta>
+<Veta c_ufo="134" nazu_ufo="Finanční úřad v Horažďovicích" nazu_predl="Horažďovicích" ufo_predl="v" c_komit="37624351" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2306">
+</Veta>
+<Veta c_ufo="123" nazu_ufo="Finanční úřad v Chebu" nazu_predl="Chebu" ufo_predl="v" c_komit="7623331" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2403">
+</Veta>
+<Veta c_ufo="238" nazu_ufo="Finanční úřad v Jičíně" nazu_predl="Jičíně" ufo_predl="v" c_komit="97629541" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2707">
+</Veta>
+<Veta c_ufo="30" nazu_ufo="Finanční úřad v Kladně" nazu_predl="Kladně" ufo_predl="v" c_komit="7621141" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2110">
+</Veta>
+<Veta c_ufo="157" nazu_ufo="Finanční úřad v Kraslicích" nazu_predl="Kraslicích" ufo_predl="v" c_komit="27628391" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2404">
+</Veta>
+<Veta c_ufo="196" nazu_ufo="Finanční úřad v Litoměřicích" nazu_predl="Litoměřicích" ufo_predl="v" c_komit="7627471" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2507">
+</Veta>
+<Veta c_ufo="300" nazu_ufo="Finanční úřad v Mikulově" nazu_predl="Mikulově" ufo_predl="v" c_komit="37628651" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3014">
+</Veta>
+<Veta c_ufo="243" nazu_ufo="Finanční úřad v Náchodě" nazu_predl="Náchodě" ufo_predl="v" c_komit="7627551" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2709">
+</Veta>
+<Veta c_ufo="379" nazu_ufo="Finanční úřad v Olomouci" nazu_predl="Olomouci" ufo_predl="v" c_komit="7621811" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3101">
+</Veta>
+<Veta c_ufo="97" nazu_ufo="Finanční úřad v Písku" nazu_predl="Písku" ufo_predl="v" c_komit="7628271" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2208">
+</Veta>
+<Veta c_ufo="393" nazu_ufo="Finanční úřad v Přerově" nazu_predl="Přerově" ufo_predl="v" c_komit="7626831" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3107">
+</Veta>
+<Veta c_ufo="253" nazu_ufo="Finanční úřad v Rychnově nad Kněžnou" nazu_predl="Rychnově nad Kněžnou" ufo_predl="v" c_komit="7621571" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2712">
+</Veta>
+<Veta c_ufo="110" nazu_ufo="Finanční úřad v Táboře" nazu_predl="Táboře" ufo_predl="v" c_komit="7621301" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2212">
+</Veta>
+<Veta c_ufo="330" nazu_ufo="Finanční úřad v Třebíči" nazu_predl="Třebíči" ufo_predl="v" c_komit="7627711" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2912">
+</Veta>
+<Veta c_ufo="273" nazu_ufo="Finanční úřad v Ústí nad Orlicí" nazu_predl="Ústí nad Orlicí" ufo_predl="v" c_komit="7622611" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2809">
+</Veta>
+<Veta c_ufo="363" nazu_ufo="Finanční úřad ve Frýdlantě nad Ostravicí" nazu_predl="Frýdlantě nad Ostravicí" ufo_predl="ve" c_komit="37624781" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3208">
+</Veta>
+<Veta c_ufo="405" nazu_ufo="Finanční úřad ve Valašském Meziříčí" nazu_predl="Valašském Meziříčí" ufo_predl="ve" c_komit="87622661" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3310">
+</Veta>
+<Veta c_ufo="270" nazu_ufo="Finanční úřad ve Vrchlabí" nazu_predl="Vrchlabí" ufo_predl="ve" c_komit="37621601" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2714">
+</Veta>
+<Veta c_ufo="13" nazu_ufo="Specializovaný finanční úřad" nazu_predl="Specializovaný finanční úřad" ufo_predl="pro" c_komit="77620021" k_bank="710" d_vzniku="2012-01-01" d_zaniku="" k_ufo_vema="4000">
+</Veta>
+<Veta c_ufo="555" nazu_ufo="Finanční ředitelství v Ústí nad Labem" nazu_predl="Ústí nad Labem" ufo_predl="v" c_komit="" k_bank="" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="\ ">
+</Veta>
+<Veta c_ufo="390" nazu_ufo="Finanční úřad Ostrava III" nazu_predl="Ostrava III" ufo_predl="" c_komit="47625761" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3203">
+</Veta>
+<Veta c_ufo="460" nazu_ufo="Finanční úřad pro Kraj Vysočina" nazu_predl="Kraj Vysočina" ufo_predl="pro" c_komit="67626681" k_bank="710" d_vzniku="2013-01-01" d_zaniku="" k_ufo_vema="2900">
+</Veta>
+<Veta c_ufo="1" nazu_ufo="Finanční úřad pro Prahu 1" nazu_predl="Prahu 1" ufo_predl="pro" c_komit="7625011" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2001">
+</Veta>
+<Veta c_ufo="8" nazu_ufo="Finanční úřad pro Prahu 8" nazu_predl="Prahu 8" ufo_predl="pro" c_komit="7626081" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2008">
+</Veta>
+<Veta c_ufo="211" nazu_ufo="Finanční úřad v Bílině" nazu_predl="Bílině" ufo_predl="v" c_komit="17626501" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2502">
+</Veta>
+<Veta c_ufo="358" nazu_ufo="Finanční úřad v Bruntále" nazu_predl="Bruntále" ufo_predl="v" c_komit="7620771" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3205">
+</Veta>
+<Veta c_ufo="82" nazu_ufo="Finanční úřad v Českém Krumlově" nazu_predl="Českém Krumlově" ufo_predl="v" c_komit="7626241" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2203">
+</Veta>
+<Veta c_ufo="370" nazu_ufo="Finanční úřad v Havířově" nazu_predl="Havířově" ufo_predl="v" c_komit="57622791" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3210">
+</Veta>
+<Veta c_ufo="119" nazu_ufo="Finanční úřad v Horšovském Týně" nazu_predl="Horšovském Týně" ufo_predl="v" c_komit="47628321" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2307">
+</Veta>
+<Veta c_ufo="182" nazu_ufo="Finanční úřad v Chomutově" nazu_predl="Chomutově" ufo_predl="v" c_komit="7625441" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2504">
+</Veta>
+<Veta c_ufo="314" nazu_ufo="Finanční úřad v Jihlavě" nazu_predl="Jihlavě" ufo_predl="v" c_komit="7623681" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2901">
+</Veta>
+<Veta c_ufo="133" nazu_ufo="Finanční úřad v Klatovech" nazu_predl="Klatovech" ufo_predl="v" c_komit="7628351" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2308">
+</Veta>
+<Veta c_ufo="359" nazu_ufo="Finanční úřad v Krnově" nazu_predl="Krnově" ufo_predl="v" c_komit="17626771" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3214">
+</Veta>
+<Veta c_ufo="264" nazu_ufo="Finanční úřad v Litomyšli" nazu_predl="Litomyšli" ufo_predl="v" c_komit="47628591" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2805">
+</Veta>
+<Veta c_ufo="98" nazu_ufo="Finanční úřad v Milevsku" nazu_predl="Milevsku" ufo_predl="v" c_komit="27629271" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2207">
+</Veta>
+<Veta c_ufo="333" nazu_ufo="Finanční úřad v Náměšti nad Oslavou" nazu_predl="Náměšti nad Oslavou" ufo_predl="v" c_komit="47629711" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2908">
+</Veta>
+<Veta c_ufo="384" nazu_ufo="Finanční úřad v Opavě" nazu_predl="Opavě" ufo_predl="v" c_komit="7629821" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3216">
+</Veta>
+<Veta c_ufo="138" nazu_ufo="Finanční úřad v Plzni" nazu_predl="Plzni" ufo_predl="v" c_komit="7629311" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2301">
+</Veta>
+<Veta c_ufo="142" nazu_ufo="Finanční úřad v Přešticích" nazu_predl="Přešticích" ufo_predl="v" c_komit="37621361" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2311">
+</Veta>
+<Veta c_ufo="59" nazu_ufo="Finanční úřad v Říčanech" nazu_predl="Říčanech" ufo_predl="v" c_komit="47629201" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2122">
+</Veta>
+<Veta c_ufo="160" nazu_ufo="Finanční úřad v Tachově" nazu_predl="Tachově" ufo_predl="v" c_komit="7626401" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2313">
+</Veta>
+<Veta c_ufo="88" nazu_ufo="Finanční úřad v Třeboni" nazu_predl="Třeboni" ufo_predl="v" c_komit="47625251" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="2214">
+</Veta>
+<Veta c_ufo="400" nazu_ufo="Finanční úřad v Zábřehu" nazu_predl="Zábřehu" ufo_predl="v" c_komit="27624841" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3110">
+</Veta>
+<Veta c_ufo="375" nazu_ufo="Finanční úřad ve Fulneku" nazu_predl="Fulneku" ufo_predl="ve" c_komit="27625801" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3209">
+</Veta>
+<Veta c_ufo="306" nazu_ufo="Finanční úřad ve Valašských Kloboukách" nazu_predl="Valašských Kloboukách" ufo_predl="ve" c_komit="57626661" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3311">
+</Veta>
+<Veta c_ufo="403" nazu_ufo="Finanční úřad ve Vsetíně" nazu_predl="Vsetíně" ufo_predl="ve" c_komit="97628661" k_bank="710" d_vzniku="1991-01-01" d_zaniku="2012-12-31" k_ufo_vema="3312">
+</Veta>
+</Ciselnik>

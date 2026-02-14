@@ -1,0 +1,1666 @@
+<?xml version="1.0" encoding="utf-8"?><xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="unqualified">
+  <xs:simpleType xmlns:xalan="http://xml.apache.org/xslt" name="dateInMultiFormat">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="(([1-9])|((0[1-9])|([12][0-9]))|(3[0-1]))\.((0?[1-9])|(1[0-2]))\.((19[0-9]{2})|(2[0-9]{3}))"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element xmlns:xalan="http://xml.apache.org/xslt" name="Pisemnost">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="DPHDP3">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element maxOccurs="1" minOccurs="1" name="VetaD">
+                <xs:complexType>
+                  <xs:attribute name="c_okec" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Uvedete číslo převažující ekonomické činnosti podle uskutečněných plnění za příslušné zdaňovací období. Toto číslo musí odpovídat nějakému číslu z číselníku CZ-NACE&lt;br&gt;
+Pro popis číselníku Činnosti klikněte &lt;a href="https://adisspr.mfcr.cz/pmd/dokumentace/ciselniky/ukazka/okec"&gt;zde&lt;/a&gt;.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="6"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="ctvrt" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>plátce se čtvrtletním zdaňovacím obdobím vyplní kalendářní čtvrtletí, za které (příp. za jehož
+						část) podává daňové přiznání. Kalendářní čtvrtletí uveďte číslicí v rozsahu 1 až 4, k vyplněné hodnotě
+						nepřipisujte tečku. Vyplnění měsíce a roku ZO nebo čtvrtletí a roku ZO je pro další zpracování nezbytné.
+						
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="1"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="d_poddp" type="dateInMultiFormat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Tento údaj se předvyplní dnešním datem.
+						</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="d_zjist" type="dateInMultiFormat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplníte jen tehdy, pokud jste vyznačili, že podáváte dodatečné daňové přiznání. V tomto případě je vyplnění dne, kdy jste zjistil(a-i) důvody pro podání dodatečného daňového přiznání, pro další zpracování nezbytné.Při podání dodatečného daňového přiznání podle § 141 odst. 2 nebo 4 zákona č. 280/2009 Sb., daňový řád, ve znění pozdějších předpisů, budou na zvláštní příloze uvedeny důvody pro jeho podání. Důvody pro podání dodatečného daňového přiznání uveďte v poli Důvody pro podání dodatečného daňového přiznání.	</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="dapdph_forma" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Označíte, zda se jedná o daňové přiznání řádné, dodatečné, řádné/opravné nebo dodatečné/opravné (§&amp;nbsp;135, 138 a 141 zákona č.&amp;nbsp;280/2009&amp;nbsp;Sb., daňový řád, ve znění pozdějších předpisů). 
+					Označení jednoho z&amp;nbsp;typů daňového přiznání je pro další zpracování nezbytné.&lt;p&gt;Předkládá se nejpozději do 25 dnů po skončení zdaňovacího období.
+					Plátce daně z&amp;nbsp;přidané hodnoty je povinen podat řádné daňové přiznání i&amp;nbsp;v&amp;nbsp;případě, že mu v&amp;nbsp;příslušném zdaňovacím období nevznikla daňová povinnost.&lt;p&gt;Před uplynutím lhůty k&amp;nbsp;podání řádného daňového přiznání může daňový subjekt nahradit daňové přiznání, které již podal,&lt;b&gt; opravným daňovým přiznáním&lt;/b&gt;(zaškrtne „řádné“ a zároveň „opravné“). V řízení se dále postupuje podle tohoto opravného daňového přiznání a k předchozímu daňovému přiznání se nepřihlíží. Takto lze nahradit i dodatečná daňová přiznání (zaškrtne „dodatečné“ a zároveň „opravné“) nebo již podaná opravná přiznání (§ 138 daňového řádu).&lt;p&gt;&lt;b&gt;Dodatečné daňové přiznání&lt;/b&gt; (dále jen "dodatečné přiznání") se předkládá samostatně pouze za jedno zdaňovací období do konce měsíce následujícího po zjištění důvodu pro podání § 141 odst. 1 daňového řádu. Plátce je povinen předložit dodatečné přiznání, zjistí-li, že jeho daň má být vyšší. Plátce je oprávněn za podmínek stanovených v §&amp;nbsp;141&amp;nbsp;odst.&amp;nbsp;2 a 3 daňového řádu podat dodatečné přiznání na daň nižší, než je poslední známá daň, nebo podle §&amp;nbsp;141 odst.&amp;nbsp;4 daňového řádu dodatečné přiznání, kterým se nemění poslední známá daň, ale pouze údaje dříve tvrzené (v těchto dvou případech uvede v příloze důvody pro jeho podání podle §&amp;nbsp;141&amp;nbsp;odst.&amp;nbsp;5 daňového řádu). Dodatečné přiznání se podává na shodném tiskopise jako řádné přiznání, na jehož první straně se označí jako dodatečné a uvede se den, kdy byly zjištěny skutečnosti zakládající povinnost nebo možnost podat dodatečné přiznání.&lt;BR&gt;&lt;b&gt;V&amp;nbsp;dodatečném přiznání se uvádí pouze rozdíly od údajů, ze kterých byla stanovena poslední známá daň příslušného zdaňovacího období.&lt;/b&gt;&lt;BR&gt; Na &lt;b&gt;ř. 66&lt;/b&gt; se vyznačí rozdíl oproti poslední známé dani. V případě kladné částky je plátce povinen ji uhradit v náhradní lhůtě splatnosti podle §&amp;nbsp;141&amp;nbsp;odst.&amp;nbsp;8 daňového řádu. V případě záporné částky může plátce podat žádost o vrácení případného přeplatku podle §&amp;nbsp;155 daňového řádu.&lt;BR&gt;V&amp;nbsp;případě, že plátce daně je povinen &lt;b&gt;krátit nárok&lt;/b&gt; na odpočet daně podle §&amp;nbsp;76 postupuje dále následovně:&lt;BR&gt; &lt;strong&gt;ř.&amp;nbsp;52 Vypočtená část odpočtu daně v krácené výši&lt;/strong&gt; &lt;BR&gt;- do levého sloupce „Koeficient (%)“ se uvede příslušný koeficient.&lt;BR&gt;- v pravém sloupci „Odpočet“ se uvede vypočtená část odpočtu daně v krácené výši dle § 76 odst. 1, která se vypočte jako součin ř. 46 - sloupec „Krácený odpočet“ a koeficientu (levý sloupec „Koeficient (%)“).&lt;BR&gt;V případě opravy přijatých nebo uskutečněných plnění za zdaňovací období dosud nevypořádaného roku se provede krácení odpočtu daně koeficientem podle § 76 odst. 6 (uvede se do levého sloupce „Koeficient (%)“).&lt;BR&gt;V případě opravy pouze přijatých zdanitelných plnění za zdaňovací období již vypořádaného roku se pro krácení odpočtu daně použije poslední vypočtený vypořádací koeficient (uvede se do levého sloupce „Koeficient (%)“).&lt;BR&gt;V případě opravy uskutečněných plnění za některé ze zdaňovacích období již vypořádaného roku, výše nároku na odpočet daně v krácené výši se vypočte novým vypořádacím koeficientem vypočteným z údajů za celé vypořádávané období s prominutím všech oprav podle § 76 odst. 9 (uvede se do levého sloupce „Koeficient (%)“).&lt;BR&gt; &lt;strong&gt;ř.&amp;nbsp;53 Vypořádání odpočtu daně &lt;/strong&gt;&lt;BR&gt;- uvede se promítnutí všech oprav podle § 76 odst. 9.&lt;p&gt;&lt;b&gt; Volby&lt;/b&gt;&lt;ul&gt;&lt;li&gt; B - řádné&lt;/li&gt;&lt;li&gt;O - opravné&lt;/li&gt;&lt;li&gt;D - dodatečné&lt;/li&gt;&lt;li&gt;E - dodatečné/opravné&lt;/li&gt;&lt;/ul&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="1"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute fixed="DP3" name="dokument" use="required"/>
+                  <xs:attribute fixed="DPH" name="k_uladis" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Musí obsahovat "DPH" - Daň z přidané hodnoty</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="kod_zo" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Kolonku "Kód zdaňovacího období následujícího roku" vyplní plátce pouze v řádném přiznání za poslední zdaňovací období kalendářního roku následovně :&lt;BR&gt;Q&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;uvede plátce, jehož zdaňovacím obdobím je kalendářní měsíc a který se rozhodl, že jeho zdaňovacím obdobím pro příslušný kalendářní rok bude kalendářní čtvrtletí (§ 99a odst. 1)&lt;BR&gt;M&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;uvede plátce, jehož zdaňovacím obdobím je kalendářní čtvrtletí a který se rozhodl, že jeho zdaňovacím obdobím pro příslušný kalendářní rok bude kalendářní měsíc nebo již nesplňuje podmínky pro čtvrtletní zdaňovací období dle § 99a odst. 1.&lt;BR&gt;Plátci, jejichž zdaňovací období se v následujícím kalendářním roce nemění, kód zdaňovacího období nevyplňují. Uvedení kódu v přiznání za poslední zdaňovací období kalendářního roku nahrazuje oznámení o změně zdaňovacího období. Pokud není daňové přiznání podáno do 31. ledna příslušného kalendářního roku, plátce změnu zdaňovacího období oznámí správci daně jiným způsobem.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="3"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="mesic" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Plátce s měsíčním zdaňovacím obdobím vyplní kalendářní měsíc, za který (příp. za jehož část)
+						podává daňové přiznání. Kalendářní měsíc uveďte číslicí v rozsahu 1 až 12, k vyplněné hodnotě nepřipisujte tečku.
+						Vyplnění měsíce a roku ZO nebo čtvrtletí a roku ZO je pro další zpracování nezbytné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="2"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="rok" use="required">
+                    <xs:annotation>
+                      <xs:documentation>vyplníte kalendářní rok, za který (příp. za jehož část) podáváte daňové přiznání. Vyplnění
+						tohoto údaje je pro další zpracování nezbytné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="4"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="trans" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vznikla-li daňová povinnost, uveďte A. Nevznikla-li daňová povinnost uveďte N.
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="1"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="typ_platce" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Označíte, o jaký typ podávající osoby se jedná. &lt;p&gt;Volby:&lt;ul&gt;&lt;li&gt;P - Plátce daně §&amp;nbsp;6 až §&amp;nbsp;6fa  &lt;/li&gt;&lt;li&gt;I - Identifikovaná osoba §&amp;nbsp;6g až §&amp;nbsp;6l&lt;/li&gt;&lt;li&gt;S - Skupina §&amp;nbsp;5a&lt;/li&gt;
+					&lt;li&gt;N - Neplátce dle §&amp;#160;108&lt;/li&gt;&lt;li&gt;R - Neplátce - pořízení NDP §&amp;#160;19c &lt;/li&gt;&lt;li&gt;D - Neplátce - dodání NDP §&amp;#160;19b&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="1"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zdobd_do" type="dateInMultiFormat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Pokud je přiznání podáváno pouze za část zdaňovacího období (např. v případě insolvenčního řízení), zadejte za období od - do. Datum zadejte ve formátu "DD.MM.RRRR".
+Pokud vyplníte pouze hodnotu od, pak se předpokládá interval od zadaného data do konce zadaného období.
+Pokud vyplníte pouze hodnotu do, pak se předpokládá interval od počátku zadaného období do zadaného data.</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="zdobd_od" type="dateInMultiFormat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Pokud je přiznání podáváno pouze za část zdaňovacího období (např. v případě insolvenčního řízení), zadejte za období od - do. Datum zadejte ve formátu "DD.MM.RRRR".&lt;br&gt;
+Pokud vyplníte pouze hodnotu od, pak se předpokládá interval od zadaného data do konce zadaného období.&lt;br&gt;
+Pokud vyplníte pouze hodnotu do, pak se předpokládá interval od počátku zadaného období do zadaného data.</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="d_por_dod" type="dateInMultiFormat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Datum pořízení/dodání nového dopr. prostředku</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="1" minOccurs="1" name="VetaP">
+                <xs:complexType>
+                  <xs:attribute name="c_orient" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>místa pobytu nebo sídla daňového subjektu.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="4"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="c_pop" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>místa pobytu nebo sídla daňového subjektu.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="6"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="c_telef" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>kontaktní daňového subjektu.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="14"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="c_ufo" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Číslo finančního úřadu, kterému je podání určeno.&lt;br&gt;
+Pro popis číselníku Územní finanční orgány klikněte &lt;a href="https://adisspr.mfcr.cz/pmd/dokumentace/ciselniky/ukazka/ufo"&gt;zde&lt;/a&gt;.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="3"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="c_pracufo" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>územní pracoviště, kde je nebo bude umístěn spis daňového subjektu (podle § 13 zákona číslo 456/2011 Sb., o Finanční správě České republiky, ve znění pozdějších předpisů).&lt;br&gt;
+Pro popis číselníku Pracoviště FÚ klikněte &lt;a href="https://adisspr.mfcr.cz/pmd/dokumentace/ciselniky/ukazka/pracufo"&gt;zde&lt;/a&gt;.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="4"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dic" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Kmenová část daňového identifikačního čísla (pouze číselná část), pokud bylo daňovému subjektu přiděleno. Neplátce fyzická osoba uvede rodné číslo (RČ), neplátce právnická osoba uvede identifikační číslo (IČ).</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:pattern value="[0-9]{1,10}"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="email" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>elektronická adresa daňového subjektu.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="255"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="jmeno" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>daňového subjektu fyzické osoby.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="30"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="naz_obce" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>místo pobytu nebo sídla daňového subjektu&lt;br&gt;
+Pro popis číselníku Obce klikněte &lt;a href="https://adisspr.mfcr.cz/pmd/dokumentace/ciselniky/ukazka/obce"&gt;zde&lt;/a&gt;.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="48"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="opr_jmeno" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>fyzické osoby oprávněné k podpisu.&lt;BR&gt;Vyplňuje se, je-li typ daňového subjektu nebo typ jeho podepisující osoby právnická osoba.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="20"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="opr_postaveni" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>fyzické osoby oprávněné k podpisu.&lt;BR&gt;Vyplňuje se, je-li typ daňového subjektu nebo typ jeho podepisující osoby právnická osoba.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="40"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="opr_prijmeni" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>fyzické osoby oprávněné k podpisu.&lt;BR&gt;Vyplňuje se, je-li typ daňového subjektu nebo typ jeho podepisující osoby právnická osoba.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="36"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="prijmeni" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>daňového subjektu fyzické osoby.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="36"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="psc" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>místa pobytu nebo sídla daňového subjektu. PSČ v České republice musí mít délku 5 znaků bez mezer.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="10"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="sest_jmeno" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>osoby, která sestavila podání/tvrzení.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="20"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="sest_prijmeni" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>osoby, která sestavila podání/tvrzení.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="36"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="sest_telef" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>osoby, která sestavila podání/tvrzení.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="14"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="stat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Název státu místa pobytu nebo sídla daňového subjektu. Pro hodnotu této položky použijte číselník Země (zeme). Z číselníku se vkládá položka naz_zeme_c25.&lt;br&gt;
+Pro popis číselníku Země klikněte &lt;a href="https://adisspr.mfcr.cz/pmd/dokumentace/ciselniky/ukazka/zeme"&gt;zde&lt;/a&gt;.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="25"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="titul" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>daňového subjektu fyzické osoby.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="10"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="typ_ds" use="required">
+                    <xs:annotation>
+                      <xs:documentation>(V případě skupiny se uvede typ zastupujícícho člena.)&lt;BR&gt;F - fyzická osoba&lt;BR&gt;P - právnická osoba..</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="1"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="ulice" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>místa pobytu nebo sídla daňového subjektu.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="38"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zast_dat_nar" type="dateInMultiFormat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>podepisující osoba.&lt;BR&gt;Pokud podává fyzická podepisující osoba, buď datum narození nebo evidenční číslo je povinné.</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="zast_ev_cislo" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Pokud podává fyzická podepisující osoba, buď datum narození nebo evidenční číslo je povinné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="36"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zast_ic" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>podepisující osoba.&lt;BR&gt;Pokud podává právnická podepisující osoba je povinné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:pattern value="[0-9]{1,10}"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zast_jmeno" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>podepisující osoba.&lt;BR&gt;Pokud podává fyzická podepisující osoba je povinné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="20"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zast_kod" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Číselný kód podle níže uvedených typů podepisující osoby:&lt;br&gt;Fyzická osoba: &lt;br&gt;1 - zákonný zástupce nebo opatrovník&lt;br&gt;2 - ustanovený zástupce&lt;br&gt;3 - společný zástupce, společný zmocněnec&lt;br&gt;4a - obecný zmocněnec - fyzická osoba i právnická osoba&lt;br&gt;4b - fyzická osoba daňový poradce nebo advokát&lt;br&gt;5a - osoba spravující pozůstalost&lt;br&gt;5b - zástupce osoby spravující pozůstalost&lt;br&gt;6a - dědic po skončení řízení o pozůstalosti&lt;br&gt;6b - zástupce dědice po skončení řízení o pozůstalosti&lt;br&gt;7b - zástupce právního nástupce právnické osoby&lt;br&gt;&lt;br&gt;Právnická osoba:&lt;br&gt;1 - zákonný zástupce nebo opatrovník&lt;br&gt;2 - ustanovený zástupce&lt;br&gt;3 - společný zástupce, společný zmocněnec&lt;br&gt;4a - obecný zmocněnec - fyzická osoba i právnická osoba&lt;br&gt;4c - právnická osoba vykonávající daňové poradenství&lt;br&gt;5a - osoba spravující pozůstalost&lt;br&gt;5b - zástupce osoby spravující pozůstalost&lt;br&gt;6a - dědic po skončení řízení o pozůstalosti&lt;br&gt;6b - zástupce dědice po skončení řízení o pozůstalosti&lt;br&gt;7a - právní nástupce právnické osoby&lt;br&gt;7b - zástupce právního nástupce právnické osoby</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zast_nazev" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>podepisující osoba.&lt;BR&gt;Pokud podává právnická podepisující osoba je povinné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="255"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zast_prijmeni" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>podepisující osoba.&lt;BR&gt;Pokud podává fyzická podepisující osoba je povinné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="36"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zast_typ" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>F - fyzická osoba &lt;BR&gt; P - právnická osoba&lt;BR&gt; Pokud podává podepisující osoba je povinné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="1"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zkrobchjm" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Obchodní jméno daňového subjektu právnické osoby.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="255"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="1" minOccurs="0" name="Veta1">
+                <xs:complexType>
+                  <xs:attribute name="dan23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+- uvede se údaj o základu daně a dani na výstupu dle sazby daně z uskutečněných zdanitelných plněních s místem plnění v tuzemsku podle §&amp;nbsp;13 (dodání zboží), §&amp;nbsp;14 (poskytnutí služby). Dále se uvede zdanitelné plnění podle §&amp;nbsp;4 odst. 9 (prodej zboží na dálku), §&amp;nbsp;4 odst. 10 (prodej dovezeného zboží na dálku) a §&amp;nbsp;13a (dodání zboží usnadněné provozovatelem el. rozhraní), pokud u těchto plnění je místo plnění v tuzemsku a není přiznána daň ve zvláštním režimu jednoho správního místa dle §&amp;nbsp;110a a násl. &lt;BR&gt;
+- uvádí se také přijatá úplata, která předchází uskutečnění zdanitelného plnění, vznikla-li jejím přijetím povinnost přiznat nebo zaplatit daň.&lt;BR&gt;
+- neuvádí se plnění s místem plnění v tuzemsku, u kterých je daň přiznána ve zvláštním režimu jednoho správního místa dle § 110a a násl.&lt;BR&gt;
+- uvede se údaj o základu daně a dani na výstupu dle sazby daně z ostatních uskutečněných zdanitelných plnění s místem plnění v tuzemsku, pro která není v daňovém přiznání samostatná kolonka (například základ daně a daň z přirážky dle §&amp;nbsp;89, §&amp;nbsp;90 a další zdanitelná plnění).&lt;BR&gt;
+- věřitel uvede se záporným znaménkem opravu základu daně a výše daně v případě nedobytné pohledávky podle §&amp;nbsp;46 a násl. S kladným znaménkem v případě nutnosti zvýšení základu daně z důvodu dalších oprav. Oprava dle §&amp;nbsp;46fa se uvede současně na ř. 14. V případě postupu dle §&amp;nbsp;46fa viz také pokyny k dodatečnému daňovému přiznání.&lt;BR&gt;
+- uvede se oprava základu daně a výše daně dle §&amp;nbsp;42, §&amp;nbsp;42a (oprava základu daně a výše daně podle §&amp;nbsp;42a se uvede rovněž na ř. 14) a §&amp;nbsp;43.
+					&lt;p&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+- uvede se údaj o základu daně a dani na výstupu dle sazby daně z uskutečněných zdanitelných plněních s místem plnění v tuzemsku podle §&amp;nbsp;13 (dodání zboží), §&amp;nbsp;14 (poskytnutí služby). Dále se uvede zdanitelné plnění podle §&amp;nbsp;4 odst. 9 (prodej zboží na dálku), §&amp;nbsp;4 odst. 10 (prodej dovezeného zboží na dálku) a §&amp;nbsp;13a (dodání zboží usnadněné provozovatelem el. rozhraní), pokud u těchto plnění je místo plnění v tuzemsku a není přiznána daň ve zvláštním režimu jednoho správního místa dle §&amp;nbsp;110a a násl. &lt;BR&gt;
+- uvádí se také přijatá úplata, která předchází uskutečnění zdanitelného plnění, vznikla-li jejím přijetím povinnost přiznat nebo zaplatit daň.&lt;BR&gt;
+- neuvádí se plnění s místem plnění v tuzemsku, u kterých je daň přiznána ve zvláštním režimu jednoho správního místa dle § 110a a násl.&lt;BR&gt;
+- uvede se údaj o základu daně a dani na výstupu dle sazby daně z ostatních uskutečněných zdanitelných plnění s místem plnění v tuzemsku, pro která není v daňovém přiznání samostatná kolonka (například základ daně a daň z přirážky dle §&amp;nbsp;89, §&amp;nbsp;90 a další zdanitelná plnění).&lt;BR&gt;
+- věřitel uvede se záporným znaménkem opravu základu daně a výše daně v případě nedobytné pohledávky podle §&amp;nbsp;46 a násl. S kladným znaménkem v případě nutnosti zvýšení základu daně z důvodu dalších oprav. Oprava dle §&amp;nbsp;46fa se uvede současně na ř. 14. V případě postupu dle §&amp;nbsp;46fa viz také pokyny k dodatečnému daňovému přiznání.&lt;BR&gt;
+- uvede se oprava základu daně a výše daně dle §&amp;nbsp;42, §&amp;nbsp;42a (oprava základu daně a výše daně podle §&amp;nbsp;42a se uvede rovněž na ř. 14) a §&amp;nbsp;43.
+&lt;p&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan_dzb23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na výstupu dle	sazby daně z dováženého zboží(§  23).
+					
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan_dzb5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na výstupu dle sazby daně z dováženého zboží(§ 23).
+					
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan_pdop_nrg" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na výstupu z pořízení nového dopravního prostředku podle § 19c plátcem nebo identifikovanou osobou od jiné osoby než osoby podle § 16 odst. 2. Zároveň se podá Hlášení o pořízení nového dopravního prostředku spolu s kopií daňového dokladu nebo dokladu o prodeji nového dopravního prostředku.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan_psl23_e" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- uvede se údaj o základu daně a dani na výstupu dle	sazby daně ze služby přijaté (a případně z poskytnuté úplaty (zálohy) - § 24 od osoby registrované k dani	v jiném členském státě s místem plnění v tuzemsku podle § 9 odst. 1, vznikla-li jejím přijetím povinnost přiznat a	zaplatit daň podle § 108 odst. 3 písm. a). &lt;BR&gt;&lt;U&gt;
+					
+					- za zdaňovací období leden až březen, resp. 1. čtvrtletí 2011 se uvede hodnota plnění dle pokynů k vyplnění - vzor č. 13, s tím, že se neuvede daň z poskytnuté úplaty (zálohy). &lt;/U&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan_psl23_z" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					
+					- uvede se údaj o základu daně a dani na výstupu z plnění poskytnutých 
+					&lt;b&gt;osobou neusazenou v tuzemsku &lt;/b&gt; 
+					s místem plnění v tuzemsku, 
+					vznikla-li jejich přijetím, nebo poskytnutím úplaty (zálohy), povinnost přiznat nebo zaplatit daň podle § 108. Například:
+					&lt;BR&gt;- služba podle §&amp;#160;10 až 10d, 
+					&lt;BR&gt;- zboží s montáží nebo instalací podle §&amp;#160;7 odst. 6,
+					&lt;BR&gt;- plyn, elektřina, teplo nebo chlad podle §&amp;#160;7a odst. 1 nebo 3,
+					&lt;BR&gt;- zboží od osoby neusazené v tuzemsku podle § 24, resp. § 108 odst. 3 písm. b).
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan_psl5_e" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					
+					- uvede se údaj o základu daně a dani na výstupu dle	sazby daně ze služby přijaté (a případně z poskytnuté úplaty (zálohy) - § 24 od osoby registrované k dani	v jiném členském státě s místem plnění v tuzemsku podle § 9 odst. 1, vznikla-li jejím přijetím povinnost přiznat a zaplatit daň podle § 108 odst. 3 písm. a). &lt;BR&gt;&lt;U&gt;
+					
+					- za zdaňovací období leden až březen, resp. 1. čtvrtletí 2011 se uvede hodnota plnění dle pokynů k vyplnění - vzor č. 13, s tím, že se neuvede daň z poskytnuté úplaty (zálohy). &lt;/U&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan_psl5_z" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+			
+					- uvede se údaj o základu daně a dani na výstupu z plnění poskytnutých 
+					&lt;b&gt;osobou neusazenou v tuzemsku &lt;/b&gt; 
+					s místem plnění v tuzemsku, 
+					vznikla-li jejich přijetím, nebo poskytnutím úplaty (zálohy), povinnost přiznat nebo zaplatit daň podle § 108. Například:
+					&lt;BR&gt;- služba podle §&amp;#160;10 až 10d, 
+					&lt;BR&gt;- zboží s montáží nebo instalací podle §&amp;#160;7 odst. 6,
+					&lt;BR&gt;- plyn, elektřina, teplo nebo chlad podle §&amp;#160;7a odst. 1 nebo 3,
+					&lt;BR&gt;- zboží od osoby neusazené v tuzemsku podle § 24, resp. § 108 odst. 3 písm. b).
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan_pzb23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+	- uvede se údaj o základu daně a dani na výstupu dle sazby daně z pořízení zboží z jiného členského státu dle §&amp;#160;16. Do tohoto řádku se uvede také údaj o základu daně a	dani na výstupu při přemístění zboží z jiného členského státu dle §&amp;#160;16 odst. 4.&lt;BR&gt;
+	- uvede se údaj o základu daně a dani na výstupu při koupi zboží od prostřední osoby kupujícím, který má povinnost přiznat daň podle §&amp;#160;108 odst. 4 písm. b).&lt;BR&gt;
+	- uvede se údaj o základu daně a dani na výstupu z pořízení nového dopravního prostředku podle §&amp;#160;19 odst. 1 plátcem nebo identifikovanou osobou &lt;b&gt;od osoby podle §&amp;#160;16 odst. 2.&lt;/b&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan_pzb5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+	- uvede se údaj o základu daně a dani na výstupu dle sazby daně z pořízení zboží z jiného členského státu dle §&amp;#160;16. Do tohoto řádku se uvede také údaj o základu daně a	dani na výstupu při přemístění zboží z jiného členského státu dle §&amp;#160;16 odst. 4.&lt;BR&gt;
+	- uvede se údaj o základu daně a dani na výstupu při koupi zboží od prostřední osoby kupujícím, který má povinnost přiznat daň podle §&amp;#160;108 odst. 4 písm. b).&lt;BR&gt;
+	- uvede se údaj o základu daně a dani na výstupu z pořízení nového dopravního prostředku podle §&amp;#160;19 odst. 1 plátcem nebo identifikovanou osobou &lt;b&gt;od osoby podle §&amp;#160;16 odst. 2.&lt;/b&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan_rpren23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- plátce, který je v tomto režimu příjemcem zdanitelného plnění, uvede údaj o základu daně a dani na výstupu. </xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan_rpren5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- plátce, který je v tomto režimu příjemcem zdanitelného plnění, uvede údaj o základu daně a dani na výstupu. </xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dov_zb23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;	- uvede se údaj o základu daně a dani na výstupu dle sazby daně z dováženého zboží (§ 23).
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dov_zb5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na výstupu dle	sazby daně z dováženého zboží(§ 23).	</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="obrat23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+- uvede se údaj o základu daně a dani na výstupu dle sazby daně z uskutečněných zdanitelných plněních s místem plnění v tuzemsku podle §&amp;nbsp;13 (dodání zboží), §&amp;nbsp;14 (poskytnutí služby). Dále se uvede zdanitelné plnění podle §&amp;nbsp;4 odst. 9 (prodej zboží na dálku), §&amp;nbsp;4 odst. 10 (prodej dovezeného zboží na dálku) a §&amp;nbsp;13a (dodání zboží usnadněné provozovatelem el. rozhraní), pokud u těchto plnění je místo plnění v tuzemsku a není přiznána daň ve zvláštním režimu jednoho správního místa dle §&amp;nbsp;110a a násl. &lt;BR&gt;
+- uvádí se také přijatá úplata, která předchází uskutečnění zdanitelného plnění, vznikla-li jejím přijetím povinnost přiznat nebo zaplatit daň.&lt;BR&gt;
+- neuvádí se plnění s místem plnění v tuzemsku, u kterých je daň přiznána ve zvláštním režimu jednoho správního místa dle § 110a a násl.&lt;BR&gt;
+- uvede se údaj o základu daně a dani na výstupu dle sazby daně z ostatních uskutečněných zdanitelných plnění s místem plnění v tuzemsku, pro která není v daňovém přiznání samostatná kolonka (například základ daně a daň z přirážky dle §&amp;nbsp;89, §&amp;nbsp;90 a další zdanitelná plnění).&lt;BR&gt;
+- věřitel uvede se záporným znaménkem opravu základu daně a výše daně v případě nedobytné pohledávky podle §&amp;nbsp;46 a násl. S kladným znaménkem v případě nutnosti zvýšení základu daně z důvodu dalších oprav. Oprava dle §&amp;nbsp;46fa se uvede současně na ř. 14. V případě postupu dle §&amp;nbsp;46fa viz také pokyny k dodatečnému daňovému přiznání.&lt;BR&gt;
+- uvede se oprava základu daně a výše daně dle §&amp;nbsp;42, §&amp;nbsp;42a (oprava základu daně a výše daně podle §&amp;nbsp;42a se uvede rovněž na ř. 14) a §&amp;nbsp;43.
+&lt;p&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="obrat5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+- uvede se údaj o základu daně a dani na výstupu dle sazby daně z uskutečněných zdanitelných plněních s místem plnění v tuzemsku podle §&amp;nbsp;13 (dodání zboží), §&amp;nbsp;14 (poskytnutí služby). Dále se uvede zdanitelné plnění podle §&amp;nbsp;4 odst. 9 (prodej zboží na dálku), §&amp;nbsp;4 odst. 10 (prodej dovezeného zboží na dálku) a §&amp;nbsp;13a (dodání zboží usnadněné provozovatelem el. rozhraní), pokud u těchto plnění je místo plnění v tuzemsku a není přiznána daň ve zvláštním režimu jednoho správního místa dle §&amp;nbsp;110a a násl. &lt;BR&gt;
+- uvádí se také přijatá úplata, která předchází uskutečnění zdanitelného plnění, vznikla-li jejím přijetím povinnost přiznat nebo zaplatit daň.&lt;BR&gt;
+- neuvádí se plnění s místem plnění v tuzemsku, u kterých je daň přiznána ve zvláštním režimu jednoho správního místa dle § 110a a násl.&lt;BR&gt;
+- uvede se údaj o základu daně a dani na výstupu dle sazby daně z ostatních uskutečněných zdanitelných plnění s místem plnění v tuzemsku, pro která není v daňovém přiznání samostatná kolonka (například základ daně a daň z přirážky dle §&amp;nbsp;89, §&amp;nbsp;90 a další zdanitelná plnění).&lt;BR&gt;
+- věřitel uvede se záporným znaménkem opravu základu daně a výše daně v případě nedobytné pohledávky podle §&amp;nbsp;46 a násl. S kladným znaménkem v případě nutnosti zvýšení základu daně z důvodu dalších oprav. Oprava dle §&amp;nbsp;46fa se uvede současně na ř. 14. V případě postupu dle §&amp;nbsp;46fa viz také pokyny k dodatečnému daňovému přiznání.&lt;BR&gt;
+- uvede se oprava základu daně a výše daně dle §&amp;nbsp;42, §&amp;nbsp;42a (oprava základu daně a výše daně podle §&amp;nbsp;42a se uvede rovněž na ř. 14) a §&amp;nbsp;43.
+&lt;p&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="p_dop_nrg" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na výstupu z pořízení nového dopravního prostředku podle §&amp;#160;19c plátcem nebo identifikovanou osobou od jiné osoby než osoby podle §&amp;#160;16 odst. 2. Zároveň se podá Hlášení o pořízení nového dopravního prostředku spolu s kopií daňového dokladu nebo dokladu o prodeji nového dopravního prostředku.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="p_sl23_e" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na výstupu dle sazby daně ze služby přijaté (a případně z poskytnuté úplaty (zálohy) - §&amp;#160;24 od osoby registrované k dani v jiném členském státě s místem plnění v tuzemsku podle §&amp;#160;9 odst. 1, vznikla-li jejím přijetím povinnost přiznat a	zaplatit daň podle §&amp;#160;108 odst. 3 písm. a).</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="p_sl23_z" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na výstupu z plnění poskytnutých 
+					&lt;b&gt;osobou neusazenou v tuzemsku &lt;/b&gt; 
+					s místem plnění v tuzemsku, 
+					vznikla-li jejich přijetím, nebo poskytnutím úplaty (zálohy), povinnost přiznat nebo zaplatit daň podle § 108. Například:
+					&lt;BR&gt;- služba podle §&amp;#160;10 až 10d,
+					&lt;BR&gt;- zboží s montáží nebo instalací podle §&amp;#160;7 odst. 6,
+					&lt;BR&gt;- plyn, elektřina, teplo nebo chlad podle §&amp;#160;7a odst. 1 nebo 3,
+					&lt;BR&gt;- zboží od osoby neusazené v tuzemsku podle § 24, resp. § 108 odst. 3 písm. b).
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="p_sl5_e" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na výstupu dle sazby daně ze služby přijaté (a případně z poskytnuté úplaty (zálohy) - §&amp;#160;24 od osoby registrované k dani v jiném členském státě s místem plnění v tuzemsku podle §&amp;#160;9 odst. 1, vznikla-li jejím přijetím povinnost přiznat a	zaplatit daň podle §&amp;#160;108 odst. 3 písm. a).</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="p_sl5_z" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na výstupu z plnění poskytnutých 
+					&lt;b&gt;osobou neusazenou v tuzemsku &lt;/b&gt; 
+					s místem plnění v tuzemsku, 
+					vznikla-li jejich přijetím, nebo poskytnutím úplaty (zálohy), povinnost přiznat nebo zaplatit daň podle § 108. Například:
+					&lt;BR&gt;- služba podle §&amp;#160;10 až 10d,
+					&lt;BR&gt;- zboží s montáží nebo instalací podle §&amp;#160;7 odst. 6,
+					&lt;BR&gt;- plyn, elektřina, teplo nebo chlad podle §&amp;#160;7a odst. 1 nebo 3,
+					&lt;BR&gt;- zboží od osoby neusazené v tuzemsku podle § 24, resp. § 108 odst. 3 písm. b).
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="p_zb23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+	- uvede se údaj o základu daně a dani na výstupu dle sazby daně z pořízení zboží z jiného členského státu dle §&amp;#160;16. Do tohoto řádku se uvede také údaj o základu daně a	dani na výstupu při přemístění zboží z jiného členského státu dle §&amp;#160;16 odst. 4.&lt;BR&gt;
+	- uvede se údaj o základu daně a dani na výstupu při koupi zboží od prostřední osoby kupujícím, který má povinnost přiznat daň podle §&amp;#160;108 odst. 4 písm. b).&lt;BR&gt;
+	- uvede se údaj o základu daně a dani na výstupu z pořízení nového dopravního prostředku podle §&amp;#160;19 odst. 1 plátcem nebo identifikovanou osobou &lt;b&gt;od osoby podle §&amp;#160;16 odst. 2.&lt;/b&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="p_zb5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+	- uvede se údaj o základu daně a dani na výstupu dle sazby daně z pořízení zboží z jiného členského státu dle §&amp;#160;16. Do tohoto řádku se uvede také údaj o základu daně a	dani na výstupu při přemístění zboží z jiného členského státu dle §&amp;#160;16 odst. 4.&lt;BR&gt;
+	- uvede se údaj o základu daně a dani na výstupu při koupi zboží od prostřední osoby kupujícím, který má povinnost přiznat daň podle §&amp;#160;108 odst. 4 písm. b).&lt;BR&gt;
+	- uvede se údaj o základu daně a dani na výstupu z pořízení nového dopravního prostředku podle §&amp;#160;19 odst. 1 plátcem nebo identifikovanou osobou &lt;b&gt;od osoby podle §&amp;#160;16 odst. 2.&lt;/b&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="rez_pren23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- plátce, který je v tomto režimu příjemcem zdanitelného plnění, uvede údaj o základu daně a dani na výstupu.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="rez_pren5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- plátce, který je v tomto režimu příjemcem zdanitelného plnění, uvede údaj o základu daně a dani na výstupu.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="opr_dane_zd" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a souhrnné výši daně bez rozdílu sazby daně v případě opravy podle § 42a a údaj o základu daně a souhrnné výši daně bez rozdílu sazby daně v případě opravy provedené věřitelem podle § 46fa.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="opr_dane_dan" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a souhrnné výši daně bez rozdílu sazby daně v případě opravy podle § 42a a údaj o základu daně a souhrnné výši daně bez rozdílu sazby daně v případě opravy provedené věřitelem podle § 46fa.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="1" minOccurs="0" name="Veta2">
+                <xs:complexType>
+                  <xs:attribute name="dod_dop_nrg" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- plátce uvede údaj o hodnotě plnění při dodání nového dopravního prostředku do jiného členského státu podle §&amp;#160;19a osobě, která mu nesdělila své daňové identifikační číslo pro účely daně z přidané hodnoty. Plátce je povinen přiložit k daňovému přiznání hlášení o dodání nového dopravního prostředku do jiného členského státu a kopii daňového dokladu. Identifikovaná osoba uvede údaj o hodnotě plnění při dodání nového dopravního prostředku do jiného členského státu podle §&amp;#160;19b odst. 3. Daňové přiznání, ke kterému přiloží hlášení o dodání nového dopravního prostředku, je identifikovaná osoba povinna podat do 10 dnů ode dne dodání nového dopravního prostředku. Údaj o hodnotě plnění se neuvede do souhrnného hlášení.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dod_zb" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- uvede se údaj o hodnotě plnění při dodání zboží do jiného členského státu dle §&amp;#160;64 (dodání zboží do jiného členského státu osobě registrované k dani
+					 §&amp;#160;64 odst. 3).&lt;BR&gt;- prodávající osoba dle §&amp;#160;17 odst. 2 uvede údaj o hodnotě plnění při dodání zboží z tuzemska do jiného členského státu při užití zjednodušeného postupu dle §&amp;#160;17.&lt;BR&gt;- uvede se údaj o hodnotě plnění při dodání nového dopravního prostředku dle §&amp;#160;64 odst. 2 do jiného členského státu, osobě &lt;b&gt;registrované&lt;/b&gt; k dani v tomto členském státě (dodání osobě neregistrované k dani v jiném členském státě se v tomto řádku neuvede, ale uvede se v řádku 23).&lt;BR&gt;Hodnota plnění z řádku 20 se uvede v souhrnném hlášení s kódy 0 a 1.
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="pln_ost" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt; 
+					- uvede se údaj o hodnotě veškerých ostatních plnění s nárokem na odpočet daně, 
+					která se neuvádí v předchozích řádcích přiznání, ani v řádku 31. Případně se uvede přijetí úplaty, která předchází uskutečnění plnění. Například:&lt;BR&gt;
+					Poskytnutí služby s místem plnění mimo tuzemsko (§ 24a), mimo plnění vykazovaných na ř. 21 a ř. 24.&lt;BR&gt;
+					Dodání zboží s instalací nebo montáží, dodání plynu, elektřiny, tepla nebo chladu soustavami nebo sítěmi s místem plnění mimo tuzemsko.&lt;BR&gt;
+					Uskutečnění plnění osvobozeného dle § 67, § 68, § 69, § 70, § 71h, § 71i.&lt;BR&gt;
+					Částka za uskutečněná plnění podle zvláštního režimu pro cestovní službu (§ 89) nebo pro	obchodníky s použitým zbožím, uměleckými díly, sběratelskými předměty a starožitnostmi (§ 90), snížená o přirážku.&lt;BR&gt;
+					Zvláštní režim pro investiční zlato dle § 92 odst. 7 a 8.&lt;BR&gt;
+					Dodání zboží s místem plnění mimo tuzemsko (§ 24a) a další. </xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="pln_rez_pren" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- plátce, který v tomto režimu uskutečnil zdanitelné plnění, uvede údaj o jeho hodnotě. </xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="pln_sluzby" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o hodnotě plnění při poskytnutí služeb s místem plnění v jiném členském státě podle §&amp;#160;9 odst. 1, s výjimkou poskytnutí služby, které je v jiném členském státě osvobozeno do daně, osobě registrované k dani v jiném členském státě, pokud je povinen přiznat a zaplatit daň příjemce služby, nebo údaj o hodnotě úplaty přijaté před uskutečněním této služby, byla-li tato služba ke dni přijetí úplaty známa dostatečně určitě.&lt;BR&gt;
+					Hodnota plnění z řádku 21 se uvede v souhrnném hlášení s kódem 3. Pokud jde o identifikovanou osobu, které nevznikne podle § 101 odst. 5 povinnost podat přiznání, má přesto povinnost podat souhrnné hlášení.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="pln_vyvoz" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- uvede se údaj o hodnotě plnění pří vývozu dle §&amp;#160;66.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="pln_zaslani" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>
+					Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se hodnota následujících uskutečněných vybraných plnění s nárokem na odpočet daně, na která je použit zvláštní režim jednoho správního místa, nebo na která by tento režim mohl být použit, pokud by osoba uskutečňující vybraná plnění byla v tomto režimu registrována, s výjimkou zdanitelných vybraných plnění uvedených na ř. 1 a 2:&lt;BR&gt;
+					- poskytnutí služby osobě nepovinné k dani s místem plnění v členském státě odlišném od  členského státu, ve kterém má osoba uskutečňující vybraná plnění sídlo nebo provozovnu;&lt;BR&gt;
+					- prodej zboží na dálku s místem plnění podle § 8 odst. 1; &lt;BR&gt;
+					- dodání zboží provozovatelem elektronického rozhraní podle § 13a odst. 2 písm. b); &lt;BR&gt;
+					- prodej dovezeného zboží na dálku s místem plnění podle § 8a; &lt;BR&gt;
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="1" minOccurs="0" name="Veta3">
+                <xs:complexType>
+                  <xs:attribute name="dov_osv" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence &lt;BR&gt;- uvede se hodnota dovezeného zboží, které je přepraveno ze třetí země, a ukončení odeslání nebo přepravy tohoto zboží je v jiném členském státě a dodání tohoto zboží do jiného členského státu je osvobozeno od daně. </xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="opr_dluz" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- věřitel uvede kladnou hodnotu opravy daně v případě nedobytné pohledávky podle §&amp;#160;46 a násl., zápornou hodnotu v případě nutnosti zvýšení základu daně z důvodu dalších oprav. Dlužník, který uplatnil odpočet daně z původního zdanitelného plnění, uvede kladnou hodnotu opravy odpočtu daně v případě nedobytné pohledávky podle §&amp;#160;74b odst. 1 a odst. 3, zápornou hodnotu v případě postupu podle §&amp;#160;74b odst. 2 a odst. 4.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="opr_verit" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- věřitel uvede kladnou hodnotu opravy daně v případě nedobytné pohledávky podle §&amp;#160;46 a násl., zápornou hodnotu v případě nutnosti zvýšení základu daně z důvodu dalších oprav. Dlužník, který uplatnil odpočet daně z původního zdanitelného plnění, uvede kladnou hodnotu opravy odpočtu daně v případě nedobytné pohledávky podle §&amp;#160;74b odst. 1 a odst. 3, zápornou hodnotu v případě postupu podle §&amp;#160;74b odst. 2 a odst. 4.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="tri_dozb" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- uvede se hodnota pořízeného zboží z jiného členského státu, resp. hodnota dodaného zboží do jiného členského státu prostřední osobou při třístranném obchodu dle §&amp;#160;17. Hodnota plnění z řádku 31 se uvede v souhrnném hlášení s kódem 2. Pokud jde o identifikovanou osobu, které nevznikne podle §&amp;#160;101 odst. 5 povinnost podat přiznání, má přesto povinnost podat souhrnné hlášení. </xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="tri_pozb" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- uvede se hodnota pořízeného zboží z jiného členského státu, resp. hodnota dodaného zboží do jiného členského státu prostřední osobou při třístranném obchodu dle §&amp;#160;17. Hodnota plnění z řádku 31 se uvede v souhrnném hlášení s kódem 2. Pokud jde o identifikovanou osobu, které nevznikne podle §&amp;#160;101 odst. 5 povinnost podat přiznání, má přesto povinnost podat souhrnné hlášení. </xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="1" minOccurs="0" name="Veta4">
+                <xs:complexType>
+                  <xs:attribute name="dov_cu" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>- uvede se údaj o základu daně a dani na vstupu při dovozu zboží v případech, kdy je správcem daně při dovozu zboží celní úřad.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="nar_maj" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na vstupu u majetku pořízeného nebo vytvořeného vlastní činností, vymezeného v § 4 odst. 4 písm. c), a to najednou v daňovém přiznání za zdaňovací období, kdy byl převeden do užívání, nebo za první zdaňovací období registrace. Neuvádějí se zde zálohy nebo přijatá dílčí plnění při pořizování majetku vlastní činností. Pokud je nárok na odpočet daně uplatněn v poměrné výši podle § 75, uvede se zde také v poměrné výši. V případě pořízení vybraného osobního automobilu podle § 72 odst. 3 a 4 se uvede základ daně v plné výši, i když daň na vstupu je omezena částkou 420 000 Kč.
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="nar_zdp23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na vstupu z přijatých zdanitelných plnění, u kterých má povinnost přiznat daň příjemce těchto zdanitelných plnění, a která se	uvádí v řádcích 3 až 13 přiznání. V případě pořízení vybraného osobního automobilu podle § 72 odst. 3 a 4 se uvede základ daně v plné výši, i když daň na vstupu je omezena částkou 420 000 Kč.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="nar_zdp5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- uvede se údaj o základu daně a dani na vstupu zpřijatých zdanitelných plnění, u kterých má povinnost přiznat daň příjemce těchto zdanitelných plnění, a která se	uvádí v řádcích 3 až 13 přiznání. V případě pořízení vybraného osobního automobilu podle § 72 odst. 3 a 4 se uvede základ daně v plné výši, i když daň na vstupu je omezena částkou 420 000 Kč.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="od_maj" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na vstupu u majetku pořízeného nebo vytvořeného vlastní činností, vymezeného v § 4 odst. 4 písm. c), a to najednou v daňovém přiznání za zdaňovací období, kdy byl převeden do užívání, nebo za první zdaňovací období registrace. Neuvádějí se zde zálohy nebo přijatá dílčí plnění při pořizování majetku vlastní činností. Pokud je nárok na odpočet daně uplatněn v poměrné výši podle § 75, uvede se zde také v poměrné výši. V případě pořízení vybraného osobního automobilu podle § 72 odst. 3 a 4 se uvede základ daně v plné výši, i když daň na vstupu je omezena částkou 420 000 Kč.
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="od_zdp23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- uvede se údaj o základu daně a dani na vstupu z přijatých zdanitelných plnění, u kterých má povinnost přiznat daň příjemce těchto zdanitelných plnění, a která se uvádí v řádcích 3 až 13 přiznání. V případě pořízení vybraného osobního automobilu podle § 72 odst. 3 a 4 se uvede základ daně v plné výši, i když daň na vstupu je omezena částkou 420 000 Kč.
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="od_zdp5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- uvede se údaj o základu daně a dani na vstupu zpřijatých zdanitelných plnění, u kterých má povinnost přiznat daň příjemce těchto zdanitelných plnění, a která se	uvádí v řádcích 3 až 13 přiznání. V případě pořízení vybraného osobního automobilu podle § 72 odst. 3 a 4 se uvede základ daně v plné výši, i když daň na vstupu je omezena částkou 420 000 Kč.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="odkr_maj" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na vstupu u majetku pořízeného nebo vytvořeného vlastní činností, vymezeného v § 4 odst. 4 písm. c), a to najednou v daňovém přiznání za zdaňovací období, kdy byl převeden do užívání, nebo za první zdaňovací období registrace. Neuvádějí se zde zálohy nebo přijatá dílčí plnění při pořizování majetku vlastní činností. Pokud je nárok na odpočet daně uplatněn v poměrné výši podle § 75, uvede se zde také v poměrné výši. V případě pořízení vybraného osobního automobilu podle § 72 odst. 3 a 4 se uvede základ daně v plné výši, i když daň na vstupu je omezena částkou 420 000 Kč.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="odkr_zdp23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- uvede se údaj o základu daně a dani na vstupu z přijatých zdanitelných plnění, u kterých má povinnost přiznat daň příjemce těchto zdanitelných plnění, a která se uvádí v řádcích 3 až 13 přiznání. V případě pořízení vybraného osobního automobilu podle § 72 odst. 3 a 4 se uvede základ daně v plné výši, i když daň na vstupu je omezena částkou 420 000 Kč.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="odkr_zdp5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- uvede se údaj o základu daně a dani na vstupu z přijatých zdanitelných plnění, u kterých má povinnost přiznat daň příjemce těchto zdanitelných plnění, a která se	uvádí v řádcích 3 až 13 přiznání. V případě pořízení vybraného osobního automobilu podle § 72 odst. 3 a 4 se uvede základ daně v plné výši, i když daň na vstupu je omezena částkou 420 000 Kč.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="odp_cu" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- uvede se údaj o základu daně a dani na vstupu při dovozu zboží v případech, kdy je správcem daně při dovozu zboží celní úřad.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="odp_cu_nar" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- uvede se údaj o základu daně a dani na vstupu při dovozu zboží v případech, kdy je správcem daně při dovozu zboží celní úřad.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="odp_rez_nar" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- v daňovém přiznání za poslední zdaňovací období kalendářního roku se uvede korekce poměrného uplatnění odpočtu daně podle § 75. Plátce má nárok na odpočet daně pouze v poměrné výši odpovídající rozsahu použití  pro účely svých uskutečněných plnění.&lt;BR&gt;
+					- uvede se částka vyrovnání odpočtu daně podle § 77, a to za zdaňovací období, ve kterém byl obchodní majetek	použit a ve kterém	nastaly skutečnosti zakládající povinnost nebo možnost provést toto vyrovnání. &lt;BR&gt;
+					- uvede se částka snížení odpočtu daně u vybraného osobního automobilu podle § 77a, a to za zdaňovací období, ve kterém se tento automobil stal dlouhodobým majetkem.&lt;BR&gt;
+					- uvede se údaj o odpočtu daně při registraci a zrušení registrace dle § 79 až § 79c a § 79e. V případě uplatnění nároku na odpočet daně při registraci	se tento údaj uvede s kladným znaménkem v přiznání za zdaňovací období, do něhož spadá den, kdy se osoba povinná k dani stala plátcem. V případě odpočtu daně při zrušení registrace se uvede tento údaj se záporným	znaménkem v přiznání za poslední zdaňovací období registrace.&lt;BR&gt;
+					- v případě postupu podle § 79d nebo § 79e viz také pokyny k dodatečnému daňovému přiznání.&lt;BR&gt;
+				- osoba povinná k dani, která přestala být plátcem a provedla opravu odpočtu daně dle § 74a, uvede v dodatečném daňovém přiznání za poslední zdaňovací období registrace částku opravy snížení uplatněného odpočtu daně, které měla povinnost provést při zrušení její registrace plátce.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="odp_rezim" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- v daňovém přiznání za poslední zdaňovací období kalendářního roku se uvede korekce poměrného uplatnění odpočtu daně podle § 75. Plátce má nárok na odpočet daně pouze v poměrné výši odpovídající rozsahu použití  pro účely svých uskutečněných plnění.&lt;BR&gt;
+					- uvede se částka vyrovnání odpočtu daně podle § 77, a to za zdaňovací období, ve kterém byl obchodní majetek	použit a ve kterém nastaly skutečnosti zakládající povinnost nebo možnost provést toto vyrovnání. &lt;BR&gt;
+					- uvede se částka snížení odpočtu daně u vybraného osobního automobilu podle § 77a, a to za zdaňovací období, ve kterém se tento automobil stal dlouhodobým majetkem. 
+					- uvede se údaj o odpočtu daně při registraci a zrušení registrace dle § 79 až § 79c a § 79e. V případě uplatnění nároku na odpočet daně při registraci	se tento údaj uvede s kladným znaménkem v přiznání za zdaňovací období, do něhož spadá den, kdy se osoba povinná k dani stala plátcem. V případě snížení odpočtu daně při zrušení registrace se uvede tento údaj se záporným znaménkem v přiznání za poslední zdaňovací období registrace.&lt;BR&gt;
+				- v případě postupu podle § 79d nebo § 79e viz také pokyny k dodatečnému daňovému přiznání.&lt;BR&gt;
+				- osoba povinná k dani, která přestala být plátcem a provedla opravu odpočtu daně dle § 74a, uvede v dodatečném daňovém přiznání za poslední zdaňovací období registrace částku opravy snížení uplatněného odpočtu daně, které měla povinnost provést při zrušení její registrace plátce.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="odp_sum_kr" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>- je součtovým řádkem, ve kterém se uvede součet řádků 40 až 45 ve sloupci „V plné výši“ a řádků 40 až 45 ve sloupci „Krácený odpočet“.&lt;p&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="odp_sum_nar" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>- je součtovým řádkem, ve kterém se uvede součet řádků 40 až 45 ve sloupci „V plné výši“ a řádků 40 až 45 ve sloupci „Krácený odpočet“</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="odp_tuz23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na vstupu, která je obsažena v částce za přijatá zdanitelná plnění nebo v úplatě poskytnuté před uskutečněním zdanitelného plnění, vznikla-li jejím přijetím povinnost přiznat a zaplatit daň. V případě pořízení vybraného osobního automobilu podle § 72 odst. 3 a 4 se uvede základ daně v plné výši, i když daň na vstupu je omezena částkou 420 000 Kč.&lt;BR&gt;
+					- uvede se oprava odpočtu daně dle § 74 a § 74a (oprava dle § 74a se uvede rovněž na ř. 48). &lt;BR&gt;
+					- dlužník uvede se záporným znaménkem opravu odpočtu daně (základu daně a daně) v případě nedobytné pohledávky podle § 74b odst. 1 a odst. 3. S kladným znaménkem v případě postupu podle § 74b odst. 2 a odst. 4.				
+</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="odp_tuz23_nar" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na vstupu, která je obsažena v částce za přijatá zdanitelná plnění nebo v úplatě poskytnuté před uskutečněním zdanitelného plnění, vznikla-li jejím přijetím povinnost přiznat a zaplatit daň. V případě pořízení vybraného osobního automobilu podle § 72 odst. 3 a 4 se uvede základ daně v plné výši, i když daň na vstupu je omezena částkou 420 000 Kč.&lt;BR&gt;
+					- uvede se oprava odpočtu daně dle § 74 a § 74a (oprava dle § 74a se uvede rovněž na ř. 48). &lt;BR&gt;
+					- dlužník uvede se záporným znaménkem opravu odpočtu daně (základu daně a daně) v případě nedobytné pohledávky podle § 74b odst. 1 a odst. 3. S kladným znaménkem v případě postupu podle § 74b odst. 2 a odst. 4.				
+</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="odp_tuz5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na vstupu, která je obsažena v částce za přijatá zdanitelná plnění nebo v úplatě poskytnuté před uskutečněním zdanitelného plnění, vznikla-li jejím přijetím povinnost přiznat a zaplatit daň. V případě pořízení vybraného osobního automobilu podle § 72 odst. 3 a 4 se uvede základ daně v plné výši, i když daň na vstupu je omezena částkou 420 000 Kč.&lt;BR&gt;
+					- uvede se oprava odpočtu daně dle § 74 a § 74a (oprava dle § 74a se uvede rovněž na ř. 48). &lt;BR&gt;
+					- dlužník uvede se záporným znaménkem opravu odpočtu daně (základu daně a daně) v případě nedobytné pohledávky podle § 74b odst. 1 a odst. 3. S kladným znaménkem v případě postupu podle § 74b odst. 2 a odst. 4.				
+</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="odp_tuz5_nar" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na vstupu, která je obsažena v částce za přijatá zdanitelná plnění nebo v úplatě poskytnuté před uskutečněním zdanitelného plnění, vznikla-li jejím přijetím povinnost přiznat a zaplatit daň. V případě pořízení vybraného osobního automobilu podle § 72 odst. 3 a 4 se uvede základ daně v plné výši, i když daň na vstupu je omezena částkou 420 000 Kč.&lt;BR&gt;
+					- uvede se oprava odpočtu daně dle § 74 a § 74a (oprava dle § 74a se uvede rovněž na ř. 48). &lt;BR&gt;
+					- dlužník uvede se záporným znaménkem opravu odpočtu daně (základu daně a daně) v případě nedobytné pohledávky podle § 74b odst. 1 a odst. 3. S kladným znaménkem v případě postupu podle § 74b odst. 2 a odst. 4.				
+</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="pln23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na vstupu, která je obsažena v částce za přijatá zdanitelná plnění nebo v úplatě poskytnuté před uskutečněním zdanitelného plnění, vznikla-li jejím přijetím povinnost přiznat a zaplatit daň. V případě pořízení vybraného osobního automobilu podle § 72 odst. 3 a 4 se uvede základ daně v plné výši, i když daň na vstupu je omezena částkou 420 000 Kč.&lt;BR&gt;
+					- uvede se oprava odpočtu daně dle § 74 a § 74a (oprava dle § 74a se uvede rovněž na ř. 48). &lt;BR&gt;
+					- dlužník uvede se záporným znaménkem opravu odpočtu daně (základu daně a daně) v případě nedobytné pohledávky podle § 74b odst. 1 a odst. 3. S kladným znaménkem v případě postupu podle § 74b odst. 2 a odst. 4.				
+</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="pln5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se údaj o základu daně a dani na vstupu, která je obsažena v částce za přijatá zdanitelná plnění nebo v úplatě poskytnuté před uskutečněním zdanitelného plnění, vznikla-li jejím přijetím povinnost přiznat a zaplatit daň. V případě pořízení vybraného osobního automobilu podle § 72 odst. 3 a 4 se uvede základ daně v plné výši, i když daň na vstupu je omezena částkou 420 000 Kč.&lt;BR&gt;
+					- uvede se oprava odpočtu daně dle § 74 a § 74a (oprava dle § 74a se uvede rovněž na ř. 48). &lt;BR&gt;
+					- dlužník uvede se záporným znaménkem opravu odpočtu daně (základu daně a daně) v případě nedobytné pohledávky podle § 74b odst. 1 a odst. 3. S kladným znaménkem v případě postupu podle § 74b odst. 2 a odst. 4.				
+</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="kor_odp_zd" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- v dodatečném daňovém přiznání za poslední zdaňovací období registrace se uvede oprava základu daně a odpočtu daně dle § 74a.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="kor_odp_plne" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- v dodatečném daňovém přiznání za poslední zdaňovací období registrace se uvede oprava základu daně a odpočtu daně dle § 74a.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="kor_odp_krac" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- v dodatečném daňovém přiznání za poslední zdaňovací období registrace se uvede oprava základu daně a odpočtu daně dle § 74a.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="1" minOccurs="0" name="Veta5">
+                <xs:complexType>
+                  <xs:attribute name="koef_p20_nov" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- ve sloupci „Koeficient (%)“ se uvede koeficient vypočtený z údajů za zdaňovací období předcházejícího kalendářního roku (&lt;b&gt;v procentním vyjádření&lt;/b&gt;) při vypořádání odpočtu daně podle §&amp;#160;76 odst. 6. Pokud plnění pro výpočet koeficientu za předcházející kalendářní rok neexistují, stanoví výši tohoto koeficientu plátce kvalifikovaným odhadem.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="6"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="koef_p20_vypor" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- ve sloupci „Vypořádací koeficient (%)“ se uvede hodnota vypořádacího koeficientu dle § 76 odst. 7.&lt;BR&gt;Vypořádací koeficient se vypočte dle § 76 odst. 3 jako &lt;b&gt;procentní &lt;/b&gt; podíl, kdy čitatel = ř. 1 a 2 (levý sloupec „Základ daně“) - ř. 14 (levý sloupec "Základ daně") + ř. 20 až 26 (sloupec „Hodnota“) + ř. 31 - ř. 51 (sloupec „S nárokem na odpočet	daně“) a jmenovatel = čitatel + ř. 50 - ř. 51 (sloupec „Bez nároku na odpočet“). Hodnoty jsou vypočteny z údajů za celé vypořádávané období.&lt;BR&gt;- ve sloupci „Změna odpočtu“ se uvede vypořádání odpočtu daně podle § 76 odst. 7 a 8. Vypořádání se vypočte jako rozdíl mezi celkovým nárokem na odpočet daně v krácené výši vypočteným z údajů za vypořádávané období a součtem uplatněných nároků na odpočet daně v krácené výši v jednotlivých zdaňovacích obdobích zahrnovaných do vypořádání z řádků 52 (pravý sloupec „Odpočet“). Nárok na odpočet daně za vypořádávané období se vypočte jako součin řádku 46 (pravý sloupec „Krácený odpočet“) z hodnot za celé vypořádávané období a vypořádacího koeficientu z řádku 53 (levý sloupec „Vypořádací koeficient“).&lt;BR&gt; V případě, že plátce uplatnil odpočet daně z úplaty (zálohy) poskytnuté v souvislosti s pořízením dlouhodobého majetku v jiném roce, než kdy došlo k pořízení tohoto majetku nebo ve kterém je plátce oprávněn uplatnit odpočet daně, pokud je oprávněn uplatnit odpočet daně nejdříve v kalendářním roce následujícím po kalendářním roce pořízení, zahrne do částky vypořádání rozdíl ve výši nároku na odpočet daně vyplývající z případného rozdílu mezi hodnotami vypořádacích koeficientů za příslušné roky. Obdobně postupuje i v případě uplatnění odpočtu daně u každého jednotlivého přijatého plnění, které se stalo součástí pořízeného dlouhodobého majetku (§ 76 odst. 10).&lt;BR&gt;Vypořádání odpočtu daně se uvede v přiznání za poslední zdaňovací období kalendářního roku, případně za poslední zdaňovací období před zrušením registrace k dani. Uvedená hodnota může být kladná či záporná.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="6"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="odp_uprav_kf" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt; ve sloupci „Odpočet“ se uvede vypočtená část nároku na odpočet daně v krácené výši podle § 76 odst. 1, která se vypočte jako součin ř. 46 - pravý sloupec „Krácený odpočet“ a koeficientu z řádku 52 - levý sloupec „Koeficient (%)“.&lt;BR&gt;Krácení odpočtu daně se provede	ve zdaňovacích obdobích aktuálního kalendářního roku včetně posledního zdaňovacího období tohoto roku. 
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="pln_nkf" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- ve sloupci „S nárokem na odpočet“ se uvede součet částek bez daně za uskutečněná plnění s nárokem na odpočet daně uvedená v ř. 1 a 2 (sloupec „Základ daně“) a ř. 20 až 26 (sloupec „Hodnota“), která se nezapočítávají do koeficientu podle § 76 odst. 4.
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="plnosv_kf" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uveďte součet částek bez daně za veškerá uskutečněná plnění osvobozená od daně dle § 51 bez nároku na odpočet daně, včetně plnění osvobozených od daně bez nároku na odpočet daně s místem plnění mimo tuzemsko.&lt;BR&gt;
+					- uvede se součet částek bez daně za veškerá ostatní uskutečněná plnění osvobozená od daně bez nároku na odpočet daně (např. zvláštní režim pro investiční zlato podle § 92 odst. 2 a 3).&lt;BR&gt;
+					- uvede se součet částek bez daně za plnění uskutečněná v režimu pro malé podniky v jiných členských státech.&lt;BR&gt;
+					- plátce, který byl bezprostředně před tím, než se stal plátcem, v režimu pro malé podniky, uvede v přiznání za zdaňovací období, do něhož spadá den, kdy se stal plátcem, hodnoty plnění podle § 76 odst. 1 písm. b), která uskutečnil v kalendářním roce, ve kterém byl registrován plátcem (§ 79 odst.7).&lt;BR&gt;
+					Povinnost přiznat uskutečnění těchto plnění vzniká ke dni jejich uskutečnění nebo ke dni přijetí úplaty, a to k tomu dni, který nastane dříve.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="plnosv_nkf" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- ve sloupci „Bez nároku na odpočet“ se uvede součet částek bez daně za uskutečněná plnění osvobozená od daně bez nároku na odpočet daně uvedená v ř. 50, která se nezapočítávají do výpočtu koeficientu podle § 76 odst. 4. 
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="vypor_odp" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- ve sloupci „Změna odpočtu“ se uvede vypořádání odpočtu daně	podle § 76 odst. 7 a 8. 
+					Vypořádání se vypočte jako rozdíl mezi celkovým nárokem na odpočet daně v	krácené výši vypočteným z údajů za vypořádávané období a součtem uplatněných nároků na odpočet daně v krácené výši v jednotlivých zdaňovacích obdobích zahrnovaných do vypořádání z řádků 52 (pravý sloupec „Odpočet“).&lt;BR&gt;
+					Nárok na odpočet daně za vypořádávané období se vypočte jako součin řádku 46 (pravý sloupec	„Krácený odpočet“) z hodnot za celé vypořádávané období a vypořádacího koeficientu z řádku 53 (levý sloupec „Vypořádací koeficient“).&lt;BR&gt;V případě, že plátce uplatnil odpočet daně z poskytnuté úplaty (zálohy) před pořízením dlouhodobého majetku v jiném roce, než kdy došlo k pořízení tohoto majetku, zahrne do částky vypořádání rozdíl ve výši nároku na odpočet daně vyplývající z případného rozdílu mezi hodnotami vypořádacích koeficientů za příslušné roky. Obdobně postupuje i v případě uplatnění odpočtu daně u každého jednotlivého přijatého plnění, které se stalo součástí pořízeného dlouhodobého majetku (§ 76 odst. 10).Vypořádání odpočtu daně se uvede v přiznání za poslední zdaňovací období kalendářního roku, případně za poslední zdaňovací období před zrušením registrace k dani. Uvedená hodnota může být kladná či záporná.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="1" minOccurs="0" name="Veta6">
+                <xs:complexType>
+                  <xs:attribute name="dan_vrac" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;- uvede se částka skutečně vrácené daně fyzickým osobám ze třetích zemí při vývozu zboží podle § 84.	</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan_zocelk" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>- je součtovým řádkem daně na výstupu konkrétně uvedených řádků přiznání a daně podle § 108 jinde neuvedené. &lt;BR&gt;
+					(ř.62 = 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11 + 12 + 13 - 61 + daň podle § 108 odst. 4 písm. g) a h).
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dano" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňuje se pouze při podání dodatečného přiznání (kladná či záporná hodnota). Je rozdílem řádků: ř.62 - ř.63.	</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dano_da" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>- je rozdílovým řádkem daně na výstupu a odpočtu daně (ř. 62 - ř. 63) v případě, že daň na výstupu převyšuje odpočet daně. Neplatí pro neplátce daně podle § 108, § 19b a § 19c. Při podání dodatečného přiznání se nevyplňuje.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dano_no" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Je rozdílovým řádkem odpočtu daně a daně na výstupu (ř.63 - ř.62) v případě, že odpočet daně převyšuje daň na výstupu. Tato hodnota musí obsahovat kladné číslo. Neplatí pro neplátce daně podle § 108, § 19b a § 19c. Při podání dodatečného přiznání se nevyplňuje.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="odp_zocelk" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Je součtovým řádkem, ve kterém se uvádí uplatněný odpočet daně ve zdaňovacím období, popřípadě krácený odpočet podle § 76.&lt;BR&gt;(ř.63 = 46 V plné výši + 52 Odpočet + 53 Změna odpočtu + 60) </xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="uprav_odp" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte podle údajů z daňové evidence&lt;BR&gt;
+					- uvede se součet vypočtených částek úprav odpočtu daně dle § 78 a násl. Úprava odpočtu daně se uvede v daňovém přiznání za poslední zdaňovací období kalendářního roku, s výjimkou jednorázových úprav podle § 78d, § 78da a § 78e, kdy se úprava odpočtu provede v příslušném zdaňovacím období. Uvedená částka může být kladná či záporná hodnota. 
+						</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="14"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="unbounded" minOccurs="0" name="VetaR">
+                <xs:complexType>
+                  <xs:attribute name="poradi" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Číslo řádku přílohy</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="3"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="t_prilohy" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Jeden řádek textové přílohy, max. 72 znaků.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="72"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="kod_sekce" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Označení oddílu, ke kterému se příloha vztahuje&lt;br&gt;O - obecná textová příloha.&lt;br&gt;D - důvody pro podání dodatečného vyúčtování</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="1"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="1" minOccurs="0" name="Prilohy">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" minOccurs="0" name="ObecnaPriloha">
+                      <xs:complexType>
+                        <xs:simpleContent>
+                          <xs:extension base="xs:base64Binary">
+                            <xs:attribute name="cislo" use="required" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                              <xs:annotation>
+                                <xs:documentation>Pořadové číslo přílohy. Nesmí být v rámci jednoho podání duplicitní</xs:documentation>
+                              </xs:annotation>
+                              <xs:simpleType>
+                                <xs:restriction base="xs:decimal">
+                                  <xs:totalDigits value="4"/>
+                                  <xs:fractionDigits value="0"/>
+                                </xs:restriction>
+                              </xs:simpleType>
+                            </xs:attribute>
+                            <xs:attribute name="nazev" use="optional" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                              <xs:annotation>
+                                <xs:documentation>Popis přiloženého souboru</xs:documentation>
+                              </xs:annotation>
+                              <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                  <xs:minLength value="0"/>
+                                  <xs:maxLength value="255"/>
+                                </xs:restriction>
+                              </xs:simpleType>
+                            </xs:attribute>
+                            <xs:attribute name="jm_souboru" use="optional" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                              <xs:annotation>
+                                <xs:documentation>&lt;strong&gt;Název přiloženého souboru.&lt;/strong&gt;&lt;br/&gt;Povolené typy souborů jsou: DOC, DOCX, RTF, XLS, XLSX, PDF, JPG, TXT a TXT/CSV. Dále je možné přiložit podepsané (formát PKCS#7) a komprimované (formát ZIP) soubory, vždy však jde o jeden podepsaný nebo jeden komprimovaný soubor některého z podporovaných formátů. Součet velikostí všech souborů přiložených v elektronické podobě (tzv. e-příloh) může být nejvýše 10 240 kilobajtů.</xs:documentation>
+                              </xs:annotation>
+                              <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                  <xs:minLength value="0"/>
+                                  <xs:maxLength value="255"/>
+                                </xs:restriction>
+                              </xs:simpleType>
+                            </xs:attribute>
+                            <xs:attribute name="kodovani" use="optional" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                              <xs:annotation>
+                                <xs:documentation>Kódování přiloženého souboru</xs:documentation>
+                              </xs:annotation>
+                              <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                  <xs:enumeration value="base64"/>
+                                </xs:restriction>
+                              </xs:simpleType>
+                            </xs:attribute>
+                          </xs:extension>
+                        </xs:simpleContent>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+            <xs:attribute name="verzePis" type="xs:string"/>
+          </xs:complexType>
+        </xs:element>
+        <xs:element maxOccurs="1" minOccurs="0" name="Kontrola">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:any maxOccurs="unbounded" minOccurs="0" processContents="lax"/>
+            </xs:sequence>
+            <xs:anyAttribute processContents="lax"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="verzeSW" type="xs:string"/>
+      <xs:attribute name="nazevSW" type="xs:string"/>
+      <xs:anyAttribute processContents="lax"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
