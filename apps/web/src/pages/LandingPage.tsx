@@ -29,7 +29,7 @@ export function LandingPage() {
         <SiteHeader showGuestActions={false} />
         <section className="landing-hero">
           <div className="landing-hero-copy">
-            <h1>{APP_NAME} - fakturační systém, který kompletně naprogramovala AI</h1>
+            <h1>{APP_NAME} - fakturační systém, který fakt naprogramovala AI</h1>
             <p className="landing-subtitle">
               Vystavíš fakturu, pohlídáš DPH a stáhneš XML pro finanční úřad bez zbytečného dramatu.
             </p>

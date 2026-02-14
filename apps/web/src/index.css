@@ -306,7 +306,7 @@ body {
 .app-brand-image {
   display: block;
   width: auto;
-  height: 40px;
+  height: 32px;
 }
 
 .app-sidebar-caption {
@@ -406,7 +406,7 @@ body {
 .site-logo-image {
   display: block;
   width: auto;
-  height: 34px;
+  height: 28px;
 }
 
 .site-auth-links {
