@@ -337,7 +337,7 @@ Backend validace:
 Pravidla:
 - `DELETE` je povoleno pro všechny stavy faktury.
 - Výchozí `year` je aktuální rok (pokud není explicitně zadán).
-- `reserve-number` atomicky přidělí další číslo v roční řadě podle `issueDate`.
+- `reserve-number` vrací pouze read-only preview dalšího čísla v roční řadě podle `issueDate` (bez rezervace/bez zápisu).
 - `issue` běží transakčně; číslo faktury doplní jen pokud historický draft číslo nemá.
 - `mark-paid`:
   - pro `issued/overdue` nastaví `status=paid` + `paid_at` (default `today`, nebo explicitní datum z payloadu),
@@ -423,7 +423,7 @@ Poznámka:
 1. Validace draftu.
 2. DB transakce:
    - update faktury na `issued`,
-   - pokud historický draft nemá `invoiceNumber`, použije se stejná sekvenční logika jako v `reserve-number`,
+   - pokud historický draft nemá `invoiceNumber`, backend při transakčním zápisu přidělí další volné číslo podle `max(auto YYYYNNNNNN v roce) + 1`,
    - `variableSymbol` se zachová (pokud je prázdný, doplní se `invoiceNumber`).
 3. Commit.
 
@@ -444,7 +444,7 @@ Poznámka:
 ### 6.5 Kopie faktury
 1. FE po akci `Kopie` otevře editor nové faktury (`/invoices/new`) se zdrojovým `invoiceId` v query.
 2. FE načte zdrojovou fakturu a předvyplní odběratele, položky, poznámku a daňovou klasifikaci.
-3. FE nastaví nové datumy (`issueDate=today`, `taxableSupplyDate=today`, `dueDate=+defaultDueDays`) a vyžádá nové číslo z číselné řady.
+3. FE nastaví nové datumy (`issueDate=today`, `taxableSupplyDate=today`, `dueDate=+defaultDueDays`) a vyžádá preview čísla z číselné řady.
 4. Nový doklad vznikne až při `Uložit`/`Vystavit fakturu` přes `POST /invoices`.
 
 ### 6.6 Mazání faktury

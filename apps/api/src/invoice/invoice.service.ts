@@ -194,7 +194,7 @@ export class InvoiceService {
       return null;
     }
 
-    const match = invoiceNumber.match(new RegExp(`^${year}(\\d+)$`));
+    const match = invoiceNumber.match(new RegExp(`^${year}(\\d{6})$`));
     if (!match) {
       return null;
     }
@@ -207,17 +207,11 @@ export class InvoiceService {
     return parsed;
   }
 
-  private async reserveNextInvoiceNumber(
+  private async getMaxAutoInvoiceSequenceForYear(
     db: DbClient,
     subjectId: string,
     year: number,
-  ): Promise<string> {
-    const sequenceWhere = {
-      subjectId_periodYear: {
-        subjectId,
-        periodYear: year,
-      },
-    };
+  ): Promise<number> {
     const yearPrefix = String(year);
     const numbers = await db.invoice.findMany({
       where: {
@@ -238,6 +232,26 @@ export class InvoiceService {
         maxSequence = sequence;
       }
     }
+
+    return maxSequence;
+  }
+
+  private async reserveNextInvoiceNumber(
+    db: DbClient,
+    subjectId: string,
+    year: number,
+  ): Promise<string> {
+    const sequenceWhere = {
+      subjectId_periodYear: {
+        subjectId,
+        periodYear: year,
+      },
+    };
+    const maxSequence = await this.getMaxAutoInvoiceSequenceForYear(
+      db,
+      subjectId,
+      year,
+    );
 
     await db.invoiceNumberSequence.upsert({
       where: sequenceWhere,
@@ -304,9 +318,12 @@ export class InvoiceService {
     const subject = await this.getSubjectByUserOrThrow(userId);
     const targetDate = this.parseDateOnly(issueDate) ?? this.startOfToday();
     const year = targetDate.getUTCFullYear();
-    const invoiceNumber = await this.prisma.$transaction((tx) =>
-      this.reserveNextInvoiceNumber(tx, subject.id, year),
+    const maxSequence = await this.getMaxAutoInvoiceSequenceForYear(
+      this.prisma,
+      subject.id,
+      year,
     );
+    const invoiceNumber = this.formatInvoiceNumber(year, maxSequence + 1);
 
     return { invoiceNumber };
   }

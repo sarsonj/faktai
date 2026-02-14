@@ -419,6 +419,18 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
     }
 
     const payload = toPayload(state);
+    if (mode === 'create' && !useCustomInvoiceNumber) {
+      const currentInvoiceNumber = state.invoiceNumber.replace(/\s+/g, '');
+      const currentVariableSymbol = state.variableSymbol.replace(/\s+/g, '');
+
+      payload.invoiceNumber = undefined;
+      if (
+        currentVariableSymbol.length === 0 ||
+        currentVariableSymbol === currentInvoiceNumber
+      ) {
+        payload.variableSymbol = undefined;
+      }
+    }
 
     if (mode === 'create') {
       const created = await createInvoice(payload);

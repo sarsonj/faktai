@@ -179,4 +179,18 @@ describe('InvoiceService', () => {
     expect(paidAtDate.toISOString().startsWith('2026-02-12')).toBe(true);
     detailSpy.mockRestore();
   });
+
+  it('returns next automatic number as preview without reservation side effects', async () => {
+    prisma.subject.findUnique.mockResolvedValue({ id: 'subject-1' });
+    prisma.invoice.findMany.mockResolvedValue([
+      { invoiceNumber: '2026000001' },
+      { invoiceNumber: '2026000015' },
+      { invoiceNumber: 'FV-2026-1' },
+      { invoiceNumber: '20261234567' },
+    ]);
+
+    const result = await service.reserveInvoiceNumber('user-1', '2026-02-14');
+
+    expect(result.invoiceNumber).toBe('2026000016');
+  });
 });

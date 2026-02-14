@@ -427,22 +427,23 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 ### 3.7 Funkční pravidla
 1. Fakturu lze vystavit jen pokud má všechny povinné údaje a alespoň 1 položku.
 2. Nový doklad dostane při vytvoření číslo faktury `YYYYNNNNNN` jako `max(pořadí pro rok) + 1`; pro každý rok se čísluje zvlášť od `1`.
-3. Dvě faktury stejného subjektu nesmí mít stejné číslo faktury (server-side validace unikátnosti).
-4. Variabilní symbol se při založení faktury předvyplní hodnotou `invoiceNumber`, ale uživatel ho může změnit.
-5. `overdue` se může počítat automaticky dávkou nebo při načtení (dle implementace), ale pravidlo je `dueDate < dnes` a `status != paid`.
-6. Hard delete je ve v1 povolen i pro vystavené a uhrazené faktury.
-7. Po vystavení se uloží snapshot dodavatele i odběratele pro historickou konzistenci.
-8. Faktura ve stavu `issued` je ve v1 plně editovatelná.
-9. Faktura ve stavu `paid` je standardně zamknutá pro editaci; odemknutí je možné jen přes pokročilé zásahy.
-10. Změna čísla dokladu je pokročilá akce (není v běžném editoru), validuje neprázdnost a unikátnost čísla, ale nevyžaduje formát `YYYYNNNNNN`.
-11. Při vytváření faktury lze v pokročilé sekci přepnout z automatického čísla na vlastní číslo dokladu (bez formátové validace).
-12. Přepnutí stavu `paid -> issued/overdue` je pokročilá akce a vynuluje datum úhrady.
-13. Při akci `Označit jako uhrazené` uživatel nejdřív zvolí datum úhrady (default dnešní datum).
-14. U uhrazené faktury lze v pokročilých akcích změnit datum úhrady bez změny stavu.
-15. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
-16. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
-17. Po `Uložit` v režimu `edit` se uživatel vrací na seznam faktur (`/invoices`) ve stejném kontextu filtrů/stránkování.
-18. V režimu `edit` se v hlavičce editoru nezobrazují pomocné akce (`Zpět na seznam`, `Detail faktury`, `PDF`); hlavní workflow je veden přes spodní akční lištu.
+3. Pouhé otevření obrazovky `Nová faktura` nebo změna data vystavení bez uložení dokladu nesmí vytvářet díry v číselné řadě.
+4. Dvě faktury stejného subjektu nesmí mít stejné číslo faktury (server-side validace unikátnosti).
+5. Variabilní symbol se při založení faktury předvyplní hodnotou `invoiceNumber`, ale uživatel ho může změnit.
+6. `overdue` se může počítat automaticky dávkou nebo při načtení (dle implementace), ale pravidlo je `dueDate < dnes` a `status != paid`.
+7. Hard delete je ve v1 povolen i pro vystavené a uhrazené faktury.
+8. Po vystavení se uloží snapshot dodavatele i odběratele pro historickou konzistenci.
+9. Faktura ve stavu `issued` je ve v1 plně editovatelná.
+10. Faktura ve stavu `paid` je standardně zamknutá pro editaci; odemknutí je možné jen přes pokročilé zásahy.
+11. Změna čísla dokladu je pokročilá akce (není v běžném editoru), validuje neprázdnost a unikátnost čísla, ale nevyžaduje formát `YYYYNNNNNN`.
+12. Při vytváření faktury lze v pokročilé sekci přepnout z automatického čísla na vlastní číslo dokladu (bez formátové validace).
+13. Přepnutí stavu `paid -> issued/overdue` je pokročilá akce a vynuluje datum úhrady.
+14. Při akci `Označit jako uhrazené` uživatel nejdřív zvolí datum úhrady (default dnešní datum).
+15. U uhrazené faktury lze v pokročilých akcích změnit datum úhrady bez změny stavu.
+16. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
+17. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
+18. Po `Uložit` v režimu `edit` se uživatel vrací na seznam faktur (`/invoices`) ve stejném kontextu filtrů/stránkování.
+19. V režimu `edit` se v hlavičce editoru nezobrazují pomocné akce (`Zpět na seznam`, `Detail faktury`, `PDF`); hlavní workflow je veden přes spodní akční lištu.
 
 ### 3.8 Stavy a chování UI
 - `Loading`: načítání editoru / faktury.
