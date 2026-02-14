@@ -1367,6 +1367,17 @@ button:disabled {
   margin-bottom: 6px;
 }
 
+.paid-at-editor {
+  border: 1px solid #d6e2ee;
+  border-radius: 12px;
+  background: #f7fbff;
+  padding: 10px 12px;
+}
+
+.paid-at-editor label {
+  max-width: 240px;
+}
+
 .advanced-tools {
   border: 1px dashed #c8d7e8;
   border-radius: 12px;

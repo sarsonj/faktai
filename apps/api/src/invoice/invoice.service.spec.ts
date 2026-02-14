@@ -8,6 +8,8 @@ describe('InvoiceService', () => {
     invoice: {
       count: jest.fn(),
       findMany: jest.fn(),
+      findFirst: jest.fn(),
+      update: jest.fn(),
     },
     $queryRaw: jest.fn(),
     $transaction: jest.fn(async (ops: Promise<unknown>[]) => Promise.all(ops)),
@@ -99,5 +101,82 @@ describe('InvoiceService', () => {
         }),
       }),
     );
+  });
+
+  it('marks issued invoice as paid with explicit date', async () => {
+    prisma.subject.findUnique.mockResolvedValue({ id: 'subject-1' });
+    prisma.invoice.findFirst.mockResolvedValue({
+      id: 'inv-1',
+      subjectId: 'subject-1',
+      status: 'issued',
+      paidAt: null,
+      items: [],
+    });
+    const detailSpy = jest
+      .spyOn(service, 'getInvoiceDetail')
+      .mockResolvedValue({ id: 'inv-1' } as any);
+
+    await service.markInvoicePaid('user-1', 'inv-1', '2026-02-10');
+
+    expect(prisma.invoice.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'inv-1' },
+        data: expect.objectContaining({
+          status: 'paid',
+          paidAt: expect.any(Date),
+        }),
+      }),
+    );
+    const paidAtDate = prisma.invoice.update.mock.calls[0][0].data.paidAt as Date;
+    expect(paidAtDate.toISOString().startsWith('2026-02-10')).toBe(true);
+    detailSpy.mockRestore();
+  });
+
+  it('does not overwrite paid date when already paid and no date provided', async () => {
+    prisma.subject.findUnique.mockResolvedValue({ id: 'subject-1' });
+    prisma.invoice.findFirst.mockResolvedValue({
+      id: 'inv-1',
+      subjectId: 'subject-1',
+      status: 'paid',
+      paidAt: new Date('2026-02-11T00:00:00.000Z'),
+      items: [],
+    });
+    const detailSpy = jest
+      .spyOn(service, 'getInvoiceDetail')
+      .mockResolvedValue({ id: 'inv-1' } as any);
+
+    await service.markInvoicePaid('user-1', 'inv-1');
+
+    expect(prisma.invoice.update).not.toHaveBeenCalled();
+    detailSpy.mockRestore();
+  });
+
+  it('updates paid date when already paid and explicit date is provided', async () => {
+    prisma.subject.findUnique.mockResolvedValue({ id: 'subject-1' });
+    prisma.invoice.findFirst.mockResolvedValue({
+      id: 'inv-1',
+      subjectId: 'subject-1',
+      status: 'paid',
+      paidAt: new Date('2026-02-11T00:00:00.000Z'),
+      items: [],
+    });
+    const detailSpy = jest
+      .spyOn(service, 'getInvoiceDetail')
+      .mockResolvedValue({ id: 'inv-1' } as any);
+
+    await service.markInvoicePaid('user-1', 'inv-1', '2026-02-12');
+
+    expect(prisma.invoice.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'inv-1' },
+        data: expect.objectContaining({
+          status: 'paid',
+          paidAt: expect.any(Date),
+        }),
+      }),
+    );
+    const paidAtDate = prisma.invoice.update.mock.calls[0][0].data.paidAt as Date;
+    expect(paidAtDate.toISOString().startsWith('2026-02-12')).toBe(true);
+    detailSpy.mockRestore();
   });
 });

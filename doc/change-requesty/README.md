@@ -58,3 +58,4 @@
 | `CR-0039` | XML FU: adresa, místní příslušnost a číselník finančních úřadů | `Implementováno` | `Must` |
 | `CR-0040` | Mapování nadřazeného finančního úřadu pro DPH XML | `Implementováno` | `Must` |
 | `CR-0041` | Kontaktní údaje pro FÚ v onboardingu a nastavení subjektu | `Implementováno` | `Must` |
+| `CR-0042` | Datum úhrady při označení jako uhrazené a pokročilá změna | `Implementováno` | `Must` |

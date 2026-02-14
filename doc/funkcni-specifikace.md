@@ -363,6 +363,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
   - při vytváření nové faktury lze zapnout vlastní číslo dokladu (pro migrace),
   - změna čísla dokladu,
   - přepnutí stavu `uhrazená -> neuhrazená`,
+  - změna data úhrady u uhrazené faktury,
   - odemknutí editace uhrazené faktury.
 
 #### 3.4.3 Chování dle režimu
@@ -436,10 +437,12 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 10. Změna čísla dokladu je pokročilá akce (není v běžném editoru), validuje neprázdnost a unikátnost čísla, ale nevyžaduje formát `YYYYNNNNNN`.
 11. Při vytváření faktury lze v pokročilé sekci přepnout z automatického čísla na vlastní číslo dokladu (bez formátové validace).
 12. Přepnutí stavu `paid -> issued/overdue` je pokročilá akce a vynuluje datum úhrady.
-13. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
-14. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
-15. Po `Uložit` v režimu `edit` se uživatel vrací na seznam faktur (`/invoices`) ve stejném kontextu filtrů/stránkování.
-16. V režimu `edit` se v hlavičce editoru nezobrazují pomocné akce (`Zpět na seznam`, `Detail faktury`, `PDF`); hlavní workflow je veden přes spodní akční lištu.
+13. Při akci `Označit jako uhrazené` uživatel nejdřív zvolí datum úhrady (default dnešní datum).
+14. U uhrazené faktury lze v pokročilých akcích změnit datum úhrady bez změny stavu.
+15. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
+16. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
+17. Po `Uložit` v režimu `edit` se uživatel vrací na seznam faktur (`/invoices`) ve stejném kontextu filtrů/stránkování.
+18. V režimu `edit` se v hlavičce editoru nezobrazují pomocné akce (`Zpět na seznam`, `Detail faktury`, `PDF`); hlavní workflow je veden přes spodní akční lištu.
 
 ### 3.8 Stavy a chování UI
 - `Loading`: načítání editoru / faktury.

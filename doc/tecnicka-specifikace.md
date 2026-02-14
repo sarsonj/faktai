@@ -339,7 +339,9 @@ Pravidla:
 - Výchozí `year` je aktuální rok (pokud není explicitně zadán).
 - `reserve-number` atomicky přidělí další číslo v roční řadě podle `issueDate`.
 - `issue` běží transakčně; číslo faktury doplní jen pokud historický draft číslo nemá.
-- `mark-paid` nastaví `status=paid` + `paid_at`.
+- `mark-paid`:
+  - pro `issued/overdue` nastaví `status=paid` + `paid_at` (default `today`, nebo explicitní datum z payloadu),
+  - pro `paid` umožní změnit `paid_at`, pokud je v payloadu explicitní datum.
 - `mark-unpaid` přepne `paid -> issued` a nastaví `paid_at=NULL`.
 - `PATCH /invoices/:id/number` validuje neprázdnost + unikátnost čísla v rámci subjektu.
 - `customerIco` se před uložením normalizuje bez mezer.
@@ -435,8 +437,9 @@ Poznámka:
 1. `PATCH /invoices/:id/number` mění číslo dokladu i u již uhrazené faktury.
 2. Volitelně lze synchronizovat variabilní symbol na novou hodnotu čísla dokladu.
 3. `POST /invoices/:id/mark-unpaid` vrací uhrazenou fakturu do stavu `issued`.
-4. Frontend zpřístupňuje pokročilé zásahy přes zanořenou sekci v detailu faktury.
-5. Při vytváření nové faktury je v pokročilé sekci volba `Použít vlastní číslo dokladu`; backend pro ruční číslo nevyžaduje formát `YYYYNNNNNN`.
+4. `POST /invoices/:id/mark-paid` s explicitním `paidAt` umožní změnu data úhrady i u již uhrazené faktury.
+5. Frontend zpřístupňuje pokročilé zásahy přes zanořenou sekci v detailu faktury.
+6. Při vytváření nové faktury je v pokročilé sekci volba `Použít vlastní číslo dokladu`; backend pro ruční číslo nevyžaduje formát `YYYYNNNNNN`.
 
 ### 6.5 Kopie faktury
 1. FE po akci `Kopie` otevře editor nové faktury (`/invoices/new`) se zdrojovým `invoiceId` v query.

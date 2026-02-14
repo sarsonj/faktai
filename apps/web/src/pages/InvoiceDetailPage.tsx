@@ -14,6 +14,20 @@ function formatDate(value: string): string {
   return new Date(value).toLocaleDateString('cs-CZ');
 }
 
+function toLocalDateInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function defaultPaidAtInputValue(paidAt?: string | null): string {
+  if (paidAt) {
+    return paidAt.slice(0, 10);
+  }
+  return toLocalDateInputValue(new Date());
+}
+
 function formatMoney(value: string): string {
   const number = Number(value);
   return `${number.toLocaleString('cs-CZ', {
@@ -96,6 +110,9 @@ export function InvoiceDetailPage() {
   const [advancedInvoiceNumber, setAdvancedInvoiceNumber] = useState('');
   const [syncVariableSymbol, setSyncVariableSymbol] = useState(true);
   const [advancedBusy, setAdvancedBusy] = useState(false);
+  const [markPaidBusy, setMarkPaidBusy] = useState(false);
+  const [showMarkPaidEditor, setShowMarkPaidEditor] = useState(false);
+  const [paidAtInput, setPaidAtInput] = useState(defaultPaidAtInputValue());
 
   useEffect(() => {
     if (!invoiceId) {
@@ -110,6 +127,8 @@ export function InvoiceDetailPage() {
         const payload = await getInvoice(invoiceId);
         setInvoice(payload);
         setAdvancedInvoiceNumber(payload.invoiceNumber ?? '');
+        setPaidAtInput(defaultPaidAtInputValue(payload.paidAt));
+        setShowMarkPaidEditor(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Načtení faktury selhalo');
       } finally {
@@ -126,19 +145,42 @@ export function InvoiceDetailPage() {
     ? `/invoices/${invoice.id}/edit${listQuery ? `?${listQuery}&advanced=1` : '?advanced=1'}`
     : '#';
 
-  const onMarkPaid = async () => {
+  const onOpenMarkPaidEditor = () => {
     if (!invoice) {
+      return;
+    }
+    setPaidAtInput(defaultPaidAtInputValue(invoice.paidAt));
+    setShowMarkPaidEditor(true);
+    setError(null);
+    setSuccess(null);
+  };
+
+  const onSubmitMarkPaid = async () => {
+    if (!invoice) {
+      return;
+    }
+    if (!paidAtInput) {
+      setError('Vyberte datum úhrady.');
       return;
     }
 
     try {
+      setMarkPaidBusy(true);
       setError(null);
       setSuccess(null);
-      const paid = await markInvoicePaid(invoice.id);
+      const paid = await markInvoicePaid(invoice.id, paidAtInput);
       setInvoice(paid);
-      setSuccess('Faktura byla označena jako uhrazená.');
+      setPaidAtInput(defaultPaidAtInputValue(paid.paidAt));
+      setShowMarkPaidEditor(false);
+      setSuccess(
+        invoice.status === 'paid'
+          ? 'Datum úhrady bylo upraveno.'
+          : 'Faktura byla označena jako uhrazená.',
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Označení úhrady selhalo');
+    } finally {
+      setMarkPaidBusy(false);
     }
   };
 
@@ -153,6 +195,7 @@ export function InvoiceDetailPage() {
       setSuccess(null);
       const unpaid = await markInvoiceUnpaid(invoice.id);
       setInvoice(unpaid);
+      setPaidAtInput(defaultPaidAtInputValue(unpaid.paidAt));
       setSuccess('Faktura byla označena jako neuhrazená.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Změna stavu faktury selhala');
@@ -302,12 +345,47 @@ export function InvoiceDetailPage() {
               </button>
             )}
             {(invoice.status === 'issued' || invoice.status === 'overdue') && (
-              <button type="button" className="invoice-primary-action secondary" onClick={onMarkPaid}>
+              <button
+                type="button"
+                className="invoice-primary-action secondary"
+                onClick={onOpenMarkPaidEditor}
+              >
                 Označit jako uhrazené
               </button>
             )}
           </div>
         </div>
+
+        {(invoice.status === 'issued' || invoice.status === 'overdue') &&
+          showMarkPaidEditor && (
+            <div className="paid-at-editor">
+              <label>
+                Datum úhrady
+                <input
+                  type="date"
+                  value={paidAtInput}
+                  onChange={(event) => setPaidAtInput(event.target.value)}
+                  disabled={markPaidBusy}
+                />
+              </label>
+              <div className="button-row wrap">
+                <button type="button" onClick={onSubmitMarkPaid} disabled={markPaidBusy}>
+                  {markPaidBusy ? 'Ukládám...' : 'Potvrdit úhradu'}
+                </button>
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={markPaidBusy}
+                  onClick={() => {
+                    setShowMarkPaidEditor(false);
+                    setPaidAtInput(defaultPaidAtInputValue(invoice.paidAt));
+                  }}
+                >
+                  Zrušit
+                </button>
+              </div>
+            </div>
+          )}
 
         <div className="kpi-grid">
           <article className="kpi-card">
@@ -469,11 +547,28 @@ export function InvoiceDetailPage() {
 
             {invoice.status === 'paid' && (
               <>
+                <label>
+                  Datum uhrazení
+                  <input
+                    type="date"
+                    value={paidAtInput}
+                    onChange={(event) => setPaidAtInput(event.target.value)}
+                    disabled={advancedBusy || markPaidBusy}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={onSubmitMarkPaid}
+                  disabled={advancedBusy || markPaidBusy}
+                >
+                  {markPaidBusy ? 'Ukládám...' : 'Uložit datum úhrady'}
+                </button>
                 <button
                   type="button"
                   className="secondary"
                   onClick={onMarkUnpaid}
-                  disabled={advancedBusy}
+                  disabled={advancedBusy || markPaidBusy}
                 >
                   Označit jako neuhrazené
                 </button>

@@ -1586,17 +1586,21 @@ export class InvoiceService {
       throw new ConflictException('Only issued invoice can be marked as paid');
     }
 
-    if (current.status !== 'paid') {
-      const paidAtDate = this.parseDateOnly(paidAt) ?? new Date();
+    const explicitPaidAt = this.parseDateOnly(paidAt);
 
-      await this.prisma.invoice.update({
-        where: { id: current.id },
-        data: {
-          status: 'paid',
-          paidAt: paidAtDate,
-        },
-      });
+    if (current.status === 'paid' && !explicitPaidAt) {
+      return this.getInvoiceDetail(userId, invoiceId);
     }
+
+    const paidAtDate = explicitPaidAt ?? current.paidAt ?? new Date();
+
+    await this.prisma.invoice.update({
+      where: { id: current.id },
+      data: {
+        status: 'paid',
+        paidAt: paidAtDate,
+      },
+    });
 
     return this.getInvoiceDetail(userId, invoiceId);
   }
