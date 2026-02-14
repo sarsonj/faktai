@@ -394,7 +394,7 @@ export class InvoiceService {
   }
 
   private formatInvoiceNumber(year: number, currentValue: number): string {
-    return `${year}${String(currentValue).padStart(2, '0')}`;
+    return `${year}${String(currentValue).padStart(6, '0')}`;
   }
 
   private mapListItem(row: InvoiceListRow): InvoiceListItem {

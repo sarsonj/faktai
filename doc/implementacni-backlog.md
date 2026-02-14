@@ -108,7 +108,7 @@
 - Scope:
   - `POST /invoices`, `POST /invoices/:id/copy`, `PATCH /invoices/:id`.
   - `POST /invoices/:id/issue`, `POST /invoices/:id/mark-paid`, `DELETE /invoices/:id`.
-  - Číselná řada `YYYYNNNN`.
+  - Číselná řada `YYYYNNNNNN`.
   - Výpočty DPH/součtů na backendu.
 - Technické tasky:
   - `DB-0401`: `invoice_number_sequences`.

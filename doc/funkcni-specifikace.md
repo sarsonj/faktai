@@ -361,7 +361,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 
 #### 3.4.3 Chování dle režimu
 - Režim `create`:
-  - při uložení nového dokladu se přidělí číslo faktury z roční řady `YYYYNN` (`YYYY` + pořadí v roce, např. `202601`),
+  - při uložení nového dokladu se přidělí číslo faktury z roční řady `YYYYNNNNNN` (`YYYY` + pořadí v roce, např. `2026000001`),
   - pro jiný rok běží pořadí od `1`,
   - v běžném formuláři není číslo dokladu editovatelné pole; v pokročilé sekci lze zapnout vlastní číslo dokladu,
   - číslo dokladu je v UI zobrazeno v nadpisu stránky (`Nová faktura {číslo}`),
@@ -418,7 +418,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 
 ### 3.7 Funkční pravidla
 1. Fakturu lze vystavit jen pokud má všechny povinné údaje a alespoň 1 položku.
-2. Nový doklad dostane při vytvoření číslo faktury `YYYYNN` jako `max(pořadí pro rok) + 1`; pro každý rok se čísluje zvlášť od `1`.
+2. Nový doklad dostane při vytvoření číslo faktury `YYYYNNNNNN` jako `max(pořadí pro rok) + 1`; pro každý rok se čísluje zvlášť od `1`.
 3. Dvě faktury stejného subjektu nesmí mít stejné číslo faktury (server-side validace unikátnosti).
 4. Variabilní symbol se při založení faktury předvyplní hodnotou `invoiceNumber`, ale uživatel ho může změnit.
 5. `overdue` se může počítat automaticky dávkou nebo při načtení (dle implementace), ale pravidlo je `dueDate < dnes` a `status != paid`.
@@ -426,7 +426,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 7. Po vystavení se uloží snapshot dodavatele i odběratele pro historickou konzistenci.
 8. Faktura ve stavu `issued` je ve v1 plně editovatelná.
 9. Faktura ve stavu `paid` je standardně zamknutá pro editaci; odemknutí je možné jen přes pokročilé zásahy.
-10. Změna čísla dokladu je pokročilá akce (není v běžném editoru), validuje neprázdnost a unikátnost čísla, ale nevyžaduje formát `YYYYNN`.
+10. Změna čísla dokladu je pokročilá akce (není v běžném editoru), validuje neprázdnost a unikátnost čísla, ale nevyžaduje formát `YYYYNNNNNN`.
 11. Při vytváření faktury lze v pokročilé sekci přepnout z automatického čísla na vlastní číslo dokladu (bez formátové validace).
 12. Přepnutí stavu `paid -> issued/overdue` je pokročilá akce a vynuluje datum úhrady.
 13. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
@@ -445,7 +445,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 ### 3.9 Akceptační kritéria (Scope 3)
 1. Uživatel dokáže vytvořit koncept faktury a později jej dokončit.
 2. Uživatel dokáže vytvořit fakturu kopií existující faktury.
-3. Vytvoření nového dokladu vždy přiřadí číslo dle `YYYYNN` a pro jiný rok se pořadí restartuje od `1`.
+3. Vytvoření nového dokladu vždy přiřadí číslo dle `YYYYNNNNNN` a pro jiný rok se pořadí restartuje od `1`.
 4. `variableSymbol` je předvyplněn z čísla dokladu a lze ho ručně změnit.
 5. Výpočty součtů odpovídají položkám a sazbám DPH.
 6. Fakturu lze smazat ze seznamu faktur i mimo stav `draft`.

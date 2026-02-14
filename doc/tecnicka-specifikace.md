@@ -421,7 +421,7 @@ Poznámka:
 2. Volitelně lze synchronizovat variabilní symbol na novou hodnotu čísla dokladu.
 3. `POST /invoices/:id/mark-unpaid` vrací uhrazenou fakturu do stavu `issued`.
 4. Frontend zpřístupňuje pokročilé zásahy přes zanořenou sekci v detailu faktury.
-5. Při vytváření nové faktury je v pokročilé sekci volba `Použít vlastní číslo dokladu`; backend pro ruční číslo nevyžaduje formát `YYYYNN`.
+5. Při vytváření nové faktury je v pokročilé sekci volba `Použít vlastní číslo dokladu`; backend pro ruční číslo nevyžaduje formát `YYYYNNNNNN`.
 
 ### 6.5 Kopie faktury
 1. Načíst zdrojovou fakturu + položky.
@@ -674,7 +674,7 @@ Mapování v1:
 - Error tracking hook (Sentry-compatible).
 
 ## 14. Potvrzená rozhodnutí
-1. Automatická číselná řada faktur používá formát `YYYYNN` (např. `202601`); pokročilý režim umožňuje ruční číslo dokladu bez formátového omezení.
+1. Automatická číselná řada faktur používá formát `YYYYNNNNNN` (např. `2026000001`); pokročilý režim umožňuje ruční číslo dokladu bez formátového omezení.
 2. V1 používá login (single-user bez autentizace se nepoužije).
 3. PDF renderer pro v1 je `pdfkit`.
 4. Registrace ve v1 nevyžaduje ověření e-mailu před prvním přihlášením.
