@@ -15,6 +15,7 @@ Tato metodika je závazná pro další průběžné doplňování tabulky.
    - `git log --reverse --date=iso --pretty=format:'%ad|%s'`
 2. Aplikuj výše uvedený algoritmus (15 minut před commitem + slučování intervalů).
 3. Aktualizuj tabulku níže o nové dny.
+4. Ve stejném commitu synchronizuj i tabulku času v root `README.md`.
 
 ## Denní přehled (od začátku projektu do teď)
 | Datum | Čas | Co se naprogramovalo |
