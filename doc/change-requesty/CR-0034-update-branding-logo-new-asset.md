@@ -46,3 +46,7 @@ Byl dodán nový návrh loga (`doc/graphics/logo_new.png`) a požadavek použít
   - zvětšena render výška loga:
     - veřejná hlavička: `28px -> 34px`,
     - logo v levém menu aplikace: `32px -> 40px`.
+- Iterace 3:
+  - logo znovu připraveno ze zdroje `doc/graphics/logo_new.png` s korektním ořezem obsahu (`173x40`),
+  - dark varianta opravena na transparentní PNG s bílým logem a zachovanou alfa maskou (bez plné bílé plochy),
+  - výstup sjednocen s chováním původních assetů `fakturai-logo.png` a `fakturai-logo-dark.png`.
