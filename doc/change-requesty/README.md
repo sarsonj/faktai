@@ -51,3 +51,4 @@
 | `CR-0032` | CapRover nasazení a příprava runtime konfigurace | `Implementováno` | `Must` |
 | `CR-0033` | Rebranding názvu aplikace na FaktAI | `Implementováno` | `Must` |
 | `CR-0034` | Aktualizace loga z dodaného assetu `logo_new.png` | `Implementováno` | `Should` |
+| `CR-0035` | Zrušení formátové validace při pokročilé změně čísla faktury | `Implementováno` | `Must` |

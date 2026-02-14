@@ -382,7 +382,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 | Pole | Povinné | Validace / pravidlo |
 |---|---|---|
 | `status` | Ano | enum `draft/issued/paid/overdue/cancelled` |
-| `invoiceNumber` | Ano | formát `YYYY` + pořadí (5-10 číslic), unikátní v rámci subjektu |
+| `invoiceNumber` | Ano | v běžném workflow formát `YYYY` + pořadí (5-10 číslic), unikátní v rámci subjektu |
 | `variableSymbol` | Ano | 1-10 číslic; defaultně se předvyplní z `invoiceNumber`, ale je editovatelný |
 | `issueDate` | Ano | datum, nesmí být prázdné |
 | `taxableSupplyDate` | Ano | datum, default `issueDate` |
@@ -424,7 +424,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 7. Po vystavení se uloží snapshot dodavatele i odběratele pro historickou konzistenci.
 8. Faktura ve stavu `issued` je ve v1 plně editovatelná.
 9. Faktura ve stavu `paid` je standardně zamknutá pro editaci; odemknutí je možné jen přes pokročilé zásahy.
-10. Změna čísla dokladu je pokročilá akce (není v běžném editoru) a validuje unikátnost čísla.
+10. Změna čísla dokladu je pokročilá akce (není v běžném editoru), validuje neprázdnost a unikátnost čísla, ale nevyžaduje formát `YYYYNN`.
 11. Přepnutí stavu `paid -> issued/overdue` je pokročilá akce a vynuluje datum úhrady.
 12. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
 13. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.

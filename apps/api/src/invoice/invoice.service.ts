@@ -1665,7 +1665,6 @@ export class InvoiceService {
     if (!invoiceNumber) {
       throw new BadRequestException('Invoice number is required');
     }
-    this.validateInvoiceNumber(invoiceNumber, current.issueDate);
 
     const shouldSyncVs = dto.syncVariableSymbol ?? true;
 
