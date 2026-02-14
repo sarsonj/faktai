@@ -10,8 +10,8 @@ Poznámka:
 - Pro tento projekt je správné nasazení minimálně na 2 appky (`api`, `web`) + DB zvlášť.
 
 ## 2. Co je v projektu připraveno
-- Dockerfile pro API: `infra/docker/api.Dockerfile`
-- Dockerfile pro WEB: `infra/docker/web.Dockerfile`
+- Dockerfile pro API (CapRover): `infra/caprover/api.Dockerfile`
+- Dockerfile pro WEB (CapRover): `infra/caprover/web.Dockerfile`
 - Captain definition soubory:
   - `infra/caprover/captain-definition-api.json`
   - `infra/caprover/captain-definition-web.json`
@@ -27,6 +27,7 @@ Poznámka:
    - `api.tvoje-domena.cz`
    - `app.tvoje-domena.cz`
 3. Zapnuté HTTPS certifikáty v CapRoveru.
+4. Deploy je veden přes `Captain Definition Path` (bez parent traversalu mimo složku `infra/caprover`).
 
 ## 4. Krok za krokem
 
