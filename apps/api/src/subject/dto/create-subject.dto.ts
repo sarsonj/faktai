@@ -3,6 +3,7 @@ import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
+  IsEmail,
   IsEnum,
   IsInt,
   IsOptional,
@@ -68,6 +69,21 @@ export class CreateSubjectDto {
     message: 'Periodicita DPH musí být month nebo quarter.',
   })
   vatPeriodType?: TaxPeriodType;
+
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsOptional()
+  @IsString({ message: 'Telefon pro FÚ musí být text.' })
+  @Matches(/^[0-9+()\-\s]{6,25}$/, {
+    message:
+      'Telefon pro FÚ může obsahovat pouze číslice, mezery a znaky + ( ) - (6 až 25 znaků).',
+  })
+  contactPhone?: string;
+
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsOptional()
+  @IsEmail({}, { message: 'E-mail pro FÚ musí být platná e-mailová adresa.' })
+  @MaxLength(255, { message: 'E-mail pro FÚ může mít maximálně 255 znaků.' })
+  contactEmail?: string;
 
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString({ message: 'Ulice musí být text.' })

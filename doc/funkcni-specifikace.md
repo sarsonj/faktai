@@ -49,7 +49,7 @@ Prvky obrazovky:
 - Krokový průvodce o 3 krocích:
   - `Krok 1: Subjekt` (ARES + základní identifikace),
   - `Krok 2: Adresa` (lookup adresy + ruční doplnění),
-  - `Krok 3: DPH a platby`.
+  - `Krok 3: DPH, platby a kontakt pro FÚ`.
 - Blok `Načíst firmu z ARES`:
   - vstup `IČO nebo název firmy`,
   - akce `Vyhledat`,
@@ -72,6 +72,7 @@ Pravidla:
 - Po chybě API se zobrazí obecná chyba a formulář zůstane vyplněný.
 - Po validační/API chybě se tlačítko vrací ze stavu `Ukládám...` zpět do aktivního stavu, aby šlo formulář znovu odeslat.
 - Ruční editace polí je možná i po použití předvyplnění z registru.
+- Pole `E-mail pro FÚ` je v onboarding kroku 3 předvyplněno z e-mailu přihlášeného účtu, ale zůstává editovatelné.
 - V uživatelských titulcích se používají srozumitelné názvy (`První kroky`, `Nastavení profilu`) místo technického termínu `onboarding`.
 
 #### 1.4.2 Detail profilu
@@ -113,6 +114,8 @@ Pravidla:
 | `isVatPayer` | Ano | boolean | Plátce / neplátce DPH |
 | `vatRegistrationDate` | Podmíněně | povinné pokud `isVatPayer=true`, nesmí být v budoucnu | Datum registrace k DPH |
 | `taxOfficePracufo` | Podmíněně | povinné pokud `isVatPayer=true`, 4 číslice, hodnota z číselníku FÚ | Místní příslušnost finančního úřadu (`k_ufo_vema`) |
+| `contactPhone` | Ne | volitelné, 6-25 znaků (`+`, mezera, `()`, `-` jsou povoleny) | Telefon pro případný kontakt FÚ |
+| `contactEmail` | Ne | volitelné, validní e-mail | E-mail pro případný kontakt FÚ; v onboardingu předvyplněn z login účtu |
 | `street` | Ano | 1-150 znaků | Ulice a číslo popisné |
 | `city` | Ano | 1-100 znaků | Obec |
 | `postalCode` | Ano | formát `123 45` nebo `12345` | PSČ |
@@ -126,6 +129,7 @@ Poznámky:
 - Ukládají se pouze číslice pro číselná pole, formátování se řeší až při zobrazení.
 - Pro faktury se používá snapshot údajů v čase vystavení faktury (pozdější změna profilu nemění historické faktury).
 - Registry lookup je asistivní funkce; při výpadku registru zůstává plně dostupné ruční vyplnění formuláře.
+- Kontaktní údaje pro FÚ jsou volitelné; prázdná hodnota neblokuje uložení subjektu.
 
 ### 1.6 Funkční pravidla
 1. Bez existujícího a validního profilu není dostupná akce `Nová faktura`.
@@ -676,6 +680,7 @@ Pravidla:
    - technické metainformace požadované schématem.
    - ve větě `VetaP`:
      - adresa subjektu je mapována do `ulice`, `c_pop`, `c_orient`,
+     - volitelné kontaktní údaje subjektu se mapují do `c_telef` a `email`,
      - místní příslušnost finančního úřadu je mapována do `c_pracufo` a `c_ufo`:
        - `c_pracufo` je přímo vybraná hodnota uživatele (`taxOfficePracufo`, např. `2705`),
        - `c_ufo` je nadřazený úřad vypočtený z prefixu `c_pracufo`:

@@ -155,6 +155,7 @@ Pravidla:
 - Adresa: `street`, `city`, `postal_code`, `country_code`
 - DPH: `is_vat_payer`, `vat_registration_date`, `vat_period_type` (`month|quarter`, default `quarter`)
 - Místní příslušnost FÚ: `tax_office_pracufo` (`k_ufo_vema` z číselníku `c_ufo.xml`)
+- Kontakt pro FÚ: `contact_phone` (nullable), `contact_email` (nullable)
 - Banka: `bank_account_prefix`, `bank_account_number`, `bank_code`
 - Výchozí nastavení: `default_variable_symbol_type`, `default_variable_symbol_value`, `default_due_days`
 - Unikátní constraint: `user_id` (v1 jen 1 subjekt na účet)
@@ -299,6 +300,8 @@ Backend validace:
 - IČO checksum.
 - DIČ povinné jen když `isVatPayer=true`.
 - `taxOfficePracufo` povinné jen když `isVatPayer=true` a musí existovat v číselníku FÚ.
+- `contactPhone` je volitelné; pokud je vyplněno, validuje se povolená sada znaků/délka.
+- `contactEmail` je volitelné; pokud je vyplněno, validuje se formát e-mailu.
 - `vatPeriodType` povoluje jen `month|quarter`.
 - Bankovní účet validace délky/povolených znaků.
 - normalizace vstupů (IČO/PSČ bez mezer, země uppercase).
@@ -383,6 +386,8 @@ Pravidla:
     - `lookupKey = first2(c_pracufo) + "00"`,
     - lookup v `c_ufo.xml` na záznamu `k_ufo_vema=lookupKey` a `d_zaniku=""`,
     - do XML jde `c_ufo` z nalezeného záznamu,
+  - `c_telef` a `sest_telef` se berou z `subject.contactPhone` (jinak prázdný string),
+  - `email` se bere z `subject.contactEmail` (jinak prázdný string),
   - `street` se při exportu rozpadá na `ulice`, `c_pop`, `c_orient` (pokud adresa obsahuje čísla).
 
 ## 6. Klíčové transakční scénáře
@@ -560,6 +565,8 @@ Poznámka:
 - Onboarding UX refresh:
   - kroková navigace (`onboarding-steps`, `onboarding-step`) s lokální validací po krocích,
   - registry lookup je dostupný v onboardingu, ale není součástí editace subjektu.
+  - onboarding krok DPH obsahuje volitelný kontakt pro FÚ (`contactPhone`, `contactEmail`),
+  - `contactEmail` je v onboardingu inicializován e-mailem přihlášeného uživatele (`me.email`) a zůstává editovatelný.
   - onboarding start krok `Vytvoření účtu` má jednokolonový layout formuláře (`onboarding-account-form`).
 
 ## 8. Výpočty a formátování

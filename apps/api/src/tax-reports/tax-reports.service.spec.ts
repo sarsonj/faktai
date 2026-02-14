@@ -63,6 +63,8 @@ describe('TaxReportsService', () => {
       ico: '77052030',
       dic: 'CZ7705203044',
       taxOfficePracufo: '2705',
+      contactPhone: '+420 777 604 080',
+      contactEmail: 'fu-kontakt@example.cz',
     });
     prisma.invoice.findMany.mockResolvedValue([
       {
@@ -114,6 +116,8 @@ describe('TaxReportsService', () => {
       ico: '77052030',
       dic: 'CZ7705203044',
       taxOfficePracufo: '2705',
+      contactPhone: '+420 777 604 080',
+      contactEmail: 'fu-kontakt@example.cz',
     });
     prisma.invoice.findMany.mockResolvedValue([
       {
@@ -154,6 +158,8 @@ describe('TaxReportsService', () => {
     expect(result.xml).toContain('c_orient="12"');
     expect(result.xml).toContain('c_pracufo="2705"');
     expect(result.xml).toContain('c_ufo="458"');
+    expect(result.xml).toContain('c_telef="+420 777 604 080"');
+    expect(result.xml).toContain('email="fu-kontakt@example.cz"');
     expect(result.fileName).toContain('77052030_DPH_20254Q.xml');
   });
 

@@ -322,10 +322,10 @@ export class TaxReportsService {
       ulice: streetName,
       sest_jmeno: subject.firstName,
       sest_prijmeni: subject.lastName,
-      sest_telef: '',
+      sest_telef: subject.contactPhone ?? '',
       typ_ds: 'F',
-      c_telef: '',
-      email: '',
+      c_telef: subject.contactPhone ?? '',
+      email: subject.contactEmail ?? '',
     });
   }
 

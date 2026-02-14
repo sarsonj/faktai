@@ -92,6 +92,8 @@ model Subject {
   vatPeriodType              TaxPeriodType             @default(quarter)
   vatRegistrationDate        DateTime?
   taxOfficePracufo           String?                   @db.VarChar(4)
+  contactPhone               String?
+  contactEmail               String?
   street                     String
   city                       String
   postalCode                 String

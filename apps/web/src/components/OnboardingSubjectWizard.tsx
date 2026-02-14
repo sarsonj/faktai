@@ -12,6 +12,7 @@ import type {
 type OnboardingSubjectWizardProps = {
   loading?: boolean;
   submitLabel: string;
+  initialContactEmail?: string;
   onSubmit: (payload: SubjectInput) => Promise<void>;
 };
 
@@ -25,6 +26,8 @@ type FormState = {
   vatPeriodType: 'month' | 'quarter';
   vatRegistrationDate: string;
   taxOfficePracufo: string;
+  contactPhone: string;
+  contactEmail: string;
   street: string;
   city: string;
   postalCode: string;
@@ -65,6 +68,7 @@ function formatAddressResult(item: RegistryAddressResult): string {
 
 export function OnboardingSubjectWizard({
   loading = false,
+  initialContactEmail,
   onSubmit,
   submitLabel,
 }: OnboardingSubjectWizardProps) {
@@ -81,6 +85,8 @@ export function OnboardingSubjectWizard({
     vatPeriodType: 'quarter',
     vatRegistrationDate: '',
     taxOfficePracufo: '',
+    contactPhone: '',
+    contactEmail: initialContactEmail ?? '',
     street: '',
     city: '',
     postalCode: '',
@@ -120,6 +126,18 @@ export function OnboardingSubjectWizard({
     void run();
   }, []);
 
+  useEffect(() => {
+    if (!initialContactEmail) {
+      return;
+    }
+    setState((current) => {
+      if (current.contactEmail.trim()) {
+        return current;
+      }
+      return { ...current, contactEmail: initialContactEmail };
+    });
+  }, [initialContactEmail]);
+
   const payload = useMemo<SubjectInput>(() => {
     return {
       firstName: state.firstName.trim(),
@@ -131,6 +149,8 @@ export function OnboardingSubjectWizard({
       vatPeriodType: state.vatPeriodType,
       vatRegistrationDate: state.isVatPayer ? state.vatRegistrationDate || undefined : undefined,
       taxOfficePracufo: state.isVatPayer ? state.taxOfficePracufo || undefined : undefined,
+      contactPhone: state.contactPhone.trim() || undefined,
+      contactEmail: state.contactEmail.trim() || undefined,
       street: state.street.trim(),
       city: state.city.trim(),
       postalCode: state.postalCode.trim(),
@@ -245,6 +265,18 @@ export function OnboardingSubjectWizard({
     if (state.isVatPayer && !state.vatRegistrationDate) return 'U plátce DPH doplňte datum registrace.';
     if (state.isVatPayer && !state.taxOfficePracufo) {
       return 'U plátce DPH vyberte místní příslušnost finančního úřadu.';
+    }
+    if (
+      state.contactEmail.trim() &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.contactEmail.trim())
+    ) {
+      return 'E-mail pro FÚ není ve správném formátu.';
+    }
+    if (
+      state.contactPhone.trim() &&
+      !/^[0-9+()\-\s]{6,25}$/.test(state.contactPhone.trim())
+    ) {
+      return 'Telefon pro FÚ může obsahovat pouze číslice, mezery a znaky + ( ) -.';
     }
     return null;
   };
@@ -549,6 +581,29 @@ export function OnboardingSubjectWizard({
             )}
 
             <label>
+              Telefon pro FÚ (volitelné)
+              <input
+                value={state.contactPhone}
+                onChange={(event) =>
+                  setState((current) => ({ ...current, contactPhone: event.target.value }))
+                }
+                placeholder="+420 777 123 456"
+              />
+            </label>
+
+            <label>
+              E-mail pro FÚ (volitelné)
+              <input
+                type="email"
+                value={state.contactEmail}
+                onChange={(event) =>
+                  setState((current) => ({ ...current, contactEmail: event.target.value }))
+                }
+                placeholder="kontakt@example.cz"
+              />
+            </label>
+
+            <label>
               Prefix účtu
               <input
                 value={state.bankAccountPrefix}
@@ -578,6 +633,9 @@ export function OnboardingSubjectWizard({
               />
             </label>
           </div>
+          <p className="helper-text">
+            Kontaktní údaje pro FÚ nejsou povinné, ale doporučujeme je vyplnit pro případný zpětný kontakt.
+          </p>
         </section>
       )}
 

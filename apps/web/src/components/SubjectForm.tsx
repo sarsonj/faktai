@@ -28,6 +28,8 @@ type FormState = {
   vatPeriodType: 'month' | 'quarter';
   vatRegistrationDate: string;
   taxOfficePracufo: string;
+  contactPhone: string;
+  contactEmail: string;
   street: string;
   city: string;
   postalCode: string;
@@ -61,6 +63,8 @@ function toInitialState(initial?: SubjectProfile): FormState {
     vatPeriodType: initial?.vatPeriodType ?? 'quarter',
     vatRegistrationDate: initial?.vatRegistrationDate?.slice(0, 10) ?? '',
     taxOfficePracufo: initial?.taxOfficePracufo ?? '',
+    contactPhone: initial?.contactPhone ?? '',
+    contactEmail: initial?.contactEmail ?? '',
     street: initial?.street ?? '',
     city: initial?.city ?? '',
     postalCode: initial?.postalCode ?? '',
@@ -136,6 +140,8 @@ export function SubjectForm({
       vatPeriodType: state.vatPeriodType,
       vatRegistrationDate: state.isVatPayer ? state.vatRegistrationDate || undefined : undefined,
       taxOfficePracufo: state.isVatPayer ? state.taxOfficePracufo || undefined : undefined,
+      contactPhone: state.contactPhone.trim() || undefined,
+      contactEmail: state.contactEmail.trim() || undefined,
       street: state.street,
       city: state.city,
       postalCode: state.postalCode,
@@ -395,7 +401,27 @@ export function SubjectForm({
               ))}
             </select>
           </label>
+          <label>
+            Telefon pro FÚ (volitelné)
+            <input
+              value={state.contactPhone}
+              onChange={(event) => setState((current) => ({ ...current, contactPhone: event.target.value }))}
+              placeholder="+420 777 123 456"
+            />
+          </label>
+          <label>
+            E-mail pro FÚ (volitelné)
+            <input
+              type="email"
+              value={state.contactEmail}
+              onChange={(event) => setState((current) => ({ ...current, contactEmail: event.target.value }))}
+              placeholder="kontakt@example.cz"
+            />
+          </label>
         </div>
+        <p className="helper-text">
+          Kontaktní údaje pro FÚ nejsou povinné, ale doporučujeme je vyplnit pro případný zpětný kontakt.
+        </p>
       </section>
 
       <section className="ui-section">

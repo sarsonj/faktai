@@ -18,6 +18,8 @@ export type SubjectProfile = {
   vatPeriodType: 'month' | 'quarter';
   vatRegistrationDate: string | null;
   taxOfficePracufo: string | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
   street: string;
   city: string;
   postalCode: string;
@@ -42,6 +44,8 @@ export type SubjectInput = {
   vatPeriodType?: 'month' | 'quarter';
   vatRegistrationDate?: string;
   taxOfficePracufo?: string;
+  contactPhone?: string;
+  contactEmail?: string;
   street: string;
   city: string;
   postalCode: string;

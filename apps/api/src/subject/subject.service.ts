@@ -26,6 +26,14 @@ export class SubjectService {
     return postalCode.replace(/\s+/g, '');
   }
 
+  private normalizeOptionalText(value?: string | null): string | null {
+    if (typeof value !== 'string') {
+      return null;
+    }
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
+  }
+
   private validateBusinessRules(payload: {
     ico?: string;
     dic?: string | null;
@@ -97,6 +105,8 @@ export class SubjectService {
         ? new Date(dto.vatRegistrationDate)
         : null,
       taxOfficePracufo: dto.isVatPayer ? (dto.taxOfficePracufo ?? null) : null,
+      contactPhone: this.normalizeOptionalText(dto.contactPhone),
+      contactEmail: this.normalizeOptionalText(dto.contactEmail),
       street: dto.street,
       city: dto.city,
       postalCode: this.normalizePostalCode(dto.postalCode),
@@ -151,6 +161,14 @@ export class SubjectService {
         dto.isVatPayer === false
           ? null
           : (dto.taxOfficePracufo ?? current.taxOfficePracufo),
+      contactPhone:
+        dto.contactPhone !== undefined
+          ? this.normalizeOptionalText(dto.contactPhone)
+          : current.contactPhone,
+      contactEmail:
+        dto.contactEmail !== undefined
+          ? this.normalizeOptionalText(dto.contactEmail)
+          : current.contactEmail,
     };
 
     const defaultVariableSymbolValue =
@@ -185,6 +203,14 @@ export class SubjectService {
           dto.isVatPayer === false
             ? null
             : (dto.taxOfficePracufo ?? undefined),
+        contactPhone:
+          dto.contactPhone !== undefined
+            ? this.normalizeOptionalText(dto.contactPhone)
+            : undefined,
+        contactEmail:
+          dto.contactEmail !== undefined
+            ? this.normalizeOptionalText(dto.contactEmail)
+            : undefined,
         defaultVariableSymbolValue,
         vatPeriodType: dto.vatPeriodType,
       },

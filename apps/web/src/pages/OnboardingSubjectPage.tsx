@@ -10,7 +10,7 @@ import type { SubjectInput } from '../types';
 
 export function OnboardingSubjectPage() {
   const navigate = useNavigate();
-  const { refreshMe } = useAuth();
+  const { me, refreshMe } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +72,12 @@ export function OnboardingSubjectPage() {
             </div>
           </header>
           {error && <p className="error">{error}</p>}
-          <OnboardingSubjectWizard loading={saving} onSubmit={onSubmit} submitLabel="Dokončit nastavení profilu" />
+          <OnboardingSubjectWizard
+            loading={saving}
+            onSubmit={onSubmit}
+            submitLabel="Dokončit nastavení profilu"
+            initialContactEmail={me?.email}
+          />
         </section>
       </div>
     </main>
