@@ -60,7 +60,7 @@ export function LandingPage() {
           <div className="landing-hero-visual">
             <img
               src="/graphics/landing-hero.webp"
-              alt="Náhled hlavních funkcí FakturAI: fakturace, DPH a XML export"
+              alt="Náhled hlavních funkcí FaktAI: fakturace, DPH a XML export"
             />
           </div>
         </section>

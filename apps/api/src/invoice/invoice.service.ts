@@ -1183,7 +1183,7 @@ export class InvoiceService {
       );
       this.drawSingleLine(
         doc,
-        'Vystaveno v aplikaci FakturAI',
+        'Vystaveno v aplikaci FaktAI',
         left + 200,
         footerY,
         220,

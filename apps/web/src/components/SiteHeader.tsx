@@ -42,7 +42,7 @@ export function SiteHeader({
     <header className={`app-topbar site-header${className ? ` ${className}` : ''}`}>
       <div className="site-header-left">
         <Link to={homeTarget} className="site-logo-link">
-          <img src="/branding/fakturai-logo.png" alt={APP_SHORT_NAME} className="site-logo-image" />
+          <img src="/branding/faktai-logo.png" alt={APP_SHORT_NAME} className="site-logo-image" />
         </Link>
         {sectionLabel && (
           <div>

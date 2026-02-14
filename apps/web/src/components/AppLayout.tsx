@@ -32,7 +32,7 @@ export function AppLayout() {
     <div className="app-frame">
       <aside className="app-sidebar">
         <Link to="/invoices" className="app-brand">
-          <img src="/branding/fakturai-logo-dark.png" alt={APP_SHORT_NAME} className="app-brand-image" />
+          <img src="/branding/faktai-logo-dark.png" alt={APP_SHORT_NAME} className="app-brand-image" />
         </Link>
         <p className="app-sidebar-caption">Hlavní menu</p>
         <nav className="app-nav">
