@@ -50,3 +50,7 @@ Byl dodán nový návrh loga (`doc/graphics/logo_new.png`) a požadavek použít
   - logo znovu připraveno ze zdroje `doc/graphics/logo_new.png` s korektním ořezem obsahu (`173x40`),
   - dark varianta opravena na transparentní PNG s bílým logem a zachovanou alfa maskou (bez plné bílé plochy),
   - výstup sjednocen s chováním původních assetů `fakturai-logo.png` a `fakturai-logo-dark.png`.
+- Iterace 4:
+  - branding assety přegenerovány ze zdrojů `doc/graphics/logo_new_main.png` (light) a `doc/graphics/logo_new_dark.png` (dark),
+  - aplikován ořez transparentních okrajů (`-trim`) a sjednocení na finální render rozměr `173x40`,
+  - zachována stejná vizuální výška loga jako u původních `fakturai` assetů.
