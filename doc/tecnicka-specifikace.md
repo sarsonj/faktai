@@ -424,10 +424,10 @@ Poznámka:
 5. Při vytváření nové faktury je v pokročilé sekci volba `Použít vlastní číslo dokladu`; backend pro ruční číslo nevyžaduje formát `YYYYNNNNNN`.
 
 ### 6.5 Kopie faktury
-1. Načíst zdrojovou fakturu + položky.
-2. Vytvořit novou `draft` fakturu s novým `invoice_number` dle roku (`max(YYYY*) + 1`).
-3. Přepočítat datumy (`issueDate=today`, `dueDate=+defaultDueDays`).
-4. Zkopírovat položky.
+1. FE po akci `Kopie` otevře editor nové faktury (`/invoices/new`) se zdrojovým `invoiceId` v query.
+2. FE načte zdrojovou fakturu a předvyplní odběratele, položky, poznámku a daňovou klasifikaci.
+3. FE nastaví nové datumy (`issueDate=today`, `taxableSupplyDate=today`, `dueDate=+defaultDueDays`) a vyžádá nové číslo z číselné řady.
+4. Nový doklad vznikne až při `Uložit`/`Vystavit fakturu` přes `POST /invoices`.
 
 ### 6.6 Mazání faktury
 1. Ověřit `status=draft`.

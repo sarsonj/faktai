@@ -370,12 +370,13 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
   - `dueDate` default `issueDate + defaultDueDays` (Scope 1, aktuálně 14 dní),
   - dodavatel je předvyplněn ze subjektu.
 - Režim `copy`:
+  - workflow kopie otevírá stejnou stránku jako `Nová faktura` s předvyplněnými daty,
   - přenesou se odběratel, položky, poznámka, sazby DPH,
   - nepřenáší se číslo dokladu,
   - `issueDate` se nastaví na dnešní datum,
   - `dueDate` se přepočte z výchozí splatnosti.
 - Režim `edit`:
-  - `draft`: plná editace všech polí,
+  - `draft`: plná editace všech polí + dostupné akce `Uložit` i `Vystavit fakturu`,
   - `issued`: plná editace všech polí,
   - `paid`: ve standardním režimu jen náhled, plná editace je dostupná pouze přes zanořenou sekci `Pokročilé zásahy`.
 

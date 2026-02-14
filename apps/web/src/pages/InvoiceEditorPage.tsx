@@ -132,6 +132,44 @@ function fromInvoice(invoice: InvoiceDetail): EditorState {
   };
 }
 
+function createStateFromCopySource(
+  source: InvoiceDetail,
+  defaultDueDays: number,
+): EditorState {
+  const base = createDefaultState(defaultDueDays);
+
+  const dueDate = new Date(base.issueDate);
+  dueDate.setDate(dueDate.getDate() + defaultDueDays);
+
+  return {
+    ...base,
+    invoiceNumber: '',
+    variableSymbol: '',
+    issueDate: base.issueDate,
+    taxableSupplyDate: base.issueDate,
+    dueDate: formatDate(dueDate),
+    taxClassification: source.taxClassification ?? base.taxClassification,
+    customerName: source.customerName,
+    customerIco: source.customerIco ?? '',
+    customerDic: source.customerDic ?? '',
+    customerStreet: source.customerStreet,
+    customerCity: source.customerCity,
+    customerPostalCode: source.customerPostalCode,
+    customerCountryCode: source.customerCountryCode,
+    note: source.note ?? '',
+    items:
+      source.items.length > 0
+        ? source.items.map((item) => ({
+            description: item.description,
+            quantity: item.quantity,
+            unit: item.unit,
+            unitPrice: item.unitPrice,
+            vatRate: item.vatRate,
+          }))
+        : [createEmptyItem()],
+  };
+}
+
 function toPayload(state: EditorState): InvoiceUpsertInput {
   return {
     invoiceNumber: state.invoiceNumber || undefined,
@@ -200,6 +238,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   const navigate = useNavigate();
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const [searchParams] = useSearchParams();
+  const copyFromInvoiceId = mode === 'create' ? searchParams.get('copyFrom') : null;
 
   const [state, setState] = useState<EditorState>(() => createDefaultState());
   const [reservingNumber, setReservingNumber] = useState(mode === 'create');
@@ -270,20 +309,15 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
     const run = async () => {
       try {
         const subject = await getSubject();
-        const defaultState = createDefaultState(subject.defaultDueDays);
+        let nextState = createDefaultState(subject.defaultDueDays);
 
-        setState((current) => {
-          if (
-            current.customerCountryCode !== 'CZ' ||
-            current.items.length !== 1 ||
-            current.customerName
-          ) {
-            return current;
-          }
-          return defaultState;
-        });
+        if (copyFromInvoiceId) {
+          const source = await getInvoice(copyFromInvoiceId);
+          nextState = createStateFromCopySource(source, subject.defaultDueDays);
+        }
 
-        await reserveNumberForDate(defaultState.issueDate);
+        setState(nextState);
+        await reserveNumberForDate(nextState.issueDate, true);
       } catch {
         // Defaults stay client-side if subject fetch fails.
         await reserveNumberForDate(createDefaultState().issueDate);
@@ -291,7 +325,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
     };
 
     void run();
-  }, [mode, reserveNumberForDate]);
+  }, [copyFromInvoiceId, mode, reserveNumberForDate]);
 
   useEffect(() => {
     if (mode !== 'edit' || !invoiceId) {
@@ -318,6 +352,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
 
   const queryForList = new URLSearchParams(searchParams);
   queryForList.delete('advanced');
+  queryForList.delete('copyFrom');
   const listQuery = queryForList.toString();
   const backHref = `/invoices${listQuery ? `?${listQuery}` : ''}`;
   const advancedEdit = searchParams.get('advanced') === '1';
@@ -860,6 +895,11 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
           )}
           {mode === 'edit' && (
             <>
+              {invoice?.status === 'draft' && (
+                <button disabled={saving || readOnly} type="button" onClick={onIssue}>
+                  {saving ? 'Vystavuji...' : 'Vystavit fakturu'}
+                </button>
+              )}
               <button disabled={saving || readOnly} type="button" onClick={onSave}>
                 {saving ? 'Ukládám...' : 'Uložit'}
               </button>
