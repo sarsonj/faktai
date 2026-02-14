@@ -676,7 +676,12 @@ Pravidla:
    - technické metainformace požadované schématem.
    - ve větě `VetaP`:
      - adresa subjektu je mapována do `ulice`, `c_pop`, `c_orient`,
-     - místní příslušnost finančního úřadu je mapována do `c_pracufo` a `c_ufo`.
+     - místní příslušnost finančního úřadu je mapována do `c_pracufo` a `c_ufo`:
+       - `c_pracufo` je přímo vybraná hodnota uživatele (`taxOfficePracufo`, např. `2705`),
+       - `c_ufo` je nadřazený úřad vypočtený z prefixu `c_pracufo`:
+         - `lookupKey = first2(c_pracufo) + "00"` (např. `2700`),
+         - lookup v `c_ufo.xml` na řádku s `k_ufo_vema=lookupKey` a `d_zaniku=""`,
+         - výsledkem je atribut `c_ufo` z nalezeného řádku (např. `458`).
 4. Aplikace pouze generuje soubor; podání do datové schránky provádí uživatel.
 5. `Přiznání k DPH` používá strukturu `Pisemnost/DPHDP3` s větami `VetaD`, `VetaP`, `Veta1` až `Veta6`.
 6. `Kontrolní hlášení` používá strukturu `Pisemnost/DPHKH1` s větami `VetaD`, `VetaP`, `VetaA4`, `VetaC`.

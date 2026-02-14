@@ -371,14 +371,24 @@ export class TaxReportsService {
       );
     }
 
-    const taxOffice = this.taxOfficesService.findByPracufo(pracufo);
-    if (!taxOffice) {
+    const selectedOffice = this.taxOfficesService.findByPracufo(pracufo);
+    if (!selectedOffice) {
       throw new BadRequestException(
         `Místní příslušnost finančního úřadu ${pracufo} nebyla v číselníku nalezena.`,
       );
     }
 
-    return taxOffice;
+    const parentUfo = this.taxOfficesService.resolveParentUfoByPracufo(pracufo);
+    if (!parentUfo) {
+      throw new BadRequestException(
+        `Pro místní příslušnost ${pracufo} nebyl nalezen aktivní nadřazený finanční úřad.`,
+      );
+    }
+
+    return {
+      pracufo,
+      ufo: parentUfo,
+    };
   }
 
   private collectVatFigures(invoices: InvoiceWithItems[]): VatFigures {

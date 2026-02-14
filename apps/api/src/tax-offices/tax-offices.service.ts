@@ -9,6 +9,10 @@ export type TaxOfficeCodebookItem = {
   name: string;
 };
 
+type TaxOfficeRawRow = TaxOfficeCodebookItem & {
+  endedAt: string;
+};
+
 type ParsedCodebook = {
   Ciselnik?: {
     Veta?: Array<Record<string, unknown>> | Record<string, unknown>;
@@ -18,6 +22,7 @@ type ParsedCodebook = {
 @Injectable()
 export class TaxOfficesService {
   private cache: TaxOfficeCodebookItem[] | null = null;
+  private rawRowsCache: TaxOfficeRawRow[] | null = null;
 
   private resolveCodebookPath(): string {
     const candidates = [
@@ -37,9 +42,9 @@ export class TaxOfficesService {
     );
   }
 
-  private loadCodebook(): TaxOfficeCodebookItem[] {
-    if (this.cache) {
-      return this.cache;
+  private loadRawRows(): TaxOfficeRawRow[] {
+    if (this.rawRowsCache) {
+      return this.rawRowsCache;
     }
 
     const parser = new XMLParser({
@@ -52,23 +57,50 @@ export class TaxOfficesService {
     const rows = parsed.Ciselnik?.Veta;
     const vetas = Array.isArray(rows) ? rows : rows ? [rows] : [];
 
-    const uniqueByPracufo = new Map<string, TaxOfficeCodebookItem>();
+    const rowsOut: TaxOfficeRawRow[] = [];
 
     for (const row of vetas) {
       const pracufo = String(row.k_ufo_vema ?? '').trim();
       const ufo = String(row.c_ufo ?? '').trim();
       const name = String(row.nazu_ufo ?? '').trim();
+      const endedAt = String(row.d_zaniku ?? '').trim();
 
       if (!/^\d+$/.test(pracufo) || !/^\d+$/.test(ufo) || !name) {
         continue;
       }
 
-      if (!uniqueByPracufo.has(pracufo)) {
-        uniqueByPracufo.set(pracufo, { pracufo, ufo, name });
+      rowsOut.push({ pracufo, ufo, name, endedAt });
+    }
+
+    if (rowsOut.length === 0) {
+      throw new InternalServerErrorException(
+        'Číselník finančních úřadů je prázdný nebo neplatný.',
+      );
+    }
+
+    this.rawRowsCache = rowsOut;
+    return rowsOut;
+  }
+
+  private loadCodebook(): TaxOfficeCodebookItem[] {
+    if (this.cache) {
+      return this.cache;
+    }
+
+    const uniqueByPracufo = new Map<string, TaxOfficeRawRow>();
+    for (const row of this.loadRawRows()) {
+      const existing = uniqueByPracufo.get(row.pracufo);
+      if (!existing) {
+        uniqueByPracufo.set(row.pracufo, row);
+        continue;
+      }
+
+      if (existing.endedAt && !row.endedAt) {
+        uniqueByPracufo.set(row.pracufo, row);
       }
     }
 
-    const values = [...uniqueByPracufo.values()].sort((a, b) =>
+    const values = [...uniqueByPracufo.values()].map(({ endedAt: _endedAt, ...item }) => item).sort((a, b) =>
       a.name.localeCompare(b.name, 'cs'),
     );
 
@@ -91,5 +123,17 @@ export class TaxOfficesService {
       this.loadCodebook().find((item) => item.pracufo === pracufo) ?? null
     );
   }
-}
 
+  resolveParentUfoByPracufo(pracufo: string): string | null {
+    if (!/^\d{4}$/.test(pracufo)) {
+      return null;
+    }
+
+    const lookupKey = `${pracufo.slice(0, 2)}00`;
+    const parent = this.loadRawRows().find(
+      (item) => item.pracufo === lookupKey && item.endedAt === '',
+    );
+
+    return parent?.ufo ?? null;
+  }
+}

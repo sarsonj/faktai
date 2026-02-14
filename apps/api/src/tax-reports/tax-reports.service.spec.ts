@@ -22,6 +22,7 @@ describe('TaxReportsService', () => {
 
   const taxOfficesService = {
     findByPracufo: jest.fn(),
+    resolveParentUfoByPracufo: jest.fn(),
   } as any;
 
   const service = new TaxReportsService(prisma, config, taxOfficesService);
@@ -33,6 +34,7 @@ describe('TaxReportsService', () => {
       ufo: '239',
       name: 'Finanční úřad v Hořicích',
     });
+    taxOfficesService.resolveParentUfoByPracufo.mockReturnValue('458');
   });
 
   it('rejects preview for non-vat payer subject', async () => {
@@ -151,7 +153,7 @@ describe('TaxReportsService', () => {
     expect(result.xml).toContain('c_pop="510"');
     expect(result.xml).toContain('c_orient="12"');
     expect(result.xml).toContain('c_pracufo="2705"');
-    expect(result.xml).toContain('c_ufo="239"');
+    expect(result.xml).toContain('c_ufo="458"');
     expect(result.fileName).toContain('77052030_DPH_20254Q.xml');
   });
 
@@ -205,7 +207,7 @@ describe('TaxReportsService', () => {
     expect(result.xml).toContain('<VetaA4');
     expect(result.xml).toContain('<VetaC');
     expect(result.xml).toContain('c_pracufo="2705"');
-    expect(result.xml).toContain('c_ufo="239"');
+    expect(result.xml).toContain('c_ufo="458"');
     expect(result.fileName).toContain('77052030_DPHKH_20254Q.xml');
   });
 
@@ -249,5 +251,34 @@ describe('TaxReportsService', () => {
         value: 4,
       }),
     ).rejects.toThrow('Subjekt nemá vyplněnou místní příslušnost finančního úřadu.');
+  });
+
+  it('rejects export when parent tax office cannot be resolved', async () => {
+    taxOfficesService.resolveParentUfoByPracufo.mockReturnValue(null);
+    prisma.subject.findUnique.mockResolvedValue({
+      id: 'subject-1',
+      isVatPayer: true,
+      firstName: 'Jindrich',
+      lastName: 'Sarson',
+      street: 'Zerotinova 510/12',
+      city: 'Horice',
+      postalCode: '50801',
+      countryCode: 'CZ',
+      ico: '77052030',
+      dic: 'CZ7705203044',
+      taxOfficePracufo: '2705',
+    });
+    prisma.invoice.findMany.mockResolvedValue([]);
+
+    await expect(
+      service.export('user-1', {
+        reportType: 'vat_return',
+        periodType: 'quarter',
+        year: 2025,
+        value: 4,
+      }),
+    ).rejects.toThrow(
+      'Pro místní příslušnost 2705 nebyl nalezen aktivní nadřazený finanční úřad.',
+    );
   });
 });

@@ -379,7 +379,10 @@ Pravidla:
   - příklad: `24755851_DPH_202601M.xml`, `24755851_DPHKH_20254Q.xml`
 - mapování `VetaP`:
   - `c_pracufo` se bere z `subject.taxOfficePracufo`,
-  - `c_ufo` se dohledá v číselníku `c_ufo.xml` podle `k_ufo_vema`,
+  - `c_ufo` se mapuje na nadřazený úřad:
+    - `lookupKey = first2(c_pracufo) + "00"`,
+    - lookup v `c_ufo.xml` na záznamu `k_ufo_vema=lookupKey` a `d_zaniku=""`,
+    - do XML jde `c_ufo` z nalezeného záznamu,
   - `street` se při exportu rozpadá na `ulice`, `c_pop`, `c_orient` (pokud adresa obsahuje čísla).
 
 ## 6. Klíčové transakční scénáře
