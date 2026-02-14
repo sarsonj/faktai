@@ -203,6 +203,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
 
   const [state, setState] = useState<EditorState>(() => createDefaultState());
   const [reservingNumber, setReservingNumber] = useState(mode === 'create');
+  const [useCustomInvoiceNumber, setUseCustomInvoiceNumber] = useState(false);
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [loading, setLoading] = useState(mode === 'edit');
   const [saving, setSaving] = useState(false);
@@ -213,8 +214,20 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   const [customerLookupError, setCustomerLookupError] = useState<string | null>(null);
   const [customerLookupResults, setCustomerLookupResults] = useState<RegistryCompanyResult[]>([]);
   const reserveRequestIdRef = useRef(0);
+  const customInvoiceNumberModeRef = useRef(useCustomInvoiceNumber);
 
-  const reserveNumberForDate = useCallback(async (issueDate: string) => {
+  useEffect(() => {
+    customInvoiceNumberModeRef.current = useCustomInvoiceNumber;
+  }, [useCustomInvoiceNumber]);
+
+  const reserveNumberForDate = useCallback(async (issueDate: string, force = false) => {
+    if (mode !== 'create') {
+      return;
+    }
+    if (customInvoiceNumberModeRef.current && !force) {
+      return;
+    }
+
     const requestId = reserveRequestIdRef.current + 1;
     reserveRequestIdRef.current = requestId;
     setReservingNumber(true);
@@ -223,6 +236,9 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
       const { invoiceNumber } = await reserveInvoiceNumber(issueDate);
       setState((current) => {
         if (requestId !== reserveRequestIdRef.current) {
+          return current;
+        }
+        if (customInvoiceNumberModeRef.current && !force) {
           return current;
         }
 
@@ -244,7 +260,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
         setReservingNumber(false);
       }
     }
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     if (mode !== 'create') {
@@ -310,6 +326,37 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   const readOnly =
     mode === 'edit' && invoice?.status === 'paid' && !advancedEdit;
 
+  const onToggleCustomInvoiceNumber = (enabled: boolean) => {
+    setUseCustomInvoiceNumber(enabled);
+
+    if (enabled) {
+      reserveRequestIdRef.current += 1;
+      setReservingNumber(false);
+      return;
+    }
+
+    void reserveNumberForDate(state.issueDate, true);
+  };
+
+  const onCustomInvoiceNumberChange = (value: string) => {
+    const nextInvoiceNumber = value;
+
+    setState((current) => {
+      const shouldSyncVariableSymbol =
+        current.variableSymbol === '' || current.variableSymbol === current.invoiceNumber;
+      const canUseInvoiceAsVariableSymbol = /^\d{1,10}$/.test(nextInvoiceNumber);
+
+      return {
+        ...current,
+        invoiceNumber: nextInvoiceNumber,
+        variableSymbol:
+          shouldSyncVariableSymbol && canUseInvoiceAsVariableSymbol
+            ? nextInvoiceNumber
+            : current.variableSymbol,
+      };
+    });
+  };
+
   const updateItem = (index: number, patch: Partial<EditorItemState>) => {
     setState((current) => ({
       ...current,
@@ -332,6 +379,10 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   };
 
   const persistDraft = async (): Promise<InvoiceDetail> => {
+    if (mode === 'create' && useCustomInvoiceNumber && state.invoiceNumber.trim().length === 0) {
+      throw new Error('Pro vlastní číslo dokladu vyplňte číslo faktury.');
+    }
+
     const payload = toPayload(state);
 
     if (mode === 'create') {
@@ -497,7 +548,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
 
                 setState((current) => ({ ...current, issueDate: nextIssueDate }));
 
-                if (mode === 'create' && currentYear !== nextYear) {
+                if (mode === 'create' && !useCustomInvoiceNumber && currentYear !== nextYear) {
                   void reserveNumberForDate(nextIssueDate);
                 }
               }}
@@ -547,6 +598,38 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
           </label>
         </div>
       </section>
+
+      {mode === 'create' && (
+        <section className="ui-section invoice-advanced-section">
+          <details className="advanced-tools">
+            <summary className="advanced-tools-summary">Další možnosti (pokročilé)</summary>
+            <div className="invoice-editor-advanced-grid">
+              <label className="toggle-row">
+                <span>Použít vlastní číslo dokladu</span>
+                <input
+                  type="checkbox"
+                  checked={useCustomInvoiceNumber}
+                  onChange={(event) => onToggleCustomInvoiceNumber(event.target.checked)}
+                />
+              </label>
+
+              {useCustomInvoiceNumber && (
+                <label>
+                  Vlastní číslo dokladu
+                  <input
+                    value={state.invoiceNumber}
+                    onChange={(event) => onCustomInvoiceNumberChange(event.target.value)}
+                    placeholder="Např. FV/2025-001"
+                  />
+                  <small className="helper-text inline">
+                    Vlastní číslo je bez formátové validace, kontroluje se jen neprázdnost a unikátnost.
+                  </small>
+                </label>
+              )}
+            </div>
+          </details>
+        </section>
+      )}
 
       <section className="ui-section">
         <h2>Odběratel</h2>

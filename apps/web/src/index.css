@@ -1390,6 +1390,41 @@ button:disabled {
   background: #fafcfe;
 }
 
+.invoice-editor-advanced-grid {
+  margin-top: 12px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #d4e0ec;
+  border-radius: 12px;
+  background: #f8fbff;
+  padding: 10px 12px;
+  min-height: 42px;
+}
+
+.toggle-row span {
+  color: #244763;
+  font-weight: 700;
+}
+
+.toggle-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.helper-text.inline {
+  display: block;
+  margin-top: 7px;
+}
+
 .invoice-meta-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

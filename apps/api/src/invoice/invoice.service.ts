@@ -186,21 +186,6 @@ export class InvoiceService {
     return next;
   }
 
-  private validateInvoiceNumber(invoiceNumber: string, issueDate: Date): void {
-    if (!/^\d{5,10}$/.test(invoiceNumber)) {
-      throw new BadRequestException(
-        'Invoice number must have format YYYY + sequence (5-10 digits)',
-      );
-    }
-
-    const issueYear = String(issueDate.getUTCFullYear());
-    if (!invoiceNumber.startsWith(issueYear)) {
-      throw new BadRequestException(
-        'Invoice number must start with invoice issue year',
-      );
-    }
-  }
-
   private parseInvoiceSequenceForYear(
     invoiceNumber: string | null,
     year: number,
@@ -1309,10 +1294,6 @@ export class InvoiceService {
     const explicitInvoiceNumber = this.normalizeInvoiceNumber(dto.invoiceNumber);
     const issueYear = issueDate.getUTCFullYear();
 
-    if (explicitInvoiceNumber) {
-      this.validateInvoiceNumber(explicitInvoiceNumber, issueDate);
-    }
-
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const invoiceNumber =
         explicitInvoiceNumber ??
@@ -1393,7 +1374,6 @@ export class InvoiceService {
         (await this.prisma.$transaction((tx) =>
           this.reserveNextInvoiceNumber(tx, subject.id, issueYear),
         ));
-      this.validateInvoiceNumber(invoiceNumber, issueDate);
 
       const variableSymbol = this.resolveVariableSymbol(dto, invoiceNumber);
 
@@ -1550,10 +1530,6 @@ export class InvoiceService {
     }
 
     this.validateReadyToIssue(current);
-
-    if (current.invoiceNumber) {
-      this.validateInvoiceNumber(current.invoiceNumber, current.issueDate);
-    }
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       try {

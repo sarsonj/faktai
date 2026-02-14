@@ -335,7 +335,7 @@ Pravidla:
 - `issue` běží transakčně; číslo faktury doplní jen pokud historický draft číslo nemá.
 - `mark-paid` nastaví `status=paid` + `paid_at`.
 - `mark-unpaid` přepne `paid -> issued` a nastaví `paid_at=NULL`.
-- `PATCH /invoices/:id/number` validuje formát + unikátnost čísla v rámci subjektu.
+- `PATCH /invoices/:id/number` validuje neprázdnost + unikátnost čísla v rámci subjektu.
 - `customerIco` se před uložením normalizuje bez mezer.
 - FE může využít `GET /registry/company-search` pro předvyplnění odběratele.
 
@@ -412,7 +412,7 @@ Poznámka:
 
 ### 6.4.1 Editace vystavené faktury
 1. `PATCH /invoices/:id` je povoleno i pro stav `issued`.
-2. `invoiceNumber` není určeno k editaci z UI; backend při update zachovává existující číslo dokladu.
+2. V běžném UI není `invoiceNumber` samostatné editovatelné pole; změna čísla probíhá jen přes pokročilé volby.
 3. `variableSymbol` se defaultně bere z `invoiceNumber`, ale pokud je odeslán explicitně, backend ho respektuje.
 4. Frontend po úspěšném `PATCH` v režimu edit přesměruje uživatele zpět na `/invoices` se stejným query stringem.
 
@@ -421,6 +421,7 @@ Poznámka:
 2. Volitelně lze synchronizovat variabilní symbol na novou hodnotu čísla dokladu.
 3. `POST /invoices/:id/mark-unpaid` vrací uhrazenou fakturu do stavu `issued`.
 4. Frontend zpřístupňuje pokročilé zásahy přes zanořenou sekci v detailu faktury.
+5. Při vytváření nové faktury je v pokročilé sekci volba `Použít vlastní číslo dokladu`; backend pro ruční číslo nevyžaduje formát `YYYYNN`.
 
 ### 6.5 Kopie faktury
 1. Načíst zdrojovou fakturu + položky.
@@ -673,7 +674,7 @@ Mapování v1:
 - Error tracking hook (Sentry-compatible).
 
 ## 14. Potvrzená rozhodnutí
-1. Číselná řada faktur používá formát `YYYYNN` (např. `202601`).
+1. Automatická číselná řada faktur používá formát `YYYYNN` (např. `202601`); pokročilý režim umožňuje ruční číslo dokladu bez formátového omezení.
 2. V1 používá login (single-user bez autentizace se nepoužije).
 3. PDF renderer pro v1 je `pdfkit`.
 4. Registrace ve v1 nevyžaduje ověření e-mailu před prvním přihlášením.

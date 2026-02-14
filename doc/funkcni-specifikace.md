@@ -354,6 +354,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 - `Smazat` (hard delete, dostupné ze seznamu faktur)
 - V detailu faktury jsou běžné akce (`Upravit`, `Kopie`, `PDF`) prezentované jako kompaktní ikonová lišta + jedna hlavní stavová akce (`Vystavit` / `Označit jako uhrazené`).
 - Pokročilé zásahy jsou zanořené pod volbou `Další možnosti (pokročilé)` v samostatné sekci na konci stránky:
+  - při vytváření nové faktury lze zapnout vlastní číslo dokladu (pro migrace),
   - změna čísla dokladu,
   - přepnutí stavu `uhrazená -> neuhrazená`,
   - odemknutí editace uhrazené faktury.
@@ -362,7 +363,8 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 - Režim `create`:
   - při uložení nového dokladu se přidělí číslo faktury z roční řady `YYYYNN` (`YYYY` + pořadí v roce, např. `202601`),
   - pro jiný rok běží pořadí od `1`,
-  - číslo dokladu není editovatelné pole; v UI je zobrazeno v nadpisu stránky (`Nová faktura {číslo}`),
+  - v běžném formuláři není číslo dokladu editovatelné pole; v pokročilé sekci lze zapnout vlastní číslo dokladu,
+  - číslo dokladu je v UI zobrazeno v nadpisu stránky (`Nová faktura {číslo}`),
   - variabilní symbol se předvyplní číslem dokladu, ale zůstává editovatelný,
   - `issueDate` default dnešní datum,
   - `dueDate` default `issueDate + defaultDueDays` (Scope 1, aktuálně 14 dní),
@@ -382,7 +384,7 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 | Pole | Povinné | Validace / pravidlo |
 |---|---|---|
 | `status` | Ano | enum `draft/issued/paid/overdue/cancelled` |
-| `invoiceNumber` | Ano | v běžném workflow formát `YYYY` + pořadí (5-10 číslic), unikátní v rámci subjektu |
+| `invoiceNumber` | Ano | automaticky `YYYY` + pořadí; v pokročilém režimu lze použít vlastní číslo, vždy unikátní v rámci subjektu |
 | `variableSymbol` | Ano | 1-10 číslic; defaultně se předvyplní z `invoiceNumber`, ale je editovatelný |
 | `issueDate` | Ano | datum, nesmí být prázdné |
 | `taxableSupplyDate` | Ano | datum, default `issueDate` |
@@ -425,11 +427,12 @@ Umožnit uživateli vytvořit novou fakturu, vytvořit kopii existující faktur
 8. Faktura ve stavu `issued` je ve v1 plně editovatelná.
 9. Faktura ve stavu `paid` je standardně zamknutá pro editaci; odemknutí je možné jen přes pokročilé zásahy.
 10. Změna čísla dokladu je pokročilá akce (není v běžném editoru), validuje neprázdnost a unikátnost čísla, ale nevyžaduje formát `YYYYNN`.
-11. Přepnutí stavu `paid -> issued/overdue` je pokročilá akce a vynuluje datum úhrady.
-12. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
-13. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
-14. Po `Uložit` v režimu `edit` se uživatel vrací na seznam faktur (`/invoices`) ve stejném kontextu filtrů/stránkování.
-15. V režimu `edit` se v hlavičce editoru nezobrazují pomocné akce (`Zpět na seznam`, `Detail faktury`, `PDF`); hlavní workflow je veden přes spodní akční lištu.
+11. Při vytváření faktury lze v pokročilé sekci přepnout z automatického čísla na vlastní číslo dokladu (bez formátové validace).
+12. Přepnutí stavu `paid -> issued/overdue` je pokročilá akce a vynuluje datum úhrady.
+13. V režimu `edit` je hlavní akce pouze `Uložit`; vystavení faktury je samostatná akce mimo editor.
+14. Předvyplnění odběratele z registru lze před uložením kdykoliv ručně upravit.
+15. Po `Uložit` v režimu `edit` se uživatel vrací na seznam faktur (`/invoices`) ve stejném kontextu filtrů/stránkování.
+16. V režimu `edit` se v hlavičce editoru nezobrazují pomocné akce (`Zpět na seznam`, `Detail faktury`, `PDF`); hlavní workflow je veden přes spodní akční lištu.
 
 ### 3.8 Stavy a chování UI
 - `Loading`: načítání editoru / faktury.

@@ -7,22 +7,20 @@ import {
   IsEnum,
   IsOptional,
   IsString,
-  Matches,
   MaxLength,
   MinLength,
+  Matches,
   ValidateNested,
 } from 'class-validator';
 import { InvoiceItemDto } from './invoice-item.dto';
 
 export class UpsertInvoiceDto {
   @Transform(({ value }) =>
-    typeof value === 'string' ? value.replace(/\s+/g, '') : value,
+    typeof value === 'string' ? value.trim() : value,
   )
   @IsOptional()
   @IsString({ message: 'Číslo faktury musí být text.' })
-  @Matches(/^\d{5,10}$/, {
-    message: 'Číslo faktury musí mít formát RRRR + pořadí (5 až 10 číslic).',
-  })
+  @MinLength(1, { message: 'Číslo faktury nesmí být prázdné.' })
   invoiceNumber?: string;
 
   @Transform(({ value }) =>
