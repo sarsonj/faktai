@@ -916,7 +916,6 @@ export class InvoiceService {
         9,
       );
       this.drawSingleLine(doc, `IBAN: ${input.iban}`, left + 6, paymentTableTop + 42, col1Width - 12, fonts.regular, 9);
-      this.drawSingleLine(doc, 'SWIFT: FIOBCZPPXXX', left + 6, paymentTableTop + 56, col1Width - 12, fonts.regular, 9);
 
       this.drawSingleLine(doc, 'variabilní:', left + col1Width + 6, paymentTableTop + 28, 52, fonts.regular, 9);
       this.drawSingleLine(
