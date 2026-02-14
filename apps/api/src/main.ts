@@ -9,6 +9,9 @@ import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  if (process.env.TRUST_PROXY === '1' || process.env.NODE_ENV === 'production') {
+    app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  }
   app.use(helmet());
   app.use(cookieParser());
   app.useGlobalPipes(

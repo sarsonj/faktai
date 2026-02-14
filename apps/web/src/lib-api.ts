@@ -1,4 +1,7 @@
+const runtimeApiBaseUrl = window.__FAKTURAI_CONFIG__?.API_BASE_URL;
+
 export const API_BASE_URL =
+  runtimeApiBaseUrl ??
   import.meta.env.VITE_API_URL ??
   `${window.location.protocol}//${window.location.hostname}:4000/api/v1`;
 

@@ -48,3 +48,4 @@
 | `CR-0029` | Landing page: integrace grafiky hero a feature sekcí | `Implementováno` | `Should` |
 | `CR-0030` | Landing page: hero bez vnitřní „bubliny“ | `Implementováno` | `Should` |
 | `CR-0031` | Odhad realizace a nacenění projektu | `Implementováno` | `Should` |
+| `CR-0032` | CapRover nasazení a příprava runtime konfigurace | `Implementováno` | `Must` |

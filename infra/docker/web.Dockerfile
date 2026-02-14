@@ -9,6 +9,8 @@ COPY packages/shared/package.json ./packages/shared/
 RUN pnpm install --frozen-lockfile=false
 
 FROM deps AS build
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 COPY . .
 RUN pnpm --filter @tappyfaktur/shared build
 RUN pnpm --filter @tappyfaktur/web build
@@ -17,6 +19,8 @@ FROM base AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/apps/web/dist ./apps/web/dist
+COPY infra/docker/start-web-with-runtime-config.sh /app/start-web-with-runtime-config.sh
+RUN chmod +x /app/start-web-with-runtime-config.sh
 RUN npm i -g serve
 EXPOSE 3000
-CMD ["serve", "-s", "apps/web/dist", "-l", "3000"]
+CMD ["/app/start-web-with-runtime-config.sh"]
