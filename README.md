@@ -2,6 +2,8 @@
 
 FaktAI je experiment „AI-first“ vývoje reálné SaaS aplikace pro fakturaci OSVČ.
 
+Repozitář projektu: [github.com/sarsonj/faktai](https://github.com/sarsonj/faktai)
+
 Cíl projektu:
 - postavit funkční fakturační systém od specifikace po nasazení,
 - dělat vývoj iterativně přes Change Requesty,
@@ -18,6 +20,13 @@ Důležitá poznámka:
 - XML exporty pro DPH přiznání a kontrolní hlášení,
 - průběžné UX/UI iterace podle uživatelského feedbacku.
 
+## Co plánujeme brzy
+- adresář firem,
+- výdajové doklady.
+
+## Autor
+- Jindřich Šaršon, CTO TappyTaps s.r.o.
+
 ## Vývojový čas (AI)
 Zdroj: `doc/vykaz-vyvoje.md` (musí být vždy v sync s tabulkou níže).
 
@@ -31,19 +40,19 @@ Zdroj: `doc/vykaz-vyvoje.md` (musí být vždy v sync s tabulkou níže).
 
 | Metrika | Hodnota | Zdroj |
 |---|---:|---|
-| Ruční odhad realizace (retrospektivně) | 108 MD | `doc/odhad-realizace-a-naceneni.md` |
-| AI vývoj (reálně měřeno z commitů) | 11h 30m (~1.44 MD při 8h/MD) | `doc/vykaz-vyvoje.md` |
-| Rozdíl | 106.56 MD | výpočet z hodnot výše |
+| Ruční odhad realizace (retrospektivně) | 128 MD | [doc/odhad-realizace-a-naceneni.md](doc/odhad-realizace-a-naceneni.md) |
+| AI vývoj (reálně měřeno z commitů) | 11h 30m (~1.44 MD při 8h/MD) | [doc/vykaz-vyvoje.md](doc/vykaz-vyvoje.md) |
+| Rozdíl | 126.56 MD | výpočet z hodnot výše |
 
 Poznámka: srovnání je orientační. Ruční odhad je obchodní retrospektiva, AI čas je technický timesheet z commitů.
 
 ## Projektová dokumentace
-- Funkční specifikace: `doc/funkcni-specifikace.md`
-- Technická specifikace: `doc/tecnicka-specifikace.md`
-- Implementační backlog: `doc/implementacni-backlog.md`
-- Change requesty: `doc/change-requesty/README.md`
-- Výkaz času vývoje: `doc/vykaz-vyvoje.md`
-- Odhad realizace a nacenění: `doc/odhad-realizace-a-naceneni.md`
+- Funkční specifikace: [doc/funkcni-specifikace.md](doc/funkcni-specifikace.md)
+- Technická specifikace: [doc/tecnicka-specifikace.md](doc/tecnicka-specifikace.md)
+- Implementační backlog: [doc/implementacni-backlog.md](doc/implementacni-backlog.md)
+- Change requesty: [doc/change-requesty/README.md](doc/change-requesty/README.md)
+- Výkaz času vývoje: [doc/vykaz-vyvoje.md](doc/vykaz-vyvoje.md)
+- Odhad realizace a nacenění: [doc/odhad-realizace-a-naceneni.md](doc/odhad-realizace-a-naceneni.md)
 
 ## Lokální spuštění (rychlý start)
 ### Varianta 1: Docker Compose

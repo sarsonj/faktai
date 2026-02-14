@@ -69,6 +69,13 @@ export function LandingPage() {
           <h2>Dobré vědět...</h2>
           <p>
             Postaveno pomocí AI. Zdarma, bez záruky, ale s dobrými úmysly.
+            {' '}
+            Pro více informací navštivte stránku projektu na
+            {' '}
+            <a href="https://github.com/sarsonj/faktai" target="_blank" rel="noreferrer">
+              GitHubu
+            </a>
+            .
           </p>
         </section>
 
