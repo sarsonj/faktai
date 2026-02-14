@@ -39,3 +39,10 @@ Byl dodán nový návrh loga (`doc/graphics/logo_new.png`) a požadavek použít
   - `pnpm --filter @tappyfaktur/web build`
 - Výsledek:
   - implementováno dle zadání.
+
+## 7. Iterace (doplnění)
+- Iterace 2:
+  - logo assety přegenerovány do vyššího rozlišení (`189x80`) pro lepší ostrost při větším zobrazení,
+  - zvětšena render výška loga:
+    - veřejná hlavička: `28px -> 34px`,
+    - logo v levém menu aplikace: `32px -> 40px`.
