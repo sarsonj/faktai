@@ -8,7 +8,7 @@
 - Technický dopad: `T0`
 
 ## 1. Business kontext
-Byl požadován souhrnný dokument s retrospektivním odhadem rozsahu realizace projektu od začátku do aktuálního stavu, včetně rozpadů na fáze a finančního vyčíslení při sazbě 1 500 Kč/MD.
+Byl požadován souhrnný dokument s retrospektivním odhadem rozsahu realizace projektu od začátku do aktuálního stavu, včetně rozpadů na fáze a finančního vyčíslení při sazbě 8 000 Kč/MD.
 
 ## 2. Aktuální vs. cílový stav
 - Aktuální stav:
@@ -27,7 +27,7 @@ Byl požadován souhrnný dokument s retrospektivním odhadem rozsahu realizace 
 
 ## 4. Akceptační kritéria
 1. Existuje samostatný dokument s rozpadem na fáze a mezisoučty.
-2. Dokument používá sazbu `1 500 Kč/MD`.
+2. Dokument používá sazbu `8 000 Kč/MD`.
 3. Dokument obsahuje finální celkovou cenu.
 
 ## 5. Rizika a poznámky
@@ -40,3 +40,9 @@ Byl požadován souhrnný dokument s retrospektivním odhadem rozsahu realizace 
   - kontrola struktury dokumentu a aritmetiky součtů
 - Výsledek:
   - implementováno dle zadání.
+
+## 7. Iterace (doplnění)
+- Iterace 2:
+  - aktualizována sazba z `1 500 Kč/MD` na `8 000 Kč/MD`,
+  - přepočteny všechny částky ve fázích i mezisoučtech,
+  - přepočten celkový součet projektu.
