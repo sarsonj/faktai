@@ -10,11 +10,11 @@ Poznámka:
 - Pro tento projekt je správné nasazení minimálně na 2 appky (`api`, `web`) + DB zvlášť.
 
 ## 2. Co je v projektu připraveno
-- Dockerfile pro API (CapRover): `infra/caprover/api.Dockerfile`
-- Dockerfile pro WEB (CapRover): `infra/caprover/web.Dockerfile`
+- Dockerfile pro API: `infra/docker/api.Dockerfile`
+- Dockerfile pro WEB: `infra/docker/web.Dockerfile`
 - Captain definition soubory:
-  - `infra/caprover/captain-definition-api.json`
-  - `infra/caprover/captain-definition-web.json`
+  - `captain-definition-api.json`
+  - `captain-definition-web.json`
 - Runtime API konfigurace webu přes env `WEB_API_URL` (není nutný rebuild při změně URL API)
 - Start skript webu: `infra/docker/start-web-with-runtime-config.sh`
 - Env šablony:
@@ -27,7 +27,11 @@ Poznámka:
    - `api.tvoje-domena.cz`
    - `app.tvoje-domena.cz`
 3. Zapnuté HTTPS certifikáty v CapRoveru.
-4. Deploy je veden přes `Captain Definition Path` (bez parent traversalu mimo složku `infra/caprover`).
+4. Deploy je veden přes `Captain Definition Path`.
+
+Poznámka:
+- CapRover bere build context podle umístění `captain-definition` souboru.
+- Proto jsou `captain-definition-*.json` umístěny v rootu repozitáře, aby byl v build contextu celý projekt (včetně `package.json`).
 
 ## 4. Krok za krokem
 
@@ -46,7 +50,7 @@ Poznámka:
 4. V `App Configs > Environmental Variables` vlož hodnoty podle `infra/caprover/api.env.example`:
    - minimálně: `NODE_ENV`, `API_PORT`, `TRUST_PROXY`, `WEB_ORIGIN`, `APP_BASE_URL`, `DATABASE_URL`, `SESSION_SECRET`.
 5. V `Deployment` zvol `Deploy from GitHub/GitLab/Bitbucket` (nebo tar upload) a nastav `Captain Definition Path`:
-   - `infra/caprover/captain-definition-api.json`
+   - `captain-definition-api.json`
 6. Deployni app.
 
 ### 4.3 Vytvoření appky WEB
@@ -58,7 +62,7 @@ Poznámka:
    - `NODE_ENV=production`
    - `WEB_API_URL=https://api.tvoje-domena.cz/api/v1`
 5. V `Deployment` nastav `Captain Definition Path`:
-   - `infra/caprover/captain-definition-web.json`
+   - `captain-definition-web.json`
 6. Deployni app.
 
 ## 5. Ověření po nasazení

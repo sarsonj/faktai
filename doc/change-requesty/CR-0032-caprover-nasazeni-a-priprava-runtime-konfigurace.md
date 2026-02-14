@@ -31,14 +31,12 @@ Byla vyžádána připravenost projektu pro nasazení na CapRover, včetně prak
 - Docker:
   - `infra/docker/web.Dockerfile`
   - `infra/docker/start-web-with-runtime-config.sh`
-  - `infra/caprover/api.Dockerfile`
-  - `infra/caprover/web.Dockerfile`
 - Konfigurace:
   - `.env.example`
   - `infra/caprover/api.env.example`
   - `infra/caprover/web.env.example`
-  - `infra/caprover/captain-definition-api.json`
-  - `infra/caprover/captain-definition-web.json`
+  - `captain-definition-api.json`
+  - `captain-definition-web.json`
 - Dokumentace:
   - `doc/nasazeni-caprover.md`
   - `doc/change-requesty/README.md`
@@ -67,6 +65,6 @@ Byla vyžádána připravenost projektu pro nasazení na CapRover, včetně prak
   - doplněny `captain-definition` soubory pro API a WEB,
   - deployment návod aktualizován na použití `Captain Definition Path` v CapRover GUI.
 - Iterace 3:
-  - doplněny CapRover-specifické Dockerfile přímo ve složce `infra/caprover`,
-  - `captain-definition` soubory změněny na lokální `./api.Dockerfile` a `./web.Dockerfile`,
-  - odstraněna závislost na parent traversal mimo umístění captain file.
+  - sjednoceno na root-level `captain-definition` soubory,
+  - `captain-definition` ukazuje na `infra/docker/*.Dockerfile`,
+  - odstraněn problém build contextu při umístění captain file v podadresáři.
