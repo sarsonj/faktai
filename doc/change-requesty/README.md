@@ -60,3 +60,4 @@
 | `CR-0041` | Kontaktní údaje pro FÚ v onboardingu a nastavení subjektu | `Implementováno` | `Must` |
 | `CR-0042` | Datum úhrady při označení jako uhrazené a pokročilá změna | `Implementováno` | `Must` |
 | `CR-0043` | Bez děr v automatickém číslování při neuložené faktuře | `Implementováno` | `Must` |
+| `CR-0044` | Denní výkaz času vývoje z Git commitů | `Implementováno` | `Should` |
