@@ -53,6 +53,16 @@ export class CreateSubjectDto {
   @IsDateString({}, { message: 'Datum registrace DPH musí být platné datum.' })
   vatRegistrationDate?: string;
 
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.replace(/\s+/g, '') : value,
+  )
+  @IsOptional()
+  @IsString({ message: 'Místní příslušnost FÚ musí být text.' })
+  @Matches(/^\d{4}$/, {
+    message: 'Místní příslušnost FÚ musí mít 4 číslice.',
+  })
+  taxOfficePracufo?: string;
+
   @IsOptional()
   @IsEnum(TaxPeriodType, {
     message: 'Periodicita DPH musí být month nebo quarter.',

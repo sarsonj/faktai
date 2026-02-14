@@ -1,7 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { searchRegistryAddresses, searchRegistryCompanies } from '../registry-api';
-import type { RegistryAddressResult, RegistryCompanyResult, SubjectInput } from '../types';
+import { getTaxOffices } from '../subject-api';
+import type {
+  RegistryAddressResult,
+  RegistryCompanyResult,
+  SubjectInput,
+  TaxOfficeOption,
+} from '../types';
 
 type OnboardingSubjectWizardProps = {
   loading?: boolean;
@@ -18,6 +24,7 @@ type FormState = {
   isVatPayer: boolean;
   vatPeriodType: 'month' | 'quarter';
   vatRegistrationDate: string;
+  taxOfficePracufo: string;
   street: string;
   city: string;
   postalCode: string;
@@ -73,6 +80,7 @@ export function OnboardingSubjectWizard({
     isVatPayer: true,
     vatPeriodType: 'quarter',
     vatRegistrationDate: '',
+    taxOfficePracufo: '',
     street: '',
     city: '',
     postalCode: '',
@@ -92,6 +100,25 @@ export function OnboardingSubjectWizard({
   const [addressLoading, setAddressLoading] = useState(false);
   const [addressError, setAddressError] = useState<string | null>(null);
   const [addressResults, setAddressResults] = useState<RegistryAddressResult[]>([]);
+  const [taxOfficeOptions, setTaxOfficeOptions] = useState<TaxOfficeOption[]>([]);
+  const [taxOfficeError, setTaxOfficeError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const items = await getTaxOffices();
+        setTaxOfficeOptions(items);
+      } catch (err) {
+        setTaxOfficeError(
+          err instanceof Error
+            ? err.message
+            : 'Načtení číselníku finančních úřadů selhalo.',
+        );
+      }
+    };
+
+    void run();
+  }, []);
 
   const payload = useMemo<SubjectInput>(() => {
     return {
@@ -103,6 +130,7 @@ export function OnboardingSubjectWizard({
       isVatPayer: state.isVatPayer,
       vatPeriodType: state.vatPeriodType,
       vatRegistrationDate: state.isVatPayer ? state.vatRegistrationDate || undefined : undefined,
+      taxOfficePracufo: state.isVatPayer ? state.taxOfficePracufo || undefined : undefined,
       street: state.street.trim(),
       city: state.city.trim(),
       postalCode: state.postalCode.trim(),
@@ -215,6 +243,9 @@ export function OnboardingSubjectWizard({
     }
     if (state.isVatPayer && !state.dic.trim()) return 'U plátce DPH je DIČ povinné.';
     if (state.isVatPayer && !state.vatRegistrationDate) return 'U plátce DPH doplňte datum registrace.';
+    if (state.isVatPayer && !state.taxOfficePracufo) {
+      return 'U plátce DPH vyberte místní příslušnost finančního úřadu.';
+    }
     return null;
   };
 
@@ -497,6 +528,26 @@ export function OnboardingSubjectWizard({
               </label>
             )}
 
+            {state.isVatPayer && (
+              <label>
+                Místní příslušnost FÚ
+                <select
+                  value={state.taxOfficePracufo}
+                  onChange={(event) =>
+                    setState((current) => ({ ...current, taxOfficePracufo: event.target.value }))
+                  }
+                  required={state.isVatPayer}
+                >
+                  <option value="">Vyberte finanční úřad</option>
+                  {taxOfficeOptions.map((item) => (
+                    <option key={item.pracufo} value={item.pracufo}>
+                      {item.name} ({item.pracufo})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
             <label>
               Prefix účtu
               <input
@@ -531,6 +582,7 @@ export function OnboardingSubjectWizard({
       )}
 
       {error && <p className="error">{error}</p>}
+      {taxOfficeError && <p className="error">{taxOfficeError}</p>}
 
       <div className="button-row">
         {step > 0 && (

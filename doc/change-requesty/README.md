@@ -55,3 +55,4 @@
 | `CR-0036` | Vlastní číslo dokladu při vytváření faktury | `Implementováno` | `Must` |
 | `CR-0037` | Formát automatického číslování faktur `YYYYNNNNNN` | `Implementováno` | `Must` |
 | `CR-0038` | Fix kopie faktury a vystavení konceptu v editoru | `Implementováno` | `Must` |
+| `CR-0039` | XML FU: adresa, místní příslušnost a číselník finančních úřadů | `Implementováno` | `Must` |

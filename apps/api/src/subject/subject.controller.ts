@@ -10,6 +10,11 @@ import { SubjectService } from './subject.service';
 export class SubjectController {
   constructor(private readonly subjectService: SubjectService) {}
 
+  @Get('tax-offices')
+  async listTaxOffices() {
+    return this.subjectService.listTaxOffices();
+  }
+
   @Get()
   async getSubject(@Req() request: RequestWithUser) {
     return this.subjectService.getSubject(request.user!.id);

@@ -20,10 +20,19 @@ describe('TaxReportsService', () => {
     }),
   } as any;
 
-  const service = new TaxReportsService(prisma, config);
+  const taxOfficesService = {
+    findByPracufo: jest.fn(),
+  } as any;
+
+  const service = new TaxReportsService(prisma, config, taxOfficesService);
 
   beforeEach(() => {
     jest.clearAllMocks();
+    taxOfficesService.findByPracufo.mockReturnValue({
+      pracufo: '2705',
+      ufo: '239',
+      name: 'Finanční úřad v Hořicích',
+    });
   });
 
   it('rejects preview for non-vat payer subject', async () => {
@@ -45,12 +54,13 @@ describe('TaxReportsService', () => {
       isVatPayer: true,
       firstName: 'Jindrich',
       lastName: 'Sarson',
-      street: 'Zerotinova 510',
+      street: 'Zerotinova 510/12',
       city: 'Horice',
       postalCode: '50801',
       countryCode: 'CZ',
       ico: '77052030',
       dic: 'CZ7705203044',
+      taxOfficePracufo: '2705',
     });
     prisma.invoice.findMany.mockResolvedValue([
       {
@@ -95,12 +105,13 @@ describe('TaxReportsService', () => {
       isVatPayer: true,
       firstName: 'Jindrich',
       lastName: 'Sarson',
-      street: 'Zerotinova 510',
+      street: 'Zerotinova 510/12',
       city: 'Horice',
       postalCode: '50801',
       countryCode: 'CZ',
       ico: '77052030',
       dic: 'CZ7705203044',
+      taxOfficePracufo: '2705',
     });
     prisma.invoice.findMany.mockResolvedValue([
       {
@@ -137,6 +148,10 @@ describe('TaxReportsService', () => {
     expect(result.xml).toContain('<Pisemnost');
     expect(result.xml).toContain('<DPHDP3');
     expect(result.xml).toContain('<Veta1');
+    expect(result.xml).toContain('c_pop="510"');
+    expect(result.xml).toContain('c_orient="12"');
+    expect(result.xml).toContain('c_pracufo="2705"');
+    expect(result.xml).toContain('c_ufo="239"');
     expect(result.fileName).toContain('77052030_DPH_20254Q.xml');
   });
 
@@ -146,12 +161,13 @@ describe('TaxReportsService', () => {
       isVatPayer: true,
       firstName: 'Jindrich',
       lastName: 'Sarson',
-      street: 'Zerotinova 510',
+      street: 'Zerotinova 510/12',
       city: 'Horice',
       postalCode: '50801',
       countryCode: 'CZ',
       ico: '77052030',
       dic: 'CZ7705203044',
+      taxOfficePracufo: '2705',
     });
     prisma.invoice.findMany.mockResolvedValue([
       {
@@ -188,6 +204,8 @@ describe('TaxReportsService', () => {
     expect(result.xml).toContain('<DPHKH1');
     expect(result.xml).toContain('<VetaA4');
     expect(result.xml).toContain('<VetaC');
+    expect(result.xml).toContain('c_pracufo="2705"');
+    expect(result.xml).toContain('c_ufo="239"');
     expect(result.fileName).toContain('77052030_DPHKH_20254Q.xml');
   });
 
@@ -205,5 +223,31 @@ describe('TaxReportsService', () => {
         value: 4,
       }),
     ).rejects.toThrow('Souhrnné hlášení není ve verzi v1 podporováno.');
+  });
+
+  it('rejects export when tax office assignment is missing', async () => {
+    prisma.subject.findUnique.mockResolvedValue({
+      id: 'subject-1',
+      isVatPayer: true,
+      firstName: 'Jindrich',
+      lastName: 'Sarson',
+      street: 'Zerotinova 510/12',
+      city: 'Horice',
+      postalCode: '50801',
+      countryCode: 'CZ',
+      ico: '77052030',
+      dic: 'CZ7705203044',
+      taxOfficePracufo: null,
+    });
+    prisma.invoice.findMany.mockResolvedValue([]);
+
+    await expect(
+      service.export('user-1', {
+        reportType: 'vat_return',
+        periodType: 'quarter',
+        year: 2025,
+        value: 4,
+      }),
+    ).rejects.toThrow('Subjekt nemá vyplněnou místní příslušnost finančního úřadu.');
   });
 });

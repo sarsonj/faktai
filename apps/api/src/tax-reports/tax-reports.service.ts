@@ -16,6 +16,7 @@ import Decimal from 'decimal.js';
 import { createHash } from 'node:crypto';
 import { XMLBuilder, XMLValidator } from 'fast-xml-parser';
 import { PrismaService } from '../prisma/prisma.service';
+import { TaxOfficesService } from '../tax-offices/tax-offices.service';
 import { TaxReportRequestDto } from './dto/tax-report-request.dto';
 
 type InvoiceWithItems = Prisma.InvoiceGetPayload<{
@@ -56,6 +57,7 @@ export class TaxReportsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly taxOfficesService: TaxOfficesService,
   ) {}
 
   private normalizePeriod(dto: TaxReportRequestDto): TaxReportRequestDto {
@@ -302,18 +304,22 @@ export class TaxReportsService {
   }
 
   private buildFuVetaP(subject: Subject) {
+    const { streetName, buildingNumber, orientationNumber } =
+      this.parseStreetForFu(subject.street);
+    const taxOffice = this.resolveTaxOfficeForSubject(subject);
+
     return this.toFuAttributes({
-      c_orient: '',
-      c_pop: '',
-      c_pracufo: '',
-      c_ufo: '',
+      c_orient: orientationNumber,
+      c_pop: buildingNumber,
+      c_pracufo: taxOffice.pracufo,
+      c_ufo: taxOffice.ufo,
       dic: this.normalizeVatId(subject.dic),
       jmeno: subject.firstName,
       prijmeni: subject.lastName,
       naz_obce: subject.city,
       psc: subject.postalCode,
       stat: subject.countryCode === 'CZ' ? 'Česká republika' : subject.countryCode,
-      ulice: subject.street,
+      ulice: streetName,
       sest_jmeno: subject.firstName,
       sest_prijmeni: subject.lastName,
       sest_telef: '',
@@ -321,6 +327,58 @@ export class TaxReportsService {
       c_telef: '',
       email: '',
     });
+  }
+
+  private parseStreetForFu(street: string): {
+    streetName: string;
+    buildingNumber: string;
+    orientationNumber: string;
+  } {
+    const normalized = street.trim().replace(/\s+/g, ' ');
+
+    const slashMatch = normalized.match(
+      /^(.*\S)\s+([0-9]+[A-Za-z]?)\s*\/\s*([0-9]+[A-Za-z]?)$/u,
+    );
+    if (slashMatch) {
+      return {
+        streetName: slashMatch[1].replace(/[,\s]+$/u, ''),
+        buildingNumber: slashMatch[2],
+        orientationNumber: slashMatch[3],
+      };
+    }
+
+    const singleNumberMatch = normalized.match(/^(.*\S)\s+([0-9]+[A-Za-z]?)$/u);
+    if (singleNumberMatch) {
+      return {
+        streetName: singleNumberMatch[1].replace(/[,\s]+$/u, ''),
+        buildingNumber: singleNumberMatch[2],
+        orientationNumber: '',
+      };
+    }
+
+    return {
+      streetName: normalized,
+      buildingNumber: '',
+      orientationNumber: '',
+    };
+  }
+
+  private resolveTaxOfficeForSubject(subject: Subject) {
+    const pracufo = subject.taxOfficePracufo?.trim();
+    if (!pracufo) {
+      throw new BadRequestException(
+        'Subjekt nemá vyplněnou místní příslušnost finančního úřadu.',
+      );
+    }
+
+    const taxOffice = this.taxOfficesService.findByPracufo(pracufo);
+    if (!taxOffice) {
+      throw new BadRequestException(
+        `Místní příslušnost finančního úřadu ${pracufo} nebyla v číselníku nalezena.`,
+      );
+    }
+
+    return taxOffice;
   }
 
   private collectVatFigures(invoices: InvoiceWithItems[]): VatFigures {

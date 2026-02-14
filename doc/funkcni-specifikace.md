@@ -112,6 +112,7 @@ Pravidla:
 | `dic` | Podmíněně | pokud `isVatPayer=true`, pole je povinné | DIČ včetně prefixu země, např. `CZ...` |
 | `isVatPayer` | Ano | boolean | Plátce / neplátce DPH |
 | `vatRegistrationDate` | Podmíněně | povinné pokud `isVatPayer=true`, nesmí být v budoucnu | Datum registrace k DPH |
+| `taxOfficePracufo` | Podmíněně | povinné pokud `isVatPayer=true`, 4 číslice, hodnota z číselníku FÚ | Místní příslušnost finančního úřadu (`k_ufo_vema`) |
 | `street` | Ano | 1-150 znaků | Ulice a číslo popisné |
 | `city` | Ano | 1-100 znaků | Obec |
 | `postalCode` | Ano | formát `123 45` nebo `12345` | PSČ |
@@ -149,6 +150,7 @@ Poznámky:
 6. Uživatel může načíst subjekt z ARES podle IČO i názvu firmy a předvyplnit pole.
 7. Po neúspěšném odeslání onboarding formuláře lze formulář okamžitě znovu odeslat.
 8. V `Nastavení subjektu` není lookup z ARES/adresy zobrazen; změny se provádějí přímou editací polí.
+9. U plátce DPH je povinný výběr místní příslušnosti finančního úřadu.
 
 ### 1.9 Potvrzená rozhodnutí
 1. V první verzi je povolen pouze 1 subjekt na 1 účet.
@@ -672,6 +674,9 @@ Pravidla:
    - období,
    - agregované hodnoty,
    - technické metainformace požadované schématem.
+   - ve větě `VetaP`:
+     - adresa subjektu je mapována do `ulice`, `c_pop`, `c_orient`,
+     - místní příslušnost finančního úřadu je mapována do `c_pracufo` a `c_ufo`.
 4. Aplikace pouze generuje soubor; podání do datové schránky provádí uživatel.
 5. `Přiznání k DPH` používá strukturu `Pisemnost/DPHDP3` s větami `VetaD`, `VetaP`, `Veta1` až `Veta6`.
 6. `Kontrolní hlášení` používá strukturu `Pisemnost/DPHKH1` s větami `VetaD`, `VetaP`, `VetaA4`, `VetaC`.
@@ -711,6 +716,7 @@ Pravidla:
 6. XML `Přiznání k DPH` a `Kontrolní hlášení` je ve FU-compatible struktuře vět.
 7. Název souboru exportu odpovídá formátu `${ICO}_DPH...` / `${ICO}_DPHKH...` podle typu podání.
 8. Perioda exportu se po načtení obrazovky předvyplní z nastavení subjektu (`vatPeriodType`) a jako hodnota použije předchozí měsíc/čtvrtletí.
+9. XML export selže s validační chybou, pokud plátce DPH nemá vyplněnou místní příslušnost finančního úřadu.
 
 ### 5.12 Potvrzená rozhodnutí
 1. Ve v1 se podporuje měsíční i čtvrtletní období.

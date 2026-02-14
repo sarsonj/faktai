@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { searchRegistryAddresses, searchRegistryCompanies } from '../registry-api';
+import { getTaxOffices } from '../subject-api';
 import type {
   RegistryAddressResult,
   RegistryCompanyResult,
   SubjectInput,
   SubjectProfile,
+  TaxOfficeOption,
 } from '../types';
 
 type SubjectFormProps = {
@@ -25,6 +27,7 @@ type FormState = {
   isVatPayer: boolean;
   vatPeriodType: 'month' | 'quarter';
   vatRegistrationDate: string;
+  taxOfficePracufo: string;
   street: string;
   city: string;
   postalCode: string;
@@ -57,6 +60,7 @@ function toInitialState(initial?: SubjectProfile): FormState {
     isVatPayer: initial?.isVatPayer ?? false,
     vatPeriodType: initial?.vatPeriodType ?? 'quarter',
     vatRegistrationDate: initial?.vatRegistrationDate?.slice(0, 10) ?? '',
+    taxOfficePracufo: initial?.taxOfficePracufo ?? '',
     street: initial?.street ?? '',
     city: initial?.city ?? '',
     postalCode: initial?.postalCode ?? '',
@@ -97,10 +101,29 @@ export function SubjectForm({
   const [addressLoading, setAddressLoading] = useState(false);
   const [addressError, setAddressError] = useState<string | null>(null);
   const [addressResults, setAddressResults] = useState<RegistryAddressResult[]>([]);
+  const [taxOfficeOptions, setTaxOfficeOptions] = useState<TaxOfficeOption[]>([]);
+  const [taxOfficeError, setTaxOfficeError] = useState<string | null>(null);
 
   useEffect(() => {
     setState(toInitialState(initial));
   }, [initial]);
+
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const items = await getTaxOffices();
+        setTaxOfficeOptions(items);
+      } catch (err) {
+        setTaxOfficeError(
+          err instanceof Error
+            ? err.message
+            : 'Načtení číselníku finančních úřadů selhalo.',
+        );
+      }
+    };
+
+    void run();
+  }, []);
 
   const payload = useMemo<SubjectInput>(() => {
     return {
@@ -111,7 +134,8 @@ export function SubjectForm({
       dic: state.dic || undefined,
       isVatPayer: state.isVatPayer,
       vatPeriodType: state.vatPeriodType,
-      vatRegistrationDate: state.vatRegistrationDate || undefined,
+      vatRegistrationDate: state.isVatPayer ? state.vatRegistrationDate || undefined : undefined,
+      taxOfficePracufo: state.isVatPayer ? state.taxOfficePracufo || undefined : undefined,
       street: state.street,
       city: state.city,
       postalCode: state.postalCode,
@@ -353,6 +377,24 @@ export function SubjectForm({
               <option value="quarter">Čtvrtletní</option>
             </select>
           </label>
+          <label>
+            Místní příslušnost FÚ
+            <select
+              disabled={!state.isVatPayer}
+              value={state.taxOfficePracufo}
+              onChange={(event) =>
+                setState((current) => ({ ...current, taxOfficePracufo: event.target.value }))
+              }
+              required={state.isVatPayer}
+            >
+              <option value="">Vyberte finanční úřad</option>
+              {taxOfficeOptions.map((item) => (
+                <option key={item.pracufo} value={item.pracufo}>
+                  {item.name} ({item.pracufo})
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       </section>
 
@@ -441,6 +483,7 @@ export function SubjectForm({
       </section>
 
       {error && <p className="error">{error}</p>}
+      {taxOfficeError && <p className="error">{taxOfficeError}</p>}
       <div className="button-row">
         <button disabled={loading} type="submit">
           {loading ? 'Ukládám...' : submitLabel}

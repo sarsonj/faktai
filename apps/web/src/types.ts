@@ -17,6 +17,7 @@ export type SubjectProfile = {
   isVatPayer: boolean;
   vatPeriodType: 'month' | 'quarter';
   vatRegistrationDate: string | null;
+  taxOfficePracufo: string | null;
   street: string;
   city: string;
   postalCode: string;
@@ -40,6 +41,7 @@ export type SubjectInput = {
   isVatPayer: boolean;
   vatPeriodType?: 'month' | 'quarter';
   vatRegistrationDate?: string;
+  taxOfficePracufo?: string;
   street: string;
   city: string;
   postalCode: string;
@@ -50,6 +52,12 @@ export type SubjectInput = {
   defaultVariableSymbolType: DefaultVariableSymbolType;
   defaultVariableSymbolValue?: string;
   defaultDueDays: number;
+};
+
+export type TaxOfficeOption = {
+  pracufo: string;
+  ufo: string;
+  name: string;
 };
 
 export type RegistryCompanyResult = {

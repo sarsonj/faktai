@@ -6,13 +6,17 @@ import {
 } from '@nestjs/common';
 import { DefaultVariableSymbolType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { TaxOfficesService } from '../tax-offices/tax-offices.service';
 import { isValidIco } from '../utils/czech-validators';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
 
 @Injectable()
 export class SubjectService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly taxOfficesService: TaxOfficesService,
+  ) {}
 
   private normalizeIco(ico: string): string {
     return ico.replace(/\s+/g, '');
@@ -27,6 +31,7 @@ export class SubjectService {
     dic?: string | null;
     isVatPayer?: boolean;
     vatRegistrationDate?: Date | null;
+    taxOfficePracufo?: string | null;
     defaultVariableSymbolType?: DefaultVariableSymbolType;
     defaultVariableSymbolValue?: string | null;
   }) {
@@ -41,6 +46,17 @@ export class SubjectService {
       if (!payload.vatRegistrationDate) {
         throw new BadRequestException(
           'Datum registrace DPH je povinné pro plátce DPH.',
+        );
+      }
+      if (!payload.taxOfficePracufo) {
+        throw new BadRequestException(
+          'Místní příslušnost finančního úřadu je povinná pro plátce DPH.',
+        );
+      }
+
+      if (!this.taxOfficesService.findByPracufo(payload.taxOfficePracufo)) {
+        throw new BadRequestException(
+          'Vybraná místní příslušnost finančního úřadu není platná.',
         );
       }
     }
@@ -80,6 +96,7 @@ export class SubjectService {
       vatRegistrationDate: dto.vatRegistrationDate
         ? new Date(dto.vatRegistrationDate)
         : null,
+      taxOfficePracufo: dto.isVatPayer ? (dto.taxOfficePracufo ?? null) : null,
       street: dto.street,
       city: dto.city,
       postalCode: this.normalizePostalCode(dto.postalCode),
@@ -104,6 +121,7 @@ export class SubjectService {
         | Date
         | null
         | undefined,
+      taxOfficePracufo: payload.taxOfficePracufo,
       defaultVariableSymbolType: payload.defaultVariableSymbolType,
       defaultVariableSymbolValue: payload.defaultVariableSymbolValue,
     });
@@ -129,6 +147,10 @@ export class SubjectService {
         : dto.isVatPayer === false
           ? null
           : current.vatRegistrationDate,
+      taxOfficePracufo:
+        dto.isVatPayer === false
+          ? null
+          : (dto.taxOfficePracufo ?? current.taxOfficePracufo),
     };
 
     const defaultVariableSymbolValue =
@@ -141,6 +163,7 @@ export class SubjectService {
       dic: merged.dic,
       isVatPayer: merged.isVatPayer,
       vatRegistrationDate: merged.vatRegistrationDate,
+      taxOfficePracufo: merged.taxOfficePracufo,
       defaultVariableSymbolType: merged.defaultVariableSymbolType,
       defaultVariableSymbolValue,
     });
@@ -158,9 +181,17 @@ export class SubjectService {
           : dto.isVatPayer === false
             ? null
             : undefined,
+        taxOfficePracufo:
+          dto.isVatPayer === false
+            ? null
+            : (dto.taxOfficePracufo ?? undefined),
         defaultVariableSymbolValue,
         vatPeriodType: dto.vatPeriodType,
       },
     });
+  }
+
+  listTaxOffices() {
+    return this.taxOfficesService.listTaxOffices();
   }
 }

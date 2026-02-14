@@ -91,6 +91,7 @@ model Subject {
   isVatPayer                 Boolean
   vatPeriodType              TaxPeriodType             @default(quarter)
   vatRegistrationDate        DateTime?
+  taxOfficePracufo           String?                   @db.VarChar(4)
   street                     String
   city                       String
   postalCode                 String

@@ -1,0 +1,1537 @@
+<?xml version="1.0" encoding="utf-8"?><xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="unqualified">
+  <xs:simpleType xmlns:xalan="http://xml.apache.org/xslt" name="dateInMultiFormat">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="(([1-9])|((0[1-9])|([12][0-9]))|(3[0-1]))\.((0?[1-9])|(1[0-2]))\.((19[0-9]{2})|(2[0-9]{3}))"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element xmlns:xalan="http://xml.apache.org/xslt" name="Pisemnost">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="DPHKH1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element maxOccurs="1" minOccurs="1" name="VetaD">
+                <xs:complexType>
+                  <xs:attribute fixed="KH1" name="dokument" use="required"/>
+                  <xs:attribute fixed="DPH" name="k_uladis" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Musí obsahovat "DPH".</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="mesic" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>	Období, za které kontrolní hlášení podává. Plátce vyplní kalendářní měsíc, za který (příp. za jehož část) podává kontrolní hlášení. Kalendářní měsíc uveďte číslicí v rozsahu 1 až 12, k vyplněné hodnotě nepřipisujte tečku. Vyplnění měsíce nebo čtvrtletí je pro další zpracování nezbytné. Pro právnickou osobu je obdobím pro podání
+kontrolního hlášení měsíc.
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="2"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="rok" use="required">
+                    <xs:annotation>
+                      <xs:documentation>vyplníte kalendářní rok, za který podáváte kontrolní hlášení. Vyplnění tohoto údaje je pro další zpracování nezbytné.
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="4"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="ctvrt" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Období, za které kontrolní hlášení podává. Plátce vyplní kalendářní čtvrtletí, za které (příp. za jehož část) podává kontrolní hlášení. Kalendářní čtvrtletí uveďte číslicí v rozsahu 1 až 4, k vyplněné hodnotě nepřipisujte tečku. Vyplnění měsíce  nebo čtvrtletí  je pro další zpracování nezbytné. Pro právnickou osobu je obdobím pro podání kontrolního hlášení měsíc.
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="1"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zdobd_od" type="dateInMultiFormat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Pouze pro fyzickou osobu (právnická osoba podává vždy za celý měsíc):&lt;br&gt;
+					Pokud je kontrolní hlášení podáváno pouze za část vyplněného období (např. v případě insolvenčního řízení), zadejte za období od – do.
+					Datum zadejte ve formátu "DD.MM.RRRR".&lt;br&gt;
+					Pokud vyplníte pouze hodnotu od, pak se předpokládá interval od zadaného data do konce zadaného období.&lt;br&gt;
+					Pokud vyplníte pouze hodnotu do, pak se předpokládá interval od počátku zadaného období do zadaného data.</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="zdobd_do" type="dateInMultiFormat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Pouze pro fyzickou osobu (právnická osoba podává vždy za celý měsíc):&lt;br&gt;
+					Pokud je kontrolní hlášení podáváno pouze za část vyplněného období (např. v případě insolvenčního řízení), zadejte za období od – do.
+					Datum zadejte ve formátu "DD.MM.RRRR".&lt;br&gt;
+					Pokud vyplníte pouze hodnotu od, pak se předpokládá interval od zadaného data do konce zadaného období.&lt;br&gt;
+					Pokud vyplníte pouze hodnotu do, pak se předpokládá interval od počátku zadaného období do zadaného data.</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="d_poddp" type="dateInMultiFormat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Tento údaj se předvyplní dnešním datem.</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="khdph_forma" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Druh kontrolního hlášení:&lt;br&gt;
+								plátce vždy označí, o jaký druh kontrolního hlášení se jedná:&lt;br&gt;
+								&lt;b&gt; Řádné (§ 101e):&lt;/b&gt; povinnost podat v zákonem stanovené lhůtě. Jedná se vždy o první podání za dané období, i když je podáváno po termínu pro podání.&lt;br&gt;
+								&lt;b&gt;Řádné/opravné (§ 101f odst. 1):&lt;/b&gt; možnost nahradit již podané řádné kontrolní hlášení, a to pouze pokud neuplynula lhůta pro podání tohoto řádného kontrolního hlášení.
+									K předchozímu kontrolnímu hlášení se nepřihlíží, tj. plátce uvede znovu všechny údaje za předmětné období s promítnutím oprav.&lt;br&gt;
+								&lt;b&gt;Následné (§ 101f odst. 2):&lt;/b&gt;
+								&lt;br&gt; Povinnost podat následné kontrolní hlášení vzniká v případě, že plátce zjistí po uplynutí lhůty k podání řádného kontrolního hlášení, že v tomto kontrolním hlášení uvedl nesprávné nebo neúplné údaje. Následné kontrolní hlášení se podává do 5 pracovních dnů ode dne zjištění nesprávných nebo neúplných údajů.
+								&lt;br&gt; Povinnost podat následné kontrolní hlášení může vzniknout rovněž na základě výzvy správce daně. V takovém případě je povinnost jej podat do 17 dnů ode dne dodání této výzvy do datové schránky (nejedná se o doručení, ale o dodání) nebo do 5 pracovních dnů od oznámení této výzvy jiným způsobem než datovou schránkou.
+								&lt;br&gt;	Následné kontrolní hlášení se nepodává jako rozdíl proti dříve podanému kontrolnímu hlášení, ale znovu - tedy jako &lt;b&gt;úplné se všemi údaji za předmětné období s promítnutím oprav&lt;/b&gt;.
+								&lt;br&gt;
+								&lt;b&gt;Následné/opravné&lt;/b&gt; se podává v případě, kdy DS zjistí chybné údaje. Před uplynutím lhůty pro podání kontrolního hlášení může být podané kontrolní hlášení nahrazeno opravným kontrolním hlášením. Po uplynutí lhůty pro podání kontrolního hlášení musí být podáno následné kontrolní hlášení, jestliže plátce zjistí nesprávné nebo neúplné údaje v již podaném kontrolním hlášení.&lt;br&gt;
+								Volby
+								&lt;ul&gt;
+								&lt;p&gt;&lt;/p&gt;
+								&lt;li&gt;    B - řádné&lt;/li&gt;&lt;p&gt;&lt;/p&gt;
+								&lt;li&gt;    O - řádné/opravné&lt;/li&gt;&lt;p&gt;&lt;/p&gt;
+								&lt;li&gt;    N - následné&lt;/li&gt;&lt;p&gt;&lt;/p&gt;
+								&lt;li&gt;    E - následné/opravné&lt;/li&gt;
+								&lt;/ul&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="1"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="d_zjist" type="dateInMultiFormat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Důvody pro podání následného kontrolního hlášení zjištěny dne (datum):
+					&lt;br&gt;Vyplní se tehdy, pokud bylo označeno podání následného kontrolního hlášení. V tomto případě  musí být vždy vyplněna buď položka "Důvody pro podání následného kontrolního hlášení zjištěny dne" anebo položka "č.j. výzvy".
+					</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="c_jed_vyzvy" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>uveďte ve tvaru (vč. uvedených oddělovačů):&lt;br&gt;
+					99999999/99/9999-99999-999999&lt;br&gt;
+					V případě použití volby "rychlá odpověď na výzvu" je vyplnění položky pro další zpracování nezbytné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="32"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="vyzva_odp" use="optional">
+                    <xs:annotation>
+                      <xs:documentation> Vyplňuje se pouze ve specifických případech jako reakce na výzvu správce daně, kdy plátci nevznikla povinnost podat kontrolní hlášení za příslušné období nebo potvrzuje správnost naposledy podaného kontrolního hlášení (tj. nemění žádná data). V případě použití této volby nesmějí být vyplněny řádky v oddílech A, B i C kontrolního hlášení, ale vyplnění údajů o „Plátci“ (jeho identifikace) a „Záhlaví“ (základní údaje o kontrolním hlášení) je pro další zpracování nezbytné. Dále je nutné doplnit položku „č.j. výzvy“ (resp. celé číslo jednací správce daně z doručené výzvy). Tímto způsobem plátce odpovídá v uvedeném případě na výzvu správce daně.
+					&lt;br&gt;Volby
+					&lt;ul&gt;
+					&lt;li&gt;B - Nemám povinnost podat KH (nulové KH). &lt;/li&gt;
+					&lt;li&gt;P - Potvrzuji správnost naposledy podaného KH.&lt;/li&gt;
+					&lt;/ul&gt; </xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="1"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="1" minOccurs="1" name="VetaP">
+                <xs:complexType>
+                  <xs:attribute name="c_ufo" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Číslo finančního úřadu, kterému je podání určeno.&lt;br&gt;
+Pro popis číselníku Územní finanční orgány klikněte &lt;a href="https://adisspr.mfcr.cz/pmd/dokumentace/ciselniky/ukazka/ufo"&gt;zde&lt;/a&gt;.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="3"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="c_pracufo" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>územní pracoviště, kde je nebo bude umístěn spis daňového subjektu (podle § 13 zákona číslo 456/2011 Sb., o Finanční správě České republiky, ve znění pozdějších předpisů).&lt;br&gt;
+Pro popis číselníku Pracoviště FÚ klikněte &lt;a href="https://adisspr.mfcr.cz/pmd/dokumentace/ciselniky/ukazka/pracufo"&gt;zde&lt;/a&gt;.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="4"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dic" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Kmenová část daňového identifikačního čísla (pouze číselná část).
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:pattern value="[0-9]{1,10}"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="typ_ds" use="required">
+                    <xs:annotation>
+                      <xs:documentation>(V případě skupiny se uvede typ zastupujícícho člena.)&lt;BR&gt;F - fyzická osoba&lt;BR&gt;P - právnická osoba.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="1"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="titul" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>daňového subjektu fyzické osoby.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="10"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="jmeno" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>daňového subjektu fyzické osoby.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="30"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="prijmeni" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>daňového subjektu fyzické osoby.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="36"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zkrobchjm" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>&amp;nbsp;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="255"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="ulice" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>místa pobytu nebo sídla daňového subjektu.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="38"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="c_orient" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>místa pobytu nebo sídla daňového subjektu.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="4"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="c_pop" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>místa pobytu nebo sídla daňového subjektu.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="6"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="naz_obce" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>místo pobytu nebo sídla daňového subjektu&lt;br&gt;
+Pro popis číselníku Obce klikněte &lt;a href="https://adisspr.mfcr.cz/pmd/dokumentace/ciselniky/ukazka/obce"&gt;zde&lt;/a&gt;.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="48"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="psc" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>místa pobytu nebo sídla daňového subjektu. PSČ v České republice musí mít délku 5 znaků bez mezer.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="10"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="stat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Název státu místa pobytu nebo sídla daňového subjektu. Pro hodnotu této položky použijte číselník Země (zeme). Z číselníku se vkládá položka naz_zeme_c25.&lt;br&gt;
+Pro popis číselníku Země klikněte &lt;a href="https://adisspr.mfcr.cz/pmd/dokumentace/ciselniky/ukazka/zeme"&gt;zde&lt;/a&gt;.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="25"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="email" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Adresa elektronické pošty, kterou plátce uvede v souladu s § 101g odst. 4 a je určena pro účely zasílání písemností vydaných správcem daně souvisejících s kontrolním hlášením (zejména případných výzev zasílaných podle § 101g odst. 4). K jinému účelu využita nebude.
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="255"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zast_typ" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>F - fyzická osoba &lt;BR&gt; P - právnická osoba&lt;BR&gt; Pokud podává podepisující osoba je povinné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="1"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zast_kod" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Číselný kód podle níže uvedených typů podepisující osoby:&lt;br&gt;Fyzická osoba: &lt;br&gt;1 - zákonný zástupce nebo opatrovník&lt;br&gt;2 - ustanovený zástupce&lt;br&gt;3 - společný zástupce, společný zmocněnec&lt;br&gt;4a - obecný zmocněnec - fyzická osoba i právnická osoba&lt;br&gt;4b - fyzická osoba daňový poradce nebo advokát&lt;br&gt;5a - osoba spravující pozůstalost&lt;br&gt;5b - zástupce osoby spravující pozůstalost&lt;br&gt;6a - dědic po skončení řízení o pozůstalosti&lt;br&gt;6b - zástupce dědice po skončení řízení o pozůstalosti&lt;br&gt;7b - zástupce právního nástupce právnické osoby&lt;br&gt;&lt;br&gt;Právnická osoba:&lt;br&gt;1 - zákonný zástupce nebo opatrovník&lt;br&gt;2 - ustanovený zástupce&lt;br&gt;3 - společný zástupce, společný zmocněnec&lt;br&gt;4a - obecný zmocněnec - fyzická osoba i právnická osoba&lt;br&gt;4c - právnická osoba vykonávající daňové poradenství&lt;br&gt;5a - osoba spravující pozůstalost&lt;br&gt;5b - zástupce osoby spravující pozůstalost&lt;br&gt;6a - dědic po skončení řízení o pozůstalosti&lt;br&gt;6b - zástupce dědice po skončení řízení o pozůstalosti&lt;br&gt;7a - právní nástupce právnické osoby&lt;br&gt;7b - zástupce právního nástupce právnické osoby</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zast_prijmeni" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>podepisující osoba.&lt;BR&gt;Pokud podává fyzická podepisující osoba je povinné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="36"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zast_jmeno" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>podepisující osoba.&lt;BR&gt;Pokud podává fyzická podepisující osoba je povinné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="20"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zast_dat_nar" type="dateInMultiFormat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>podepisující osoba.&lt;BR&gt;Pokud podává fyzická podepisující osoba, buď datum narození nebo evidenční číslo je povinné.</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="zast_ev_cislo" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Pokud podává fyzická podepisující osoba, buď datum narození nebo evidenční číslo je povinné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="36"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zast_nazev" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>podepisující osoba.&lt;BR&gt;Pokud podává právnická podepisující osoba je povinné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="255"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zast_ic" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>podepisující osoba.&lt;BR&gt;Pokud podává právnická podepisující osoba je povinné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:pattern value="[0-9]{1,10}"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="opr_jmeno" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>fyzické osoby oprávněné k podpisu.&lt;BR&gt;Vyplňuje se, je-li typ daňového subjektu nebo typ jeho podepisující osoby právnická osoba.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="20"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="opr_postaveni" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>fyzické osoby oprávněné k podpisu.&lt;BR&gt;Vyplňuje se, je-li typ daňového subjektu nebo typ jeho podepisující osoby právnická osoba.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="40"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="opr_prijmeni" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>fyzické osoby oprávněné k podpisu.&lt;BR&gt;Vyplňuje se, je-li typ daňového subjektu nebo typ jeho podepisující osoby právnická osoba.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="36"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="sest_jmeno" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte jméno kontaktní osoby, případně osoby, která sestavila podání.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="20"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="sest_prijmeni" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte příjmení kontaktní osoby, případně osoby, která sestavila podání.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="36"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="sest_telef" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte telefon kontaktní osoby, případně osoby, která sestavila podání.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="14"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="c_telef" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>kontaktní daňového subjektu.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="14"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="unbounded" minOccurs="0" name="VetaA1">
+                <xs:complexType>
+                  <xs:attribute name="c_radku" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Pokud je uvedeno, budou řádky ve formuláři uspořádány v zadaném pořadí.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="6"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dic_odb" use="required">
+                    <xs:annotation>
+                      <xs:documentation>(kmenová část bez mezer, pouze číselná část), povinný. Nesmí být uvedeno vlastní DIČ.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:pattern value="[0-9]{1,10}"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="c_evid_dd" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Nepodává-li KH skupina, nesmí být duplicitní ev. č. daňového dokladu v řádcích se stejným kódem předmětu plnění.
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="60"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="duzp" type="dateInMultiFormat" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Datum uskutečnění zdanitelného plnění (plnění v režimu přenesení daňové povinnosti přiznává dodavatel ke dni uskutečnění zdanitelného plnění, nikoli z případných předcházejících přijatých plateb před uskutečněním zdanitelného plnění - tj. "záloh")
+						- ve tvaru: DD.MM.RRRR (např.: 02.03.2016, tj. 10-místná položka). Datum uskutečnění zdanitelného plnění musí být vyšší než 
+  31.12.2015. Doklady s DUZP nižším než 1.1.2016 je nutné podat pomocí Výpisu z evidence.
+					</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane1" use="required">
+                    <xs:annotation>
+                      <xs:documentation>bez rozlišení sazby daně </xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="kod_pred_pl" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Uvede se (vybere z číselníku) na základě předem vyplněného období ze stránky Záhlaví. 
+					Pokud bude na jednom daňovém dokladu uvedeno více druhů plnění (spadajících pod různé kódy), je nutno rozepsat každý kód plnění na samostatný řádek (s uvedením  stejného evidenčního čísla daňového dokladu).	
+					&lt;br&gt;
+Pro popis číselníku Kód předmětů plnění klikněte &lt;a href="https://adisspr.mfcr.cz/pmd/dokumentace/ciselniky/ukazka/k_pred_pl"&gt;zde&lt;/a&gt;.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="3"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="unbounded" minOccurs="0" name="VetaA2">
+                <xs:complexType>
+                  <xs:attribute name="c_radku" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Pokud je uvedeno, budou řádky ve formuláři uspořádány v zadaném pořadí.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="6"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="k_stat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Kód státu, který přidělil daňové identifikační číslo registrace k DPH dodavatele.&lt;br&gt;- např. u
+						Německa "DE".&lt;br&gt;Seznam kódů zemí je uveden níže, viz tabulka&lt;b&gt; Daňová identifikační čísla členských států
+						EU&lt;/b&gt;.
+		  		  &lt;br&gt;&lt;table border="1" cellspacing="1" cellpadding="5" width="100px"&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;&lt;b&gt;Název země&lt;/b&gt;&lt;/td&gt;&lt;td width="25%" valign="top"&gt;&lt;b&gt;Kód země&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;BELGIE&lt;/td&gt;&lt;td width="25%" valign="top"&gt;BE&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;BULHARSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;BG&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;ČESKÁ REPUBLIKA&lt;/td&gt;&lt;td width="25%" valign="top"&gt;CZ&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;DÁNSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;DK&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;ESTONSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;EE&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;FINSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;FI&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;FRANCIE&lt;/td&gt;&lt;td width="25%" valign="top"&gt;FR&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;CHORVATSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;HR&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;IRSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;IE&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;ITÁLIE&lt;/td&gt;&lt;td width="25%" valign="top"&gt;IT&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;KYPR&lt;/td&gt;&lt;td width="25%" valign="top"&gt;CY&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;LITVA&lt;/td&gt;&lt;td width="25%" valign="top"&gt;LT&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;LOTYŠSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;LV&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;LUCEMBURSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;LU&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;MAĎARSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;HU&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;MALTA&lt;/td&gt;&lt;td width="25%" valign="top"&gt;MT&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;NĚMECKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;DE&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;NIZOZEMSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;NL&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;POLSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;PL&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;PORTUGALSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;PT&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;RAKOUSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;AT&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;RUMUNSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;RO&lt;/td&gt;&lt;/tr&gt;				   
+				  &lt;tr&gt;&lt;td width="75%" valign="top"&gt;ŘECKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;EL&lt;/td&gt;&lt;/tr&gt;
+				   &lt;tr&gt;&lt;td width="75%" valign="top"&gt;SEVERNÍ IRSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;XI&lt;/td&gt; &lt;/tr&gt;
+				   &lt;tr&gt;&lt;td width="75%" valign="top"&gt;SLOVENSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;SK&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;SLOVINSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;SI&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;ŠPANĚLSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;ES&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;ŠVÉDSKO&lt;/td&gt; 
+				  &lt;td width="25%" valign="top"&gt;SE&lt;/td&gt;&lt;/tr&gt;
+
+				  &lt;tr&gt;&lt;td width="75%" valign="top"&gt;VELKÁ BRITÁNIE&lt;/td&gt;&lt;td width="25%" valign="top"&gt;GB&lt;/td&gt; &lt;/tr&gt;
+				  
+				  &lt;/table&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="vatid_dod" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>DIČ DPH dodavatele z jiného členského státu, tj. tzv. VAT ID, ve formátu bez mezer  bez kódu členského státu dodavatele – např. u Německa:
+"12345678". V případě, že dodavatel nemá VAT ID, tj. EU DIČ DPH, (může se jednat např. o DIČ osoby povinné k dani z jiného členského státu nebo identifikaci zahraniční osoby povinné k dani, nebo ve vybraných případech přemístění  zboží podle § 16 odst. 3) – tak v těchto případech pole "Identifikace dodavatele" zůstává prázdné&lt;br&gt;&lt;b&gt;Daňová identifikační čísla členských států EU&lt;/b&gt;
+		  		  &lt;br&gt;&lt;table border="1" cellspacing="1" cellpadding="5" width="100%"&gt;
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;&lt;b&gt;Název země&lt;/b&gt;&lt;/td&gt;
+&lt;td width="6%" valign="top"&gt;&lt;b&gt;Kód země&lt;/b&gt;&lt;/td&gt;
+&lt;td width="18%" valign="top"&gt;&lt;b&gt;Formát DIČ dodavatele&lt;/b&gt;&lt;/td&gt;
+&lt;td width="9%" valign="top"&gt;&lt;b&gt;Počet znaků&lt;/b&gt;&lt;/td&gt;
+&lt;td width="49%" valign="top"&gt;&lt;b&gt;Poznámky&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;
+
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;BELGIE&lt;/td&gt;&lt;td width="6%" valign="top"&gt;BE&lt;/td&gt;
+&lt;td width="18%" valign="top"&gt;1234567890&lt;/td&gt;&lt;td width="9%" valign="top"&gt;10&lt;/td&gt;
+&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;
+
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;BULHARSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;BG&lt;/td&gt;&lt;td width="18%" valign="top"&gt;123456789&lt;br&gt;1234567890&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;br&gt;nebo 10&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;ČESKÁ REPUBLIKA&lt;/td&gt;&lt;td width="6%" valign="top"&gt;CZ&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678&lt;br&gt;123456789&lt;br&gt;1234567890&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;br&gt; nebo &lt;br&gt;9&lt;br&gt;nebo&lt;br&gt; 10&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;				  
+				  &lt;tr&gt;&lt;td width="18%" valign="top"&gt;DÁNSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;DK&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;ESTONSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;EE&lt;/td&gt;&lt;td width="18%" valign="top"&gt;123456789&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;FINSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;FI&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;FRANCIE&lt;/td&gt;&lt;td width="6%" valign="top"&gt;FR&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678901&lt;br&gt;X1123456789&lt;br&gt;1X123456789&lt;br&gt;XX123456789&lt;/td&gt;&lt;td width="9%" valign="top"&gt;11&lt;/td&gt;&lt;td width="49%" valign="top"&gt;obsahuje buď jen číslice nebo na prvním nebo druhém místě nebo na prvním a druhém místě velké písmeno, s výjimkou písmen I a O&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;CHORVATSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;HR&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678901&lt;/td&gt;&lt;td width="9%" valign="top"&gt;11&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice; Pozn.: je možné použít od 1.7.2013&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;IRSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;IE&lt;/td&gt;&lt;td width="18%" valign="top"&gt;1234567X&lt;br&gt;1X34567X&lt;br&gt;1234567XX&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;br&gt;nebo 9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;obsahuje jedno nebo dvě velká písmena, a to na posledním místě nebo na druhém a posledním místě (pro délku 8),&lt;br&gt;obsahuje dvě velká písmena, a to na posledním a předposledním místě (pro délku 9)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;ITÁLIE&lt;/td&gt;&lt;td width="6%" valign="top"&gt;IT&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678901&lt;/td&gt;&lt;td width="9%" valign="top"&gt;11&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;KYPR&lt;/td&gt;&lt;td width="6%" valign="top"&gt;CY&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678X&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;obsahuje na posledním místě jedno velké písmeno&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;LITVA&lt;/td&gt;&lt;td width="6%" valign="top"&gt;LT&lt;/td&gt;&lt;td width="18%" valign="top"&gt;123456789&lt;br&gt;123456789012&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9 nebo&lt;br&gt;12&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;LOTYŠSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;LV&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678901&lt;/td&gt;&lt;td width="9%" valign="top"&gt;11&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;LUCEMBURSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;LU&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;MAĎARSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;HU&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;MALTA&lt;/td&gt;&lt;td width="6%" valign="top"&gt;MT&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;NĚMECKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;DE&lt;/td&gt;&lt;td width="18%" valign="top"&gt;123456789&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;
+
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;NIZOZEMSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;NL&lt;/td&gt;
+&lt;td width="18%" valign="top"&gt;123456789B01 &lt;br&gt;nebo&lt;br&gt; ZZZZZZZZZZ12&lt;/td&gt;&lt;td width="9%" valign="top"&gt;12&lt;/td&gt;
+&lt;td width="49%" valign="top"&gt;prvních devět znaků jsou číslice, poslední 3 znaky jsou vždy v rozsahu B01 až B99 &lt;br&gt;nebo&lt;br&gt;
+prvních deset znaků jsou číslice nebo velká písmena nebo "+" nebo "*", poslední 2 znaky jsou vždy v rozsahu 02 až 98
+&lt;/td&gt;&lt;/tr&gt;
+
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;POLSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;PL&lt;/td&gt;&lt;td width="18%" valign="top"&gt;1234567890&lt;/td&gt;&lt;td width="9%" valign="top"&gt;10&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;PORTUGALSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;PT&lt;/td&gt;&lt;td width="18%" valign="top"&gt;123456789&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;RAKOUSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;AT&lt;/td&gt;&lt;td width="18%" valign="top"&gt;U12345678&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;první znak je vždy U, zbývajících osm jsou číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;RUMUNSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;RO&lt;/td&gt;&lt;td width="18%" valign="top"&gt;1234567890&lt;/td&gt;&lt;td width="9%" valign="top"&gt;10 a méně&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;br&gt;vzhledem k proměnlivé délce DIČ je i číslice „0“ na prvním popřípadě dalších místech DIČ rozhodující, např. RO 019 a RO 0019 představují dvě rozdílná DIČ&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;ŘECKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;EL&lt;/td&gt;&lt;td width="18%" valign="top"&gt;123456789&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;
+
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;SEVERNÍ IRSKO&lt;/td&gt;
+				  &lt;td width="6%" valign="top"&gt;XI&lt;/td&gt;
+				  &lt;td width="18%" valign="top"&gt;123456789&lt;br&gt;nebo&lt;br&gt;123456789012&lt;br&gt;nebo&lt;br&gt;GD123&lt;br&gt;nebo&lt;br&gt;HA123&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9
+				  &lt;br&gt;nebo
+				  &lt;br&gt;12&lt;br&gt;nebo&lt;br&gt;5&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice nebo na prvním a druhém místě písmena GD nebo HA
+				  &lt;br&gt;- v případě 12 číslic poslední tři představují identifikaci organizační složky pořizovatele zboží,
+				  &lt;br&gt;- písmena GD a tři následující číslice představují identifikaci vládní instituce,
+				  &lt;br&gt;- písmena HA a tři následující číslice představují identifikaci zdravotnické organizace&lt;/td&gt;&lt;/tr&gt;
+
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;SLOVENSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;SK&lt;/td&gt;&lt;td width="18%" valign="top"&gt;1234567890&lt;/td&gt;&lt;td width="9%" valign="top"&gt;10&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;SLOVINSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;SI&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;ŠPANĚLSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;ES&lt;/td&gt;
+&lt;td width="18%" valign="top"&gt;X12345678&lt;br&gt;12345678X&lt;br&gt;X1234567X&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;obsahuje jedno nebo dvě velká písmena, a to na prvním nebo posledním místě nebo na prvním a posledním místě&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;ŠVÉDSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;SE&lt;/td&gt;&lt;td width="18%" valign="top"&gt;123456789012&lt;/td&gt;&lt;td width="9%" valign="top"&gt;12&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;VELKÁ BRITÁNIE&lt;/td&gt;
+				  &lt;td width="6%" valign="top"&gt;GB&lt;/td&gt;
+				  &lt;td width="18%" valign="top"&gt;123456789&lt;br&gt;nebo&lt;br&gt;123456789012&lt;br&gt;nebo&lt;br&gt;GD123&lt;br&gt;nebo&lt;br&gt;HA123&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9
+				  &lt;br&gt;nebo
+				  &lt;br&gt;12&lt;br&gt;nebo&lt;br&gt;5&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice nebo na prvním a druhém místě písmena GD nebo HA
+				  &lt;br&gt;- v případě 12 číslic poslední tři představují identifikaci organizační složky pořizovatele zboží,
+				  &lt;br&gt;- písmena GD a tři následující číslice představují identifikaci vládní instituce,
+				  &lt;br&gt;- písmena HA a tři následující číslice představují identifikaci zdravotnické organizace&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+		  
+</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="12"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="c_evid_dd" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Evidenční číslo daňového dokladu uvedené na dokladu. Pokud plátce nemá doklad k dispozici, položku „Ev. číslo daňového dokladu“ ponechá prázdnou.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="60"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dppd" type="dateInMultiFormat" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Datum povinnosti přiznat daň ve tvaru DD.MM.RRRR, tj. 10-místná položka - podle § 24 (tj. ke	dni uskutečnění zdanitelného plnění nebo ke dni poskytnutí úplaty, pokud je zdanitelné plnění ke dni poskytnutí úplaty známo dostatečně určitě - § 20a odst. 3), podle § 25 (k patnáctému dni v měsíci, který následuje po měsíci, v němž bylo zboží pořízeno. Pokud však byl daňový doklad vystaven před patnáctým dnem měsíce, který následuje po měsíci, v němž bylo zboží pořízeno, vzniká povinnost přiznat daň ke dni vystavení tohoto dokladu. V případě pořízení zboží z jiného členského státu podle § 16 odst. 3, tj. přemístění zboží do tuzemska z jiného členského státu, vzniká povinnost přiznat daň dnem přemístění do tuzemska).
+					</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane1" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Základ daně pro základní sazbu DPH</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan1" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Hodnota daně v základní sazbě DPH</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane2" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Základ daně pro sníženou sazbu DPH (pro plnění s datem povinnosti přiznat daň/DPPD do 31. 12. 2023 se uvádí základ daně pro první sníženou sazbu DPH platnou do 31. 12. 2023, a také v případě opravy základu daně a výše daně.)</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan2" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Hodnota daně ve snížené sazbě DPH (pro plnění s DPPD do 31. 12. 2023 se uvádí hodnota daně v první snížené sazbě DPH platné do 31. 12. 2023, a také v případě opravy základu daně a výše daně.)</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane3" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplní se v případě plnění s DPPD do 31. 12. 2023, a to základ daně pro druhou sníženou sazbu DPH platnou do 31. 12. 2023, a také v případě opravy základu daně a výše daně.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan3" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplní se v případě plnění s DPPD do 31. 12. 2023, a to hodnota daně v druhé snížené sazbě DPH platné do 31. 12. 2023, a také v případě opravy základu daně a výše daně.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="unbounded" minOccurs="0" name="VetaA3">
+                <xs:complexType>
+                  <xs:attribute name="c_radku" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Pokud je uvedeno, budou řádky ve formuláři uspořádány v zadaném pořadí.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="6"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="k_stat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Kód státu, který přidělil daňové identifikační číslo registrace k DPH odběratele.&lt;br&gt;- např. u
+						Německa "DE".&lt;br&gt;Seznam kódů zemí je uveden níže, viz tabulka&lt;b&gt; Daňová identifikační čísla členských států
+						EU&lt;/b&gt;.
+		  		  &lt;br&gt;&lt;table border="1" cellspacing="1" cellpadding="5" width="100px"&gt;
+&lt;tr&gt;&lt;td width="75%" valign="top"&gt;&lt;b&gt;Název země&lt;/b&gt;&lt;/td&gt;&lt;td width="25%" valign="top"&gt;&lt;b&gt;Kód země&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="75%" valign="top"&gt;BELGIE&lt;/td&gt;&lt;td width="25%" valign="top"&gt;BE&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="75%" valign="top"&gt;BULHARSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;BG&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="75%" valign="top"&gt;ČESKÁ REPUBLIKA&lt;/td&gt;&lt;td width="25%" valign="top"&gt;CZ&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="75%" valign="top"&gt;DÁNSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;DK&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="75%" valign="top"&gt;ESTONSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;EE&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="75%" valign="top"&gt;FINSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;FI&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;FRANCIE&lt;/td&gt;
+&lt;td width="25%" valign="top"&gt;FR&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;CHORVATSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;HR&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;IRSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;IE&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;ITÁLIE&lt;/td&gt;&lt;td width="25%" valign="top"&gt;IT&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;KYPR&lt;/td&gt;&lt;td width="25%" valign="top"&gt;CY&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;LITVA&lt;/td&gt;&lt;td width="25%" valign="top"&gt;LT&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;LOTYŠSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;LV&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;LUCEMBURSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;LU&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;MAĎARSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;HU&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;MALTA&lt;/td&gt;&lt;td width="25%" valign="top"&gt;MT&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;NĚMECKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;DE&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;NIZOZEMSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;NL&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="75%" valign="top"&gt;POLSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;PL&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;PORTUGALSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;PT&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;RAKOUSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;AT&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;RUMUNSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;RO&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;ŘECKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;EL&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="75%" valign="top"&gt;SEVERNÍ IRSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;XI&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="75%" valign="top"&gt;SLOVENSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;SK&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;SLOVINSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;SI&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;ŠPANĚLSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;ES&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;ŠVÉDSKO&lt;/td&gt;&lt;td width="25%" valign="top"&gt;SE&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="75%" valign="top"&gt;VELKÁ BRITÁNIE&lt;/td&gt;&lt;td width="25%" valign="top"&gt;GB&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="vatid_odb" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>
+					
+					Pokud nemá odběratel DIČ (nebo tzv. „VAT ID“, resp. DIČ DPH EU – v případě osoby registrované k dani v jiném členském státě), položka zůstane prázdná (tj. fyzická osoba nepovinná k dani, nebo osoba povinná k dani nemající tuzemské DIČ pro daňové účely nebo VAT ID)a v těchto případech se pak dále uvádí údaj o jménu a příjmení nebo obchodním jménu/ datu narození (ve tvaru: DD.MM.RRRR, tj. 10-místná položka, u fyzické osoby nepovinné k dani) a místo pobytu nebo sídlo příjemce plnění (do pole pro místo pobytu se uvedou údaje - za sebou oddělené čárkou: ulice a číslo popisné nebo číslo orientační, název obce, PSČ, stát).
+					&lt;br&gt; Pozn.: Pokud je vyplněna položka „Identifikace odběratele (Kód státu a kmenová část DIČ /VAT ID)“, tak položky týkající se „jména a příjmení/obchodního jména/data narození a místa pobytu/sídla“ – se již nevyplňují. Naopak pokud není vyplněna položka „Identifikace odběratele (Kód státu a kmenová část DIČ/VAT ID)“, stávají se povinnými poli pro vyplnění: „jméno a příjmení/obchodní jméno/datum narození (u fyzické osoby nepovinné k dani) a místo pobytu/sídlo.&lt;br&gt;
+					Identifikace odběratele DIČ / VAT ID: DIČ DPH z jiného členského státu, tj. tzv. VAT ID, ve formátu bez mezer bez kódu členského státu odběratele – např. u Německa: "123456789". 
+
+&lt;br&gt;&lt;b&gt;Daňová identifikační čísla členských států EU&lt;/b&gt;
+		  		  &lt;br&gt;&lt;table border="1" cellspacing="1" cellpadding="5" width="100%"&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;&lt;b&gt;Název země&lt;/b&gt;&lt;/td&gt;&lt;td width="6%" valign="top"&gt;&lt;b&gt;Kód země&lt;/b&gt;&lt;/td&gt;&lt;td width="18%" valign="top"&gt;&lt;b&gt;Formát DIČ odběratele&lt;/b&gt;&lt;/td&gt;&lt;td width="9%" valign="top"&gt;&lt;b&gt;Počet znaků&lt;/b&gt;&lt;/td&gt;&lt;td width="49%" valign="top"&gt;&lt;b&gt;Poznámky&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;
+
+
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;BELGIE&lt;/td&gt;&lt;td width="6%" valign="top"&gt;BE&lt;/td&gt;
+&lt;td width="18%" valign="top"&gt;1234567890&lt;/td&gt;&lt;td width="9%" valign="top"&gt;10&lt;/td&gt;
+&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;
+
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;BULHARSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;BG&lt;/td&gt;&lt;td width="18%" valign="top"&gt;123456789&lt;br&gt;1234567890&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;br&gt;nebo 10&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;
+				   &lt;tr&gt;&lt;td width="18%" valign="top"&gt;ČESKÁ REPUBLIKA&lt;/td&gt;&lt;td width="6%" valign="top"&gt;CZ&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678&lt;br&gt;123456789&lt;br&gt;1234567890&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;br&gt; nebo &lt;br&gt;9&lt;br&gt;nebo&lt;br&gt; 10&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;				  
+				  &lt;tr&gt;&lt;td width="18%" valign="top"&gt;DÁNSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;DK&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;ESTONSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;EE&lt;/td&gt;&lt;td width="18%" valign="top"&gt;123456789&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;FINSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;FI&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;FRANCIE&lt;/td&gt;&lt;td width="6%" valign="top"&gt;FR&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678901&lt;br&gt;X1123456789&lt;br&gt;1X123456789&lt;br&gt;XX123456789&lt;/td&gt;&lt;td width="9%" valign="top"&gt;11&lt;/td&gt;&lt;td width="49%" valign="top"&gt;obsahuje buď jen číslice nebo na prvním nebo druhém místě nebo na prvním a druhém místě velké písmeno, s výjimkou písmen I a O&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;CHORVATSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;HR&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678901&lt;/td&gt;&lt;td width="9%" valign="top"&gt;11&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice; Pozn.: je možné použít od 1.7.2013&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;IRSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;IE&lt;/td&gt;&lt;td width="18%" valign="top"&gt;1234567X&lt;br&gt;1X34567X&lt;br&gt;1234567XX&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;br&gt;nebo 9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;obsahuje jedno nebo dvě velká písmena, a to na posledním místě nebo na druhém a posledním místě (pro délku 8),&lt;br&gt;obsahuje dvě velká písmena, a to na posledním a předposledním místě (pro délku 9)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;ITÁLIE&lt;/td&gt;&lt;td width="6%" valign="top"&gt;IT&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678901&lt;/td&gt;&lt;td width="9%" valign="top"&gt;11&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;KYPR&lt;/td&gt;&lt;td width="6%" valign="top"&gt;CY&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678X&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;obsahuje na posledním místě jedno velké písmeno&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;LITVA&lt;/td&gt;&lt;td width="6%" valign="top"&gt;LT&lt;/td&gt;&lt;td width="18%" valign="top"&gt;123456789&lt;br&gt;123456789012&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9 nebo&lt;br&gt;12&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;LOTYŠSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;LV&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678901&lt;/td&gt;&lt;td width="9%" valign="top"&gt;11&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;LUCEMBURSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;LU&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;MAĎARSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;HU&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;MALTA&lt;/td&gt;&lt;td width="6%" valign="top"&gt;MT&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;NĚMECKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;DE&lt;/td&gt;&lt;td width="18%" valign="top"&gt;123456789&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;NIZOZEMSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;NL&lt;/td&gt;&lt;td width="18%" valign="top"&gt;123456789B01 &lt;br&gt;nebo&lt;br&gt; ZZZZZZZZZZ12&lt;/td&gt;&lt;td width="9%" valign="top"&gt;12&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice prvních devět znaků jsou číslice, poslední 3 znaky jsou vždy v rozsahu B01 až B99 &lt;br&gt;nebo&lt;br&gt;prvních deset znaků jsou číslice nebo velká písmena nebo "+" nebo "*", poslední 2 znaky jsou vždy v rozsahu 02 až 98&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;POLSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;PL&lt;/td&gt;&lt;td width="18%" valign="top"&gt;1234567890&lt;/td&gt;&lt;td width="9%" valign="top"&gt;10&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;PORTUGALSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;PT&lt;/td&gt;&lt;td width="18%" valign="top"&gt;123456789&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;RAKOUSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;AT&lt;/td&gt;&lt;td width="18%" valign="top"&gt;U12345678&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;první znak je vždy U, zbývajících osm jsou číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;RUMUNSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;RO&lt;/td&gt;&lt;td width="18%" valign="top"&gt;1234567890&lt;/td&gt;&lt;td width="9%" valign="top"&gt;10 a méně&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;br&gt;vzhledem k proměnlivé délce DIČ je i číslice „0“ na prvním popřípadě dalších místech DIČ rozhodující, např. RO 019 a RO 0019 představují dvě rozdílná DIČ&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;ŘECKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;EL&lt;/td&gt;&lt;td width="18%" valign="top"&gt;123456789&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;SEVERNÍ IRSKO&lt;/td&gt;
+				  &lt;td width="6%" valign="top"&gt;XI&lt;/td&gt;
+				  &lt;td width="18%" valign="top"&gt;123456789&lt;br&gt;nebo&lt;br&gt;123456789012&lt;br&gt;nebo&lt;br&gt;GD123&lt;br&gt;nebo&lt;br&gt;HA123&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9
+				  &lt;br&gt;nebo				  &lt;br&gt;12&lt;br&gt;nebo&lt;br&gt;5&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice nebo na prvním a druhém místě písmena GD nebo HA
+				  &lt;br&gt;- v případě 12 číslic poslední tři představují identifikaci organizační složky pořizovatele zboží,
+				  &lt;br&gt;- písmena GD a tři následující číslice představují identifikaci vládní instituce,
+				  &lt;br&gt;- písmena HA a tři následující číslice představují identifikaci zdravotnické organizace&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td width="18%" valign="top"&gt;SLOVENSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;SK&lt;/td&gt;&lt;td width="18%" valign="top"&gt;1234567890&lt;/td&gt;&lt;td width="9%" valign="top"&gt;10&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;SLOVINSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;SI&lt;/td&gt;&lt;td width="18%" valign="top"&gt;12345678&lt;/td&gt;&lt;td width="9%" valign="top"&gt;8&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;ŠPANĚLSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;ES&lt;/td&gt;&lt;td width="18%" valign="top"&gt;X12345678&lt;br&gt;12345678X&lt;br&gt;X1234567X&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9&lt;/td&gt;&lt;td width="49%" valign="top"&gt;obsahuje jedno nebo dvě velká písmena, a to na prvním nebo posledním místě nebo na prvním a posledním místě&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;ŠVÉDSKO&lt;/td&gt;&lt;td width="6%" valign="top"&gt;SE&lt;/td&gt;&lt;td width="18%" valign="top"&gt;123456789012&lt;/td&gt;&lt;td width="9%" valign="top"&gt;12&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width="18%" valign="top"&gt;VELKÁ BRITÁNIE&lt;/td&gt;
+				  &lt;td width="6%" valign="top"&gt;GB&lt;/td&gt;
+				  &lt;td width="18%" valign="top"&gt;123456789&lt;br&gt;nebo&lt;br&gt;123456789012&lt;br&gt;nebo&lt;br&gt;GD123&lt;br&gt;nebo&lt;br&gt;HA123&lt;/td&gt;&lt;td width="9%" valign="top"&gt;9
+				  &lt;br&gt;nebo
+				  &lt;br&gt;12&lt;br&gt;nebo&lt;br&gt;5&lt;/td&gt;&lt;td width="49%" valign="top"&gt;pouze číslice nebo na prvním a druhém místě písmena GD nebo HA
+				  &lt;br&gt;- v případě 12 číslic poslední tři představují identifikaci organizační složky pořizovatele zboží,
+				  &lt;br&gt;- písmena GD a tři následující číslice představují identifikaci vládní instituce,
+				  &lt;br&gt;- písmena HA a tři následující číslice představují identifikaci zdravotnické organizace&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+				  </xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="12"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="jm_prijm_obch" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Pokud má odběratel DIČ (kód státu a kmenová část DIČ nebo VAT ID), položka zůstane prázdná. Pokud odběratel nemá DIČ nebo VAT ID a je fyzická osoba nepovinná k dani, vyplní se zde jméno a příjmení. Pokud je odběratel právnická osoba, tak se zde vyplní obchodní jméno právnické osoby. Pokud nemá odběratel DIČ nebo VAT ID, je vyplnění této položky povinné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="57"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="d_narozeni" type="dateInMultiFormat" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Pokud má odběratel DIČ (kód státu a kmenová část DIČ nebo VAT ID), položka zůstane prázdná. Pokud odběratel nemá DIČ nebo VAT ID a je fyzická osoba nepovinná k dani, vyplní se zde datum narození (ve tvaru DD.MM.RRRR, tj 10-místná položka). Pokud je odběratel právnická osoba, tak položka zůstane prázdná.</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="m_pobytu_sidlo" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Pokud má odběratel DIČ (kód státu a kmenová část DIČ nebo VAT ID), položka zůstane prázdná. Pokud odběratel nemá DIČ nebo VAT ID a je fyzická osoba nepovinná k dani, vyplní se zde místo pobytu. Pokud je odběratel právnická osoba nepovinná k dani nebo osoba povinná k dani nemající tuzemské DIČ pro daňové účely nebo VAT ID, tak se zde vyplní sídlo právnické osoby. Pokud nemá odběratel DIČ nebo VAT ID, je vyplnění této položky povinné.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="100"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="c_evid_dd" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Evidenční číslo daňového dokladu</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="60"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dup" type="dateInMultiFormat" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Datum uskutečnění osvobozeného plnění - ve tvaru DD.MM.RRRR, tj. 10- místná položka.</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="osv_plneni" use="required">
+                    <xs:annotation>
+                      <xs:documentation>kterou je povinen uvést na kumulativním řádku 26 daňového přiznání k DPH.
+						Vyplňují se údaje z daňového dokladu - jeden řádek = jeden daňový doklad.
+						V případě vystavení souhrnného daňového
+						dokladu (§ 31b), tj. dokladu za několik samostatných plnění, které plátce uskuteční pro stejnou osobu, uvede
+						plátce souhrnnou hodnotu plnění z tohoto dokladu na jednom řádku kontrolního hlášení a do pole datum uskutečnění
+						osvobozeného plnění ("DUP") uvede poslední
+						(kalendářní) datum uskutečnění uvedené na dokladu.
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="unbounded" minOccurs="0" name="VetaA4">
+                <xs:complexType>
+                  <xs:attribute name="c_radku" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Pokud je uvedeno, budou řádky ve formuláři uspořádány v zadaném pořadí.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="9"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dic_odb" use="required">
+                    <xs:annotation>
+                      <xs:documentation>(kmenová část bez mezer, pouze číselná část), povinný. Nesmí být uvedeno vlastní DIČ.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:pattern value="[0-9]{1,10}"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="c_evid_dd" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Nepodává-li kontrolní hlášení skupina, nesmí být evidenční číslo dokladu uvedeno duplicitně v řádcích se stejným kódem režimu plnění nebo v řádcích se stejným datem povinnosti přiznat daň.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="60"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dppd" type="dateInMultiFormat" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Datum povinnosti přiznat daň (podle 20a odst. 1 a 2: den uskutečnění zdanitelného plnění nebo den přijetí úplaty - tj. vč. případných přijatých plateb před uskutečněním plnění, pokud je zdanitelné plnění v okamžiku přijetí úplaty známo dostatečně určitě, § 20a odst. 3) - uvede se ve tvaru DD.MM.RRRR, tj. 10- místná položka
+					</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane1" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>pro základní sazbu DPH</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan1" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Hodnota daně v základní sazbě DPH.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane2" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Základ daně pro sníženou sazbu DPH (pro plnění s datem povinnosti přiznat daň/DPPD do 31. 12. 2023 se uvádí základ daně pro první sníženou sazbu DPH platnou do 31. 12. 2023, a také v případě opravy základu daně a výše daně.).</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan2" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Hodnota daně ve snížené sazbě DPH (pro plnění s DPPD do 31. 12. 2023 se uvádí hodnota daně v první snížené sazbě DPH platné do 31. 12. 2023, a také v případě opravy základu daně a výše daně.).</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane3" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplní se v případě plnění s DPPD do 31. 12. 2023, a to základ daně pro druhou sníženou sazbu DPH platnou do 31. 12. 2023, a také v případě opravy základu daně a výše daně.
+</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan3" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplní se v případě plnění s DPPD do 31. 12. 2023, a to hodnota daně v druhé snížené sazbě DPH platné do 31. 12. 2023, a také v případě opravy základu daně a výše daně.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="kod_rezim_pl" use="required">
+                    <xs:annotation>
+                      <xs:documentation>
+					&lt;b&gt;Kód režimu plnění.&lt;/b&gt;  Specifikace kódu režimu plnění:
+					&lt;ul&gt;
+					&lt;li&gt;0 - běžné plnění&lt;/li&gt;
+					&lt;li&gt;1 - § 89 ZDPH (zvláštní režim pro cestovní službu)&lt;/li&gt;
+					&lt;li&gt;2 - § 90 ZDPH (zvláštní režim pro použité zboží)&lt;/li&gt;&lt;/ul&gt;					 </xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="1"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zdph_44" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Příznak opravy u nedobytné pohledávky. Nabývá hodnot:
+					&lt;ul&gt;
+					&lt;li&gt;N – nejedná se o opravu nedobytné pohledávky &lt;/li&gt;
+					&lt;li&gt;P – jedná se o opravu podle § 46 a násl. ZDPH&lt;/li&gt;
+					&lt;li&gt;A – jedná se o opravu podle § 44 ZDPH ve znění do 31.3.2019			
+					 &lt;/li&gt;
+					&lt;/ul&gt;</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="1"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="1" minOccurs="0" name="VetaA5">
+                <xs:complexType>
+                  <xs:attribute name="zakl_dane1" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Základ daně pro základní sazbu DPH</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan1" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Hodnota daně v základní sazbě DPH</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane2" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Základ daně pro sníženou sazbu DPH (pro plnění s datem povinnosti přiznat daň/DPPD do 31. 12. 2023 se uvádí základ daně pro první sníženou sazbu DPH platnou do 31. 12. 2023, a také v případě opravy základu daně a výše daně.)</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan2" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Hodnota daně ve snížené sazbě DPH (pro plnění s DPPD do 31. 12. 2023 se uvádí hodnota daně v první snížené sazbě DPH platné do 31. 12. 2023, a také v případě opravy základu daně a výše daně.)</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane3" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplní se v případě plnění s DPPD do 31. 12. 2023, a to základ daně pro druhou sníženou sazbu DPH platnou do 31. 12. 2023, a také v případě opravy základu daně a výše daně.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan3" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplní se v případě plnění s DPPD do 31. 12. 2023, a to hodnota daně v druhé snížené sazbě DPH platné do 31. 12. 2023, a také v případě opravy základu daně a výše daně.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="unbounded" minOccurs="0" name="VetaB1">
+                <xs:complexType>
+                  <xs:attribute name="c_radku" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Pokud je uvedeno, budou řádky ve formuláři uspořádány v zadaném pořadí.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="6"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dic_dod" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte kmenovou část daňového identifikačního čísla dodavatele (pouze číselná část). Vyplnění tohoto údaje je pro další zpracování nezbytné. 
+Nesmí být uvedeno DIČ subjektu, za který je KH podáváno.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:pattern value="[0-9]{1,10}"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="c_evid_dd" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Evidenční číslo daňového dokladu – uvedené na dokladu poskytovatelem plnění 
+Pokud není poskytovatelem plnění skupina, nesmí být uvedeno duplicitní číslo daňového dokladu a kódu předmětu plnění od jednoho poskytovatele plnění.
+</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="60"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="duzp" type="dateInMultiFormat" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Datum uskutečnění zdanitelného plnění,(v režimu přenesení daňové povinnosti je odběratel povinen přiznat daň ke dni uskutečnění zdanitelného plnění „DUZP“, nikoli z případných předcházejících plateb před	uskutečněním zdanitelného plnění, - tj.„záloh“) – uvede se ve tvaru DD.MM.RRRR, tj. 10-místná položka Datum uskutečnění zdanitelného plnění musí být vyšší než 
+  31.12.2015. Doklady s DUZP nižším než 1.1.2016 je nutné podat pomocí Výpisu z evidence.
+					</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane1" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Základ daně pro základní sazbu DPH</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan1" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Hodnota daně v základní sazbě DPH</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane2" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Základ daně pro sníženou sazbu DPH (pro plnění s datem uskutečnění zdanitelného plnění/DUZP do 31. 12. 2023 se uvádí základ daně pro první sníženou sazbu DPH platnou do 31. 12. 2023, a také v případě opravy základu daně a výše daně.)</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan2" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Hodnota daně ve snížené sazbě DPH (pro plnění s DUZP do 31. 12. 2023 se uvádí hodnota daně v první snížené sazbě DPH platné do 31. 12. 2023, a také v případě opravy základu daně a výše daně.)</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane3" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplní se v případě plnění s DUZP do 31. 12. 2023, a to základ daně pro druhou sníženou sazbu DPH platnou do 31. 12. 2023, a také v případě opravy základu daně a výše daně.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan3" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplní se v případě plnění s DUZP do 31. 12. 2023, a to hodnota daně v druhé snížené sazbě DPH platné do 31. 12. 2023, a také v případě opravy základu daně a výše daně.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="kod_pred_pl" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Uvede se (vybere z číselníku) na základě předem vyplněného období ze stránky Záhlaví. 
+					Pokud bude na jednom daňovém dokladu uvedeno více druhů plnění (spadajících pod různé kódy), je nutno rozepsat každý kód plnění na samostatný řádek (s uvedením  stejného evidenčního čísla daňového dokladu).	
+					&lt;br&gt;
+Pro popis číselníku Kód předmětů plnění klikněte &lt;a href="https://adisspr.mfcr.cz/pmd/dokumentace/ciselniky/ukazka/k_pred_pl"&gt;zde&lt;/a&gt;.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="3"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="unbounded" minOccurs="0" name="VetaB2">
+                <xs:complexType>
+                  <xs:attribute name="c_radku" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Pokud je uvedeno, budou řádky ve formuláři uspořádány v zadaném pořadí.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="9"/>
+                        <xs:fractionDigits value="0"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dic_dod" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Vyplňte kmenovou část daňového identifikačního čísla dodavatele (pouze číselná část). Vyplnění tohoto údaje je pro další zpracování nezbytné. 
+Nesmí být uvedeno DIČ subjektu, za který je KH podáváno.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:pattern value="[0-9]{1,10}"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="c_evid_dd" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Evidenční číslo daňového dokladu – uvedené na dokladu poskytovatelem plnění. Pokud není poskytovatelem plnění skupina, nesmí být uvedeno duplicitní číslo daňového dokladu od jednoho poskytovatele plnění v řádcích se stejným datem povinnosti přiznat daň „DPPD“ nebo v řádcích se shodně vyplněným polem „Použit poměr“.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="60"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dppd" type="dateInMultiFormat" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Datum, kdy nastaly skutečnosti zakládající povinnost daň přiznat (dodavatelem), tj. datum vzniku nároku na odpočet daně 
+					podle § 72 odst. 5 (datum povinnosti přiznat daň dodavatelem - "DPPD"). Tímto datem je den uskutečnění zdanitelného plnění nebo den přijetí úplaty, pokud je v okamžiku přijetí úplaty zdanitelné plnění známo dostatečně určitě - § 20a odst. 1 až 3. Uvede se ve tvaru DD.MM.RRRR, tj. 10-místná položka.					</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane1" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Základ daně pro základní sazbu DPH</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan1" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Hodnota daně v základní sazbě DPH</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane2" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Základ daně pro sníženou sazbu DPH (pro plnění s datem povinnosti přiznat daň/DPPD do 31. 12. 2023 se uvádí základ daně pro první sníženou sazbu DPH platnou do 31. 12. 2023, a také v případě opravy základu daně a výše daně.)</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan2" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Hodnota daně ve snížené sazbě DPH (pro plnění s DPPD do 31. 12. 2023 se uvádí hodnota daně v první snížené sazbě DPH platné do 31. 12. 2023, a také v případě opravy základu daně a výše daně.)</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane3" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplní se v případě plnění s DPPD do 31. 12. 2023, a to základ daně pro druhou sníženou sazbu DPH platnou do 31. 12. 2023, a také v případě opravy základu daně a výše daně.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan3" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplní se v případě plnění s DPPD do 31. 12. 2023, 
+					a to základ daně pro druhou sníženou sazbu DPH platnou do 31. 12. 2023, 
+					a také v případě opravy základu daně a výše daně.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="pomer" use="required">
+                    <xs:annotation>
+                      <xs:documentation>ANO/NE. Specifikace poměrného nároku na odpočet daně, pokud je takto vykazován podle § 75.
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="1"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zdph_44" use="required">
+                    <xs:annotation>
+                      <xs:documentation>Příznak opravy u nedobytné pohledávky. Nabývá hodnot:
+					&lt;ul&gt;
+						&lt;li&gt;N – nejedná se o opravu nedobytné pohledávky&lt;/li&gt;
+					&lt;li&gt;P – jedná se o opravu podle § 74b ZDPH (§ 74a ZDPH ve znění do 31.12.2024)&lt;/li&gt;
+					&lt;li&gt;A – jedná se o opravu podle § 44 ZDPH ve znění do 31.3.2019				&lt;/li&gt;
+					&lt;/ul&gt;
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:minLength value="0"/>
+                        <xs:maxLength value="1"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="1" minOccurs="0" name="VetaB3">
+                <xs:complexType>
+                  <xs:attribute name="zakl_dane1" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Základ daně pro základní sazbu DPH</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan1" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Hodnota daně v základní sazbě</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane2" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Základ daně pro sníženou sazbu DPH (pro plnění s datem povinnosti přiznat daň/DPPD do 31. 12. 2023 se uvádí základ daně pro první sníženou sazbu DPH platnou do 31. 12. 2023, a také v případě opravy základu daně a výše daně.)</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan2" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Hodnota daně ve snížené sazbě DPH (pro plnění s DPPD do 31. 12. 2023 se uvádí hodnota daně v první snížené sazbě DPH platné do 31. 12. 2023, a také v případě opravy základu daně a výše daně.)</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="zakl_dane3" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplní se v případě plnění s DPPD do 31. 12. 2023, a to základ daně pro druhou sníženou sazbu DPH platnou do 31. 12. 2023, a také v případě opravy základu daně a výše daně.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="dan3" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Vyplní se v případě plnění s DPPD do 31. 12. 2023, a to hodnota daně v druhé snížené sazbě DPH platné do 31. 12. 2023, a také v případě opravy základu daně a výše daně.</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="17"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element maxOccurs="1" minOccurs="0" name="VetaC">
+                <xs:complexType>
+                  <xs:attribute name="obrat23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Celková hodnota základu daně A.4. a A.5. za období (nebo součet tří kontrolních hlášení u čtvrtletního plátce) odpovídá řádku 1 přiznání k DPH. (Výpočet s maximální tolerancí +/- 1000 Kč.)		</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="19"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="obrat5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Celková hodnota základu daně u snížené sazby A.4. a A.5. za období (nebo součet tří kontrolních hlášení u čtvrtletního plátce) odpovídá řádku 2 přiznání k DPH. (Výpočet s maximální tolerancí +/- 1000 Kč.)					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="19"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="pln23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Celková hodnota základu daně (a daně) B.2. a B.3. (nebo součet tří kontrolních hlášení u čtvrtletního plátce) odpovídá součtu řádků 40 daňového přiznání k DPH. (Výpočet s maximální tolerancí +/- 1000 Kč.) 
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="19"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="pln5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Celková hodnota základu daně u snížené sazby B.2. a B.3. (nebo součet tří kontrolních hlášení u čtvrtletního plátce) odpovídá součtu řádků 41 daňového přiznání k DPH. (Výpočet s maximální tolerancí +/- 1000 Kč.)
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="19"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="pln_rez_pren" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Celková hodnota základu daně A.1. za období (nebo součet tří kontrolních hlášení u čtvrtletního plátce) odpovídá řádku 25 přiznání k DPH. (Výpočet s maximální tolerancí +/- 1000 Kč.)
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="19"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="rez_pren23" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Celková hodnota základu daně B.1. za období (nebo součet tří kontrolních hlášení u čtvrtletního plátce) odpovídá součtu základů daně řádků 10. (Výpočet s maximální tolerancí +/- 1000 Kč.)
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="19"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="rez_pren5" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Celková hodnota základu daně u snížené sazby B.1. za období (nebo součet tří kontrolních hlášení u čtvrtletního plátce) odpovídá součtu základů daně řádků 11 přiznání k DPH. (Výpočet s maximální tolerancí +/- 1000 Kč.)
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="19"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                  <xs:attribute name="celk_zd_a2" use="optional">
+                    <xs:annotation>
+                      <xs:documentation>Celková hodnota základu daně A.2. za období (nebo součet tří  kontrolních hlášení u čtvrtletního plátce) odpovídá řádkům: 3, 4, 5, 6, 9, 12 a 13 přiznání k DPH. (Výpočet s maximální tolerancí +/- 1000 Kč.)
+					</xs:documentation>
+                    </xs:annotation>
+                    <xs:simpleType>
+                      <xs:restriction base="xs:decimal">
+                        <xs:totalDigits value="19"/>
+                        <xs:fractionDigits value="2"/>
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+            <xs:attribute name="verzePis" type="xs:string"/>
+          </xs:complexType>
+        </xs:element>
+        <xs:element maxOccurs="1" minOccurs="0" name="Kontrola">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:any maxOccurs="unbounded" minOccurs="0" processContents="lax"/>
+            </xs:sequence>
+            <xs:anyAttribute processContents="lax"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="verzeSW" type="xs:string"/>
+      <xs:attribute name="nazevSW" type="xs:string"/>
+      <xs:anyAttribute processContents="lax"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

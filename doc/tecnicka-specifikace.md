@@ -154,6 +154,7 @@ Pravidla:
 - Identita: `first_name`, `last_name`, `business_name`, `ico`, `dic`
 - Adresa: `street`, `city`, `postal_code`, `country_code`
 - DPH: `is_vat_payer`, `vat_registration_date`, `vat_period_type` (`month|quarter`, default `quarter`)
+- Místní příslušnost FÚ: `tax_office_pracufo` (`k_ufo_vema` z číselníku `c_ufo.xml`)
 - Banka: `bank_account_prefix`, `bank_account_number`, `bank_code`
 - Výchozí nastavení: `default_variable_symbol_type`, `default_variable_symbol_value`, `default_due_days`
 - Unikátní constraint: `user_id` (v1 jen 1 subjekt na účet)
@@ -292,10 +293,12 @@ Pravidla:
 1. `GET /subject`
 2. `POST /subject`
 3. `PATCH /subject`
+4. `GET /subject/tax-offices`
 
 Backend validace:
 - IČO checksum.
 - DIČ povinné jen když `isVatPayer=true`.
+- `taxOfficePracufo` povinné jen když `isVatPayer=true` a musí existovat v číselníku FÚ.
 - `vatPeriodType` povoluje jen `month|quarter`.
 - Bankovní účet validace délky/povolených znaků.
 - normalizace vstupů (IČO/PSČ bez mezer, země uppercase).
@@ -374,6 +377,10 @@ Pravidla:
   - `${ICO}_DPHKH_${YEAR}${PERIOD}M|Q.xml`
   - `PERIOD=01..12` pro `month`, `PERIOD=1..4` pro `quarter`
   - příklad: `24755851_DPH_202601M.xml`, `24755851_DPHKH_20254Q.xml`
+- mapování `VetaP`:
+  - `c_pracufo` se bere z `subject.taxOfficePracufo`,
+  - `c_ufo` se dohledá v číselníku `c_ufo.xml` podle `k_ufo_vema`,
+  - `street` se při exportu rozpadá na `ulice`, `c_pop`, `c_orient` (pokud adresa obsahuje čísla).
 
 ## 6. Klíčové transakční scénáře
 
@@ -592,6 +599,8 @@ Poznámka:
 - Nad výsledkem probíhá XSD validace.
 - Chyby mapování/validace vrací `422` s detailním listem problémů.
 - Pro `vat_return` a `control_statement` se používá FU-compatible struktura atributových vět (`Veta*`).
+- Pro mapování místní příslušnosti FÚ se používá číselník `apps/api/assets/tax/c_ufo.xml`.
+- Referenční XSD podklady jsou dostupné v `apps/api/assets/xsd/`.
 
 ### 10.2 Typy exportu v1
 1. `Přiznání k DPH`
