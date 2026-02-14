@@ -1,4 +1,4 @@
-# FaktAI - fakturační systém vytvoření fakt pomocí AI
+# FaktAI - fakturační systém vytvořený fakt pomocí AI
 
 FaktAI je experiment „AI-first“ vývoje reálné SaaS aplikace pro fakturaci OSVČ.
 
