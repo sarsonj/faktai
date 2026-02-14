@@ -12,6 +12,9 @@ Poznámka:
 ## 2. Co je v projektu připraveno
 - Dockerfile pro API: `infra/docker/api.Dockerfile`
 - Dockerfile pro WEB: `infra/docker/web.Dockerfile`
+- Captain definition soubory:
+  - `infra/caprover/captain-definition-api.json`
+  - `infra/caprover/captain-definition-web.json`
 - Runtime API konfigurace webu přes env `WEB_API_URL` (není nutný rebuild při změně URL API)
 - Start skript webu: `infra/docker/start-web-with-runtime-config.sh`
 - Env šablony:
@@ -41,8 +44,8 @@ Poznámka:
 3. V `HTTP Settings` připoj doménu `api.tvoje-domena.cz` + HTTPS.
 4. V `App Configs > Environmental Variables` vlož hodnoty podle `infra/caprover/api.env.example`:
    - minimálně: `NODE_ENV`, `API_PORT`, `TRUST_PROXY`, `WEB_ORIGIN`, `APP_BASE_URL`, `DATABASE_URL`, `SESSION_SECRET`.
-5. V `Deployment` zvol `Deploy from GitHub/GitLab/Bitbucket` (nebo tar upload) a použij Dockerfile:
-   - `infra/docker/api.Dockerfile`
+5. V `Deployment` zvol `Deploy from GitHub/GitLab/Bitbucket` (nebo tar upload) a nastav `Captain Definition Path`:
+   - `infra/caprover/captain-definition-api.json`
 6. Deployni app.
 
 ### 4.3 Vytvoření appky WEB
@@ -53,8 +56,8 @@ Poznámka:
 4. V `App Configs > Environmental Variables` vlož hodnoty podle `infra/caprover/web.env.example`:
    - `NODE_ENV=production`
    - `WEB_API_URL=https://api.tvoje-domena.cz/api/v1`
-5. V `Deployment` použij Dockerfile:
-   - `infra/docker/web.Dockerfile`
+5. V `Deployment` nastav `Captain Definition Path`:
+   - `infra/caprover/captain-definition-web.json`
 6. Deployni app.
 
 ## 5. Ověření po nasazení

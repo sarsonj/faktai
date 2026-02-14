@@ -35,6 +35,8 @@ Byla vyžádána připravenost projektu pro nasazení na CapRover, včetně prak
   - `.env.example`
   - `infra/caprover/api.env.example`
   - `infra/caprover/web.env.example`
+  - `infra/caprover/captain-definition-api.json`
+  - `infra/caprover/captain-definition-web.json`
 - Dokumentace:
   - `doc/nasazeni-caprover.md`
   - `doc/change-requesty/README.md`
@@ -57,3 +59,8 @@ Byla vyžádána připravenost projektu pro nasazení na CapRover, včetně prak
   - `pnpm --filter @tappyfaktur/api build`
 - Výsledek:
   - implementováno dle zadání.
+
+## 7. Iterace (doplnění)
+- Iterace 2:
+  - doplněny `captain-definition` soubory pro API a WEB,
+  - deployment návod aktualizován na použití `Captain Definition Path` v CapRover GUI.
