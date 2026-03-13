@@ -127,7 +127,7 @@ Pravidla:
 
 Poznámky:
 - Ukládají se pouze číslice pro číselná pole, formátování se řeší až při zobrazení.
-- Ve wizardu i v nastavení subjektu se při zadání kódu banky okamžitě zobrazuje název banky; neznámý kód zablokuje uložení.
+- Ve wizardu i v nastavení subjektu se při zadání známého kódu banky propsá název banky do labelu pole `Kód banky (...)`; neznámý kód neukazuje inline nápovědu a zablokuje až odeslání formuláře.
 - Pro faktury se používá snapshot údajů v čase vystavení faktury (pozdější změna profilu nemění historické faktury).
 - Registry lookup je asistivní funkce; při výpadku registru zůstává plně dostupné ruční vyplnění formuláře.
 - Kontaktní údaje pro FÚ jsou volitelné; prázdná hodnota neblokuje uložení subjektu.

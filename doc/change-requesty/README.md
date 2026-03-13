@@ -65,3 +65,4 @@
 | `CR-0046` | Aktualizace odhadu realizace o nové change requesty | `Implementováno` | `Should` |
 | `CR-0047` | Aktualizace dodavatelského snapshotu na faktuře | `Implementováno` | `Must` |
 | `CR-0048` | Validace kódu banky a název banky ve formulářích | `Implementováno` | `Must` |
+| `CR-0049` | Název banky v labelu pole `bankCode` | `Implementováno` | `Should` |

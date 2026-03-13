@@ -76,23 +76,3 @@ export function normalizeBankCode(value: string): string {
 export function findBankByCode(value: string): BankDirectoryEntry | null {
   return BANK_DIRECTORY_BY_CODE.get(normalizeBankCode(value)) ?? null;
 }
-
-export type BankCodeFeedback =
-  | { tone: 'neutral'; message: string }
-  | { tone: 'valid'; message: string; bank: BankDirectoryEntry }
-  | { tone: 'error'; message: string };
-
-export function getBankCodeFeedback(value: string): BankCodeFeedback | null {
-  const normalized = normalizeBankCode(value);
-  if (!normalized) {
-    return null;
-  }
-  if (normalized.length < 4) {
-    return { tone: 'neutral', message: 'Kód banky má 4 číslice.' };
-  }
-  const bank = findBankByCode(normalized);
-  if (!bank) {
-    return { tone: 'error', message: 'Kód banky není v aktuálním číselníku ČNB.' };
-  }
-  return { tone: 'valid', message: `Banka: ${bank.name}`, bank };
-}

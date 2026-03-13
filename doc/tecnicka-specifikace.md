@@ -573,7 +573,7 @@ Poznámka:
   - registry lookup je dostupný v onboardingu, ale není součástí editace subjektu.
   - onboarding krok DPH obsahuje volitelný kontakt pro FÚ (`contactPhone`, `contactEmail`),
   - `contactEmail` je v onboardingu inicializován e-mailem přihlášeného uživatele (`me.email`) a zůstává editovatelný.
-  - kód banky je na frontendu validován proti lokálnímu číselníku ČNB (`apps/web/src/bank-codes.ts`) a formulář průběžně zobrazuje název banky,
+  - kód banky je na frontendu validován proti lokálnímu číselníku ČNB (`apps/web/src/bank-codes.ts`); při shodě se název banky propisuje do labelu pole, při neshodě zůstává chyba až na submit validaci,
   - onboarding start krok `Vytvoření účtu` má jednokolonový layout formuláře (`onboarding-account-form`).
 
 ## 8. Výpočty a formátování

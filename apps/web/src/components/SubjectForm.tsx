@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import {
-  findBankByCode,
-  getBankCodeFeedback,
-  normalizeBankCode,
-} from '../bank-codes';
+import { findBankByCode, normalizeBankCode } from '../bank-codes';
 import { searchRegistryAddresses, searchRegistryCompanies } from '../registry-api';
 import { getTaxOffices } from '../subject-api';
 import type {
@@ -134,7 +130,8 @@ export function SubjectForm({
     void run();
   }, []);
 
-  const bankCodeFeedback = useMemo(() => getBankCodeFeedback(state.bankCode), [state.bankCode]);
+  const resolvedBank = useMemo(() => findBankByCode(state.bankCode), [state.bankCode]);
+  const bankCodeLabel = resolvedBank ? `Kód banky (${resolvedBank.name})` : 'Kód banky';
 
   const payload = useMemo<SubjectInput>(() => {
     return {
@@ -512,7 +509,7 @@ export function SubjectForm({
             />
           </label>
           <label>
-            Kód banky
+            {bankCodeLabel}
             <input
               value={state.bankCode}
               onChange={(event) =>
@@ -523,13 +520,6 @@ export function SubjectForm({
               }
               required
             />
-            {bankCodeFeedback && (
-              <small
-                className={`field-hint${bankCodeFeedback.tone === 'error' ? ' error' : ''}${bankCodeFeedback.tone === 'valid' ? ' valid' : ''}`}
-              >
-                {bankCodeFeedback.message}
-              </small>
-            )}
           </label>
           <label>
             Splatnost (dny)
