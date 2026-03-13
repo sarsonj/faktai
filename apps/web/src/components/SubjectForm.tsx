@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import {
+  findBankByCode,
+  getBankCodeFeedback,
+  normalizeBankCode,
+} from '../bank-codes';
 import { searchRegistryAddresses, searchRegistryCompanies } from '../registry-api';
 import { getTaxOffices } from '../subject-api';
 import type {
@@ -129,6 +134,8 @@ export function SubjectForm({
     void run();
   }, []);
 
+  const bankCodeFeedback = useMemo(() => getBankCodeFeedback(state.bankCode), [state.bankCode]);
+
   const payload = useMemo<SubjectInput>(() => {
     return {
       firstName: state.firstName,
@@ -148,7 +155,7 @@ export function SubjectForm({
       countryCode: state.countryCode,
       bankAccountPrefix: state.bankAccountPrefix || undefined,
       bankAccountNumber: state.bankAccountNumber,
-      bankCode: state.bankCode,
+      bankCode: normalizeBankCode(state.bankCode),
       defaultVariableSymbolType: 'ico',
       defaultVariableSymbolValue: undefined,
       defaultDueDays: Number(state.defaultDueDays),
@@ -233,6 +240,22 @@ export function SubjectForm({
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError(null);
+
+    if (!state.bankAccountNumber.trim()) {
+      setError('Doplňte číslo bankovního účtu.');
+      return;
+    }
+
+    const normalizedBankCode = normalizeBankCode(state.bankCode);
+    if (normalizedBankCode.length !== 4) {
+      setError('Kód banky musí mít 4 číslice.');
+      return;
+    }
+
+    if (!findBankByCode(normalizedBankCode)) {
+      setError('Kód banky není v aktuálním číselníku ČNB.');
+      return;
+    }
 
     try {
       await onSubmit(payload);
@@ -492,9 +515,21 @@ export function SubjectForm({
             Kód banky
             <input
               value={state.bankCode}
-              onChange={(event) => setState((current) => ({ ...current, bankCode: event.target.value }))}
+              onChange={(event) =>
+                setState((current) => ({
+                  ...current,
+                  bankCode: normalizeBankCode(event.target.value),
+                }))
+              }
               required
             />
+            {bankCodeFeedback && (
+              <small
+                className={`field-hint${bankCodeFeedback.tone === 'error' ? ' error' : ''}${bankCodeFeedback.tone === 'valid' ? ' valid' : ''}`}
+              >
+                {bankCodeFeedback.message}
+              </small>
+            )}
           </label>
           <label>
             Splatnost (dny)

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { findBankByCode } from '../bank-codes';
 import { SubjectForm } from '../components/SubjectForm';
 import { getSubject, updateSubject } from '../subject-api';
 import type { SubjectInput, SubjectProfile } from '../types';
@@ -58,6 +59,7 @@ export function SettingsSubjectPage() {
 
   const subjectName = subject.businessName || `${subject.firstName} ${subject.lastName}`;
   const bankAccount = `${subject.bankAccountPrefix ? `${subject.bankAccountPrefix}-` : ''}${subject.bankAccountNumber}/${subject.bankCode}`;
+  const bankName = findBankByCode(subject.bankCode)?.name;
 
   return (
     <section className="card card-narrow">
@@ -87,6 +89,7 @@ export function SettingsSubjectPage() {
           <article className="kpi-card">
             <p>Bankovní účet</p>
             <strong>{bankAccount}</strong>
+            {bankName && <small className="kpi-footnote">{bankName}</small>}
           </article>
         </div>
       </section>

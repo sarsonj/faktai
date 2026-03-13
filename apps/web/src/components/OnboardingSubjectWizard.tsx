@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import {
+  findBankByCode,
+  getBankCodeFeedback,
+  normalizeBankCode,
+} from '../bank-codes';
 import { searchRegistryAddresses, searchRegistryCompanies } from '../registry-api';
 import { getTaxOffices } from '../subject-api';
 import type {
@@ -138,6 +143,8 @@ export function OnboardingSubjectWizard({
     });
   }, [initialContactEmail]);
 
+  const bankCodeFeedback = useMemo(() => getBankCodeFeedback(state.bankCode), [state.bankCode]);
+
   const payload = useMemo<SubjectInput>(() => {
     return {
       firstName: state.firstName.trim(),
@@ -157,7 +164,7 @@ export function OnboardingSubjectWizard({
       countryCode: state.countryCode.trim(),
       bankAccountPrefix: state.bankAccountPrefix.trim() || undefined,
       bankAccountNumber: state.bankAccountNumber.trim(),
-      bankCode: state.bankCode.trim(),
+      bankCode: normalizeBankCode(state.bankCode),
       defaultVariableSymbolType: 'ico',
       defaultVariableSymbolValue: undefined,
       defaultDueDays: Number(state.defaultDueDays),
@@ -256,7 +263,11 @@ export function OnboardingSubjectWizard({
     }
 
     if (!state.bankAccountNumber.trim()) return 'Doplňte číslo bankovního účtu.';
-    if (!/^\d{4}$/.test(state.bankCode.trim())) return 'Kód banky musí mít 4 číslice.';
+    const normalizedBankCode = normalizeBankCode(state.bankCode);
+    if (normalizedBankCode.length !== 4) return 'Kód banky musí mít 4 číslice.';
+    if (!findBankByCode(normalizedBankCode)) {
+      return 'Kód banky není v aktuálním číselníku ČNB.';
+    }
     const dueDays = Number(state.defaultDueDays);
     if (!Number.isInteger(dueDays) || dueDays < 1 || dueDays > 90) {
       return 'Splatnost musí být celé číslo v rozsahu 1 až 90 dní.';
@@ -628,9 +639,21 @@ export function OnboardingSubjectWizard({
               Kód banky
               <input
                 value={state.bankCode}
-                onChange={(event) => setState((current) => ({ ...current, bankCode: event.target.value }))}
+                onChange={(event) =>
+                  setState((current) => ({
+                    ...current,
+                    bankCode: normalizeBankCode(event.target.value),
+                  }))
+                }
                 required
               />
+              {bankCodeFeedback && (
+                <small
+                  className={`field-hint${bankCodeFeedback.tone === 'error' ? ' error' : ''}${bankCodeFeedback.tone === 'valid' ? ' valid' : ''}`}
+                >
+                  {bankCodeFeedback.message}
+                </small>
+              )}
             </label>
           </div>
           <p className="helper-text">

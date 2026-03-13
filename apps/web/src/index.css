@@ -1436,6 +1436,30 @@ button:disabled {
   margin-top: 7px;
 }
 
+.field-hint {
+  display: block;
+  margin-top: 7px;
+  color: #61758c;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.field-hint.valid {
+  color: #0f766e;
+}
+
+.field-hint.error {
+  color: #b91c1c;
+}
+
+.kpi-footnote {
+  display: block;
+  margin-top: 6px;
+  color: #627991;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 .invoice-meta-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

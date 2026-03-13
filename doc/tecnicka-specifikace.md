@@ -573,6 +573,7 @@ Poznámka:
   - registry lookup je dostupný v onboardingu, ale není součástí editace subjektu.
   - onboarding krok DPH obsahuje volitelný kontakt pro FÚ (`contactPhone`, `contactEmail`),
   - `contactEmail` je v onboardingu inicializován e-mailem přihlášeného uživatele (`me.email`) a zůstává editovatelný.
+  - kód banky je na frontendu validován proti lokálnímu číselníku ČNB (`apps/web/src/bank-codes.ts`) a formulář průběžně zobrazuje název banky,
   - onboarding start krok `Vytvoření účtu` má jednokolonový layout formuláře (`onboarding-account-form`).
 
 ## 8. Výpočty a formátování
@@ -603,6 +604,7 @@ Poznámka:
 - Povinná pole: `ACC`, `AM`, `CC`, `X-VS`.
 - `ACC` se skládá z IBAN.
 - Převod CZ účtu (`prefix/number/bankCode`) -> `CZ IBAN` probíhá backendově.
+- `bankCode` se na webu udržuje jako 4místný kód banky z lokálního exportu oficiálního číselníku ČNB; název banky se do DB neukládá.
 
 ### 9.3 Chybové stavy
 - Chybějící bankovní údaje: `422 Unprocessable Entity`.

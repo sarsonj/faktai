@@ -122,11 +122,12 @@ Pravidla:
 | `countryCode` | Ano | ISO-2, default `CZ` | Země sídla |
 | `bankAccountPrefix` | Ne | 0-6 číslic | Prefix účtu |
 | `bankAccountNumber` | Ano | 2-10 číslic | Číslo účtu |
-| `bankCode` | Ano | přesně 4 číslice | Kód banky |
+| `bankCode` | Ano | přesně 4 číslice, hodnota musí existovat v aktuálním číselníku ČNB | Kód banky |
 | `defaultDueDays` | Ano | celé číslo 1-90 | Výchozí splatnost faktur |
 
 Poznámky:
 - Ukládají se pouze číslice pro číselná pole, formátování se řeší až při zobrazení.
+- Ve wizardu i v nastavení subjektu se při zadání kódu banky okamžitě zobrazuje název banky; neznámý kód zablokuje uložení.
 - Pro faktury se používá snapshot údajů v čase vystavení faktury (pozdější změna profilu nemění historické faktury).
 - Registry lookup je asistivní funkce; při výpadku registru zůstává plně dostupné ruční vyplnění formuláře.
 - Kontaktní údaje pro FÚ jsou volitelné; prázdná hodnota neblokuje uložení subjektu.
