@@ -318,10 +318,11 @@ Backend validace:
 5. `GET /invoices/:id`
 6. `PATCH /invoices/:id`
 7. `PATCH /invoices/:id/number` (pokročilá změna čísla dokladu)
-8. `POST /invoices/:id/issue`
-9. `POST /invoices/:id/mark-paid`
-10. `POST /invoices/:id/mark-unpaid`
-11. `DELETE /invoices/:id`
+8. `POST /invoices/:id/refresh-supplier-snapshot`
+9. `POST /invoices/:id/issue`
+10. `POST /invoices/:id/mark-paid`
+11. `POST /invoices/:id/mark-unpaid`
+12. `DELETE /invoices/:id`
 
 `GET /invoices` query:
 - `status=all|paid|unpaid|overdue`
@@ -344,6 +345,7 @@ Pravidla:
   - pro `paid` umožní změnit `paid_at`, pokud je v payloadu explicitní datum.
 - `mark-unpaid` přepne `paid -> issued` a nastaví `paid_at=NULL`.
 - `PATCH /invoices/:id/number` validuje neprázdnost + unikátnost čísla v rámci subjektu.
+- `POST /invoices/:id/refresh-supplier-snapshot` přepíše `supplierSnapshot` aktuálními údaji subjektu; povoleno jen pro `issued|paid|overdue`.
 - `customerIco` se před uložením normalizuje bez mezer.
 - FE může využít `GET /registry/company-search` pro předvyplnění odběratele.
 
@@ -440,6 +442,7 @@ Poznámka:
 4. `POST /invoices/:id/mark-paid` s explicitním `paidAt` umožní změnu data úhrady i u již uhrazené faktury.
 5. Frontend zpřístupňuje pokročilé zásahy přes zanořenou sekci v detailu faktury.
 6. Při vytváření nové faktury je v pokročilé sekci volba `Použít vlastní číslo dokladu`; backend pro ruční číslo nevyžaduje formát `YYYYNNNNNN`.
+7. `POST /invoices/:id/refresh-supplier-snapshot` je explicitní vědomá akce; běžná editace faktury dodavatelský snapshot sama nepřepisuje.
 
 ### 6.5 Kopie faktury
 1. FE po akci `Kopie` otevře editor nové faktury (`/invoices/new`) se zdrojovým `invoiceId` v query.

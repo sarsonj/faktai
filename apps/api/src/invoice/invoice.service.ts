@@ -79,6 +79,9 @@ export type InvoiceDetail = {
   totalWithVat: string;
   pdfVersion: number;
   paidAt: string | null;
+  supplierBankAccountPrefix: string | null;
+  supplierBankAccountNumber: string;
+  supplierBankCode: string;
   items: InvoiceDetailItem[];
 };
 
@@ -444,7 +447,11 @@ export class InvoiceService {
     };
   }
 
-  private mapDetail(row: Invoice & { items: InvoiceItem[] }): InvoiceDetail {
+  private mapDetail(
+    row: Invoice & { items: InvoiceItem[]; subject: Subject },
+  ): InvoiceDetail {
+    const supplier = this.resolveSupplierSnapshot(row);
+
     return {
       id: row.id,
       invoiceNumber: row.invoiceNumber,
@@ -468,6 +475,9 @@ export class InvoiceService {
       totalWithVat: row.totalWithVat.toString(),
       pdfVersion: row.pdfVersion,
       paidAt: row.paidAt?.toISOString() ?? null,
+      supplierBankAccountPrefix: supplier.bankAccountPrefix,
+      supplierBankAccountNumber: supplier.bankAccountNumber,
+      supplierBankCode: supplier.bankCode,
       items: row.items
         .sort((a, b) => a.position - b.position)
         .map((item) => this.mapDetailItem(item)),
@@ -495,6 +505,7 @@ export class InvoiceService {
         items: {
           orderBy: { position: 'asc' },
         },
+        subject: true,
       },
     });
 
@@ -524,7 +535,7 @@ export class InvoiceService {
     };
   }
 
-  private getSupplierSnapshotForPdf(
+  private resolveSupplierSnapshot(
     invoice: Invoice & { subject: Subject },
   ): SupplierSnapshot {
     const raw = invoice.supplierSnapshot;
@@ -1683,6 +1694,29 @@ export class InvoiceService {
     return this.getInvoiceDetail(userId, invoiceId);
   }
 
+  async refreshSupplierSnapshot(
+    userId: string,
+    invoiceId: string,
+  ): Promise<InvoiceDetail> {
+    const subject = await this.getSubjectByUserOrThrow(userId);
+    const current = await this.getInvoiceBySubjectOrThrow(subject.id, invoiceId);
+
+    if (current.status === 'draft' || current.status === 'cancelled') {
+      throw new ConflictException(
+        'Dodavatelské údaje lze aktualizovat jen u vystavené nebo uhrazené faktury',
+      );
+    }
+
+    await this.prisma.invoice.update({
+      where: { id: current.id },
+      data: {
+        supplierSnapshot: this.buildSupplierSnapshot(subject),
+      },
+    });
+
+    return this.getInvoiceDetail(userId, invoiceId);
+  }
+
   async exportInvoicePdf(
     userId: string,
     invoiceId: string,
@@ -1711,7 +1745,7 @@ export class InvoiceService {
       );
     }
 
-    const supplier = this.getSupplierSnapshotForPdf(invoice);
+    const supplier = this.resolveSupplierSnapshot(invoice);
     const iban = this.toCzIban(
       supplier.bankAccountPrefix,
       supplier.bankAccountNumber,

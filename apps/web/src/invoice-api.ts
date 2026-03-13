@@ -85,6 +85,12 @@ export async function changeInvoiceNumber(
   });
 }
 
+export async function refreshSupplierSnapshot(invoiceId: string): Promise<InvoiceDetail> {
+  return apiRequest<InvoiceDetail>(`/invoices/${invoiceId}/refresh-supplier-snapshot`, {
+    method: 'POST',
+  });
+}
+
 export async function deleteInvoice(invoiceId: string): Promise<void> {
   await apiRequest(`/invoices/${invoiceId}`, {
     method: 'DELETE',

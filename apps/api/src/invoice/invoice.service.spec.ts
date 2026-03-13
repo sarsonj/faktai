@@ -193,4 +193,61 @@ describe('InvoiceService', () => {
 
     expect(result.invoiceNumber).toBe('2026000016');
   });
+
+  it('refreshes supplier snapshot from current subject settings', async () => {
+    prisma.subject.findUnique.mockResolvedValue({
+      id: 'subject-1',
+      firstName: 'Jan',
+      lastName: 'Novak',
+      businessName: 'Jan Novak IT',
+      ico: '60142294',
+      dic: 'CZ60142294',
+      street: 'Nova 1',
+      city: 'Praha',
+      postalCode: '11000',
+      countryCode: 'CZ',
+      bankAccountPrefix: '19',
+      bankAccountNumber: '1234567890',
+      bankCode: '2010',
+      isVatPayer: true,
+    });
+    prisma.invoice.findFirst.mockResolvedValue({
+      id: 'inv-1',
+      subjectId: 'subject-1',
+      status: 'issued',
+      items: [],
+      subject: {
+        firstName: 'Jan',
+        lastName: 'Novak',
+        businessName: 'Jan Novak IT',
+        ico: '60142294',
+        dic: 'CZ60142294',
+        street: 'Nova 1',
+        city: 'Praha',
+        postalCode: '11000',
+        countryCode: 'CZ',
+        bankAccountPrefix: '19',
+        bankAccountNumber: '1234567890',
+        bankCode: '2010',
+        isVatPayer: true,
+      },
+    });
+    const detailSpy = jest
+      .spyOn(service, 'getInvoiceDetail')
+      .mockResolvedValue({ id: 'inv-1' } as any);
+
+    await service.refreshSupplierSnapshot('user-1', 'inv-1');
+
+    expect(prisma.invoice.update).toHaveBeenCalledWith({
+      where: { id: 'inv-1' },
+      data: {
+        supplierSnapshot: expect.objectContaining({
+          bankAccountPrefix: '19',
+          bankAccountNumber: '1234567890',
+          bankCode: '2010',
+        }),
+      },
+    });
+    detailSpy.mockRestore();
+  });
 });

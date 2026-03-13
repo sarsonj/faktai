@@ -151,6 +151,9 @@ export type InvoiceDetail = {
   totalWithVat: string;
   pdfVersion: number;
   paidAt: string | null;
+  supplierBankAccountPrefix: string | null;
+  supplierBankAccountNumber: string;
+  supplierBankCode: string;
   items: InvoiceItem[];
 };
 

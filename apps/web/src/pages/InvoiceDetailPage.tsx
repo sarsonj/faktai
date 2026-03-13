@@ -7,6 +7,7 @@ import {
   issueInvoice,
   markInvoicePaid,
   markInvoiceUnpaid,
+  refreshSupplierSnapshot,
 } from '../invoice-api';
 import type { InvoiceDetail } from '../types';
 
@@ -34,6 +35,12 @@ function formatMoney(value: string): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })} Kč`;
+}
+
+function formatSupplierBankAccount(invoice: InvoiceDetail): string {
+  return invoice.supplierBankAccountPrefix
+    ? `${invoice.supplierBankAccountPrefix}-${invoice.supplierBankAccountNumber}/${invoice.supplierBankCode}`
+    : `${invoice.supplierBankAccountNumber}/${invoice.supplierBankCode}`;
 }
 
 function statusLabel(status: InvoiceDetail['status']): string {
@@ -250,6 +257,29 @@ export function InvoiceDetailPage() {
     }
   };
 
+  const onRefreshSupplierSnapshot = async () => {
+    if (!invoice) {
+      return;
+    }
+
+    try {
+      setAdvancedBusy(true);
+      setError(null);
+      setSuccess(null);
+      const refreshed = await refreshSupplierSnapshot(invoice.id);
+      setInvoice(refreshed);
+      setSuccess('Dodavatelské údaje byly aktualizovány z nastavení subjektu.');
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Aktualizace dodavatelských údajů selhala',
+      );
+    } finally {
+      setAdvancedBusy(false);
+    }
+  };
+
   if (loading) {
     return <section className="card card-wide">Načítám detail faktury...</section>;
   }
@@ -423,6 +453,10 @@ export function InvoiceDetailPage() {
                 <dt>Variabilní symbol</dt>
                 <dd>{invoice.variableSymbol}</dd>
               </div>
+              <div>
+                <dt>Účet dodavatele</dt>
+                <dd>{formatSupplierBankAccount(invoice)}</dd>
+              </div>
             </dl>
           </article>
           <article className="invoice-meta-card">
@@ -544,6 +578,17 @@ export function InvoiceDetailPage() {
             >
               Uložit číslo dokladu
             </button>
+
+            {invoice.status !== 'draft' && invoice.status !== 'cancelled' && (
+              <button
+                type="button"
+                className="secondary"
+                onClick={onRefreshSupplierSnapshot}
+                disabled={advancedBusy || markPaidBusy}
+              >
+                Aktualizovat údaje dodavatele z nastavení
+              </button>
+            )}
 
             {invoice.status === 'paid' && (
               <>

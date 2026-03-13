@@ -100,6 +100,14 @@ export class InvoiceController {
     return this.invoiceService.changeInvoiceNumber(request.user!.id, id, dto);
   }
 
+  @Post(':id/refresh-supplier-snapshot')
+  async refreshSupplierSnapshot(
+    @Req() request: RequestWithUser,
+    @Param('id') id: string,
+  ) {
+    return this.invoiceService.refreshSupplierSnapshot(request.user!.id, id);
+  }
+
   @Get(':id/pdf')
   async exportInvoicePdf(
     @Req() request: RequestWithUser,

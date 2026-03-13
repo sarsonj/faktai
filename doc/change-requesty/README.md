@@ -63,3 +63,4 @@
 | `CR-0044` | Denní výkaz času vývoje z Git commitů | `Implementováno` | `Should` |
 | `CR-0045` | Root README a porovnání času AI vs ruční vývoj | `Implementováno` | `Should` |
 | `CR-0046` | Aktualizace odhadu realizace o nové change requesty | `Implementováno` | `Should` |
+| `CR-0047` | Aktualizace dodavatelského snapshotu na faktuře | `Implementováno` | `Must` |
