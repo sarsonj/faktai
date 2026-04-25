@@ -698,7 +698,7 @@ Pravidla:
          - výsledkem je atribut `c_ufo` z nalezeného řádku (např. `458`).
 4. Aplikace pouze generuje soubor; podání do datové schránky provádí uživatel.
 5. `Přiznání k DPH` používá strukturu `Pisemnost/DPHDP3` s větami `VetaD`, `VetaP`, `Veta1` až `Veta6`.
-6. `Kontrolní hlášení` používá strukturu `Pisemnost/DPHKH1` s větami `VetaD`, `VetaP`, `VetaA4`, `VetaC`.
+6. `Kontrolní hlášení` používá strukturu `Pisemnost/DPHKH1` s větami v pořadí `VetaD`, `VetaP`, `VetaA4`, `VetaC`.
 7. Referenční příklady formátu jsou v:
    - `doc/examples/iDoklad_DPH3_2025Q04B`
    - `doc/examples/iDoklad_DPHKH_2025Q04B`

@@ -596,21 +596,22 @@ export class TaxReportsService {
       ...this.toFuAttributes({ verzePis: '01.02.01' }),
       VetaD: this.buildFuVetaD(request, 'KH1', 'khdph_forma'),
       VetaP: this.buildFuVetaP(subject),
-      VetaC: this.toFuAttributes({
-        celk_zd_a2: '0',
-        obrat23: this.formatDecimal(figures.base21),
-        obrat5: this.formatDecimal(figures.base12),
-        pln23: '0',
-        pln5: '0',
-        pln_rez_pren: this.formatDecimal(figures.reverse21.add(figures.reverse12)),
-        rez_pren23: this.formatDecimal(figures.reverse21),
-        rez_pren5: this.formatDecimal(figures.reverse12),
-      }),
     };
 
     if (vetaA4.length > 0) {
       reportNode.VetaA4 = vetaA4;
     }
+
+    reportNode.VetaC = this.toFuAttributes({
+      celk_zd_a2: '0',
+      obrat23: this.formatDecimal(figures.base21),
+      obrat5: this.formatDecimal(figures.base12),
+      pln23: '0',
+      pln5: '0',
+      pln_rez_pren: this.formatDecimal(figures.reverse21.add(figures.reverse12)),
+      rez_pren23: this.formatDecimal(figures.reverse21),
+      rez_pren5: this.formatDecimal(figures.reverse12),
+    });
 
     const xmlPayload = {
       Pisemnost: {

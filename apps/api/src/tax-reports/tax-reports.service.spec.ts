@@ -212,6 +212,7 @@ describe('TaxReportsService', () => {
     expect(result.xml).toContain('<DPHKH1');
     expect(result.xml).toContain('<VetaA4');
     expect(result.xml).toContain('<VetaC');
+    expect(result.xml.indexOf('<VetaA4')).toBeLessThan(result.xml.indexOf('<VetaC'));
     expect(result.xml).toContain('c_pracufo="2705"');
     expect(result.xml).toContain('c_ufo="458"');
     expect(result.fileName).toContain('77052030_DPHKH_20254Q.xml');

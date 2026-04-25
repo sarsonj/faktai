@@ -475,7 +475,7 @@ Poznámka:
 1. Spočítat dataset pro období.
 2. Sestavit XML dle typu podání:
    - `vat_return` -> `DPHDP3` + `VetaD/VetaP/Veta1..Veta6`,
-   - `control_statement` -> `DPHKH1` + `VetaD/VetaP/VetaA4/VetaC`.
+   - `control_statement` -> `DPHKH1` + `VetaD/VetaP/VetaA4/VetaC` v tomto pořadí.
 3. Validovat proti XSD.
 4. Vrátit XML stream.
 
