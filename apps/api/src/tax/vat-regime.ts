@@ -31,26 +31,37 @@ export function effectiveVatRate(
 
 /**
  * Kódy předmětu plnění pro kontrolní hlášení (oddíl A.1, atribut `kod_pred_pl`).
- * Výběr nejčastějších kódů z číselníku Finanční správy „Kód předmětu plnění“.
+ * Úplný číselník platný pro období od 1. 7. 2017 podle Pokynů k vyplnění KH DPH
+ * (Finanční správa, verze 2024 – adisspr.mfcr.cz/.../pokyny_dphkh1_2024.pdf).
+ * Pořadí: nejčastější kód pro OSVČ (4) první, zbytek dle číselníku.
  */
 export const REVERSE_CHARGE_CODES: ReadonlyArray<{
   code: string;
   label: string;
 }> = [
-  { code: '4', label: 'Stavební a montážní práce (§ 92e)' },
-  { code: '5', label: 'Zboží uvedené v příloze č. 5 – odpad, šrot (§ 92c)' },
-  { code: '1', label: 'Zlato (§ 92b)' },
-  { code: '3', label: 'Dodání nemovité věci (§ 92d)' },
-  { code: '6', label: 'Povolenky na emise skleníkových plynů (§ 92f)' },
-  { code: '7', label: 'Obiloviny a technické plodiny (příloha č. 6)' },
-  { code: '11', label: 'Kovy (příloha č. 6)' },
-  { code: '12', label: 'Mobilní telefony (příloha č. 6)' },
-  { code: '13', label: 'Integrované obvody (příloha č. 6)' },
+  { code: '4', label: 'Stavební a montážní práce' },
+  { code: '4a', label: 'Stavební a montážní práce – poskytnutí pracovníků' },
+  { code: '1', label: 'Zlato' },
+  { code: '1a', label: 'Zlato – zprostředkování dodání investičního zlata' },
+  { code: '3', label: 'Dodání nemovité věci' },
+  { code: '3a', label: 'Dodání nemovité věci v nuceném prodeji' },
+  { code: '5', label: 'Zboží uvedené v příloze č. 5' },
+  { code: '6', label: 'Dodání zboží poskytnutého původně jako záruka' },
+  { code: '7', label: 'Dodání zboží po postoupení výhrady vlastnictví' },
+  { code: '11', label: 'Povolenky na emise skleníkových plynů' },
+  { code: '12', label: 'Obiloviny a technické plodiny' },
+  { code: '13', label: 'Kovy' },
+  { code: '14', label: 'Mobilní telefony' },
+  { code: '15', label: 'Integrované obvody' },
+  { code: '16', label: 'Přenosná zařízení pro automatizované zpracování dat' },
+  { code: '17', label: 'Videoherní konzole' },
+  { code: '18', label: 'Dodání certifikátů elektřiny' },
+  { code: '19', label: 'Dodání elektřiny soustavami nebo sítěmi obchodníkovi' },
+  { code: '20', label: 'Dodání plynu soustavami nebo sítěmi obchodníkovi' },
   {
-    code: '14',
-    label: 'Přenosná zařízení pro automatizované zpracování dat (příloha č. 6)',
+    code: '21',
+    label: 'Poskytnutí vymezených služeb elektronických komunikací',
   },
-  { code: '15', label: 'Videoherní konzole (příloha č. 6)' },
 ];
 
 export const REVERSE_CHARGE_CODE_VALUES = REVERSE_CHARGE_CODES.map(

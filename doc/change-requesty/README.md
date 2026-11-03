@@ -71,3 +71,4 @@
 | `CR-0052` | Vícestránkové PDF, duplicitní koncepty a logování chyb | `Implementováno` | `Must` |
 | `CR-0053` | DPH režimy faktur a oprava exportů pro FÚ | `Implementováno` | `Must` |
 | `CR-0054` | Lint v CI a vyčištění lint chyb | `Implementováno` | `Should` |
+| `CR-0055` | Oficiální číselník kódů předmětu plnění (KH A.1) | `Implementováno` | `Must` |

@@ -51,7 +51,7 @@
 5. PDF neplátce a PDF v režimu přenesení obsahují správný nadpis a doložku (vizuální kontrola).
 
 ## 6. Rizika a poznámky
-- Číselník kódů předmětu plnění obsahuje výběr nejčastějších kódů; **před produkčním použitím ověřit proti aktuálnímu číselníku FS** „Kód předmětu plnění“. Faktura s více kódy předmětu plnění není podporována (jeden kód na fakturu).
+- Číselník kódů předmětu plnění byl ověřen a opraven v CR-0055 (původní výběr měl u kódů 6, 7, 11–15 nesprávné významy). Faktura s více kódy předmětu plnění není podporována (jeden kód na fakturu).
 - Již vystavené faktury se nepřepočítávají. Pokud mají nekonzistentní data (např. DPH v režimu přenesení, `domestic_standard` se sazbou 0 %), export DPH/KH skončí srozumitelnou chybou s číslem faktury, aby se špatná data nepodala.
 - Řádky na vstupu (přijaté faktury, odpočet) aplikace nadále neřeší – `odp_zocelk = 0`.
 - Opravné daňové doklady (dobropisy) nejsou podporovány.

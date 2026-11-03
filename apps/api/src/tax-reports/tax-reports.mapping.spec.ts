@@ -180,6 +180,12 @@ describe('TaxReportsService – mapping to FU rows', () => {
           reverseChargeCode: '4',
         },
       ),
+      // A.1 – kód s písmenem (4a)
+      invoice(
+        'domestic_reverse_charge',
+        [{ rate: 0, base: '1000.00', vat: '0.00' }],
+        { reverseChargeCode: '4a' },
+      ),
       // EU – v KH se neuvádí
       invoice('eu_service', [{ rate: 0, base: '7000.00', vat: '0.00' }], {
         customerDic: 'DE123456789',
@@ -192,7 +198,8 @@ describe('TaxReportsService – mapping to FU rows', () => {
     );
     const kh = parser.parse(xml).Pisemnost.DPHKH1;
 
-    expect(kh.VetaA1).toHaveLength(1);
+    expect(kh.VetaA1).toHaveLength(2);
+    expect(kh.VetaA1[1].kod_pred_pl).toBe('4a');
     expect(kh.VetaA1[0]).toMatchObject({
       dic_odb: '24755851',
       zakl_dane1: '8000.00',
@@ -218,7 +225,7 @@ describe('TaxReportsService – mapping to FU rows', () => {
     expect(kh.VetaC).toMatchObject({
       obrat23: '61000.00',
       obrat5: '1000.00',
-      pln_rez_pren: '8000.00',
+      pln_rez_pren: '9000.00',
       rez_pren23: '0',
     });
 
