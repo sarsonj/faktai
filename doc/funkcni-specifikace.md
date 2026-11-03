@@ -1072,6 +1072,26 @@ Pravidla:
 6. Stránka obsahuje ukázku použití (`curl`) a odkaz na dokumentaci API (OpenAPI).
 7. Klíč má stejná oprávnění jako přihlášený uživatel; slouží ke skriptovanému zadávání dokladů a stahování PDF.
 
+## 7b. Přijaté doklady (CR-0060)
+1. Modul `Přijaté doklady` (`/received`) eviduje faktury od dodavatelů: seznam s vyhledáváním a výběrem roku (podle DUZP), založení, úprava, smazání.
+2. Doklad obsahuje: číslo dokladu dodavatele, dodavatele (načtení z ARES; IČO, DIČ / VAT ID, adresa), předmět, datum vystavení, DUZP, splatnost, režim DPH, rozpis DPH po sazbách (základ + DPH), poznámku a přílohy.
+3. Režimy DPH a dopad do podání:
+
+| Režim | Přiznání k DPH | Kontrolní hlášení | Povinné údaje |
+| --- | --- | --- | --- |
+| Tuzemsko s DPH | odpočet ř. 40/41 | B.2 (doklad nad 10 000 Kč vč. DPH) / B.3 | české DIČ dodavatele (pokud je DPH > 0) |
+| Přenesení daňové povinnosti | daň ř. 10/11 + odpočet ř. 43/44 | B.1 | české DIČ, kód předmětu plnění |
+| Pořízení zboží z EU | daň ř. 3/4 + odpočet ř. 43/44 | A.2 | VAT ID dodavatele s kódem státu |
+| Služba z EU (§ 9 odst. 1) | daň ř. 5/6 + odpočet ř. 43/44 | A.2 | VAT ID dodavatele s kódem státu |
+| Bez nároku na odpočet | – | – | – |
+
+4. U tuzemských dokladů se DPH zadává podle dokladu; když chybí, dopočítá se ze základu. U přenesení a EU si daň vyměřuje příjemce – dopočítá se vždy a nezapočítává se do částky k úhradě dodavateli.
+5. Odpočet z tuzemského dokladu se uplatní v období DUZP, nebo v pozdějším období podle pole `Uplatnit odpočet k datu` (doklad dorazil později). Datum nesmí být před DUZP. Plnění s daní přiznanou příjemcem (přenesení, EU) se vykazují v období DUZP.
+6. Neplátce DPH eviduje přijaté doklady jen v režimu `Bez nároku na odpočet`.
+7. Odpočet se uplatňuje v plné výši; krácený a poměrný odpočet (§ 75, § 76) aplikace nepodporuje.
+8. Přílohy: PDF, PNG, JPEG, WEBP, HEIC do 15 MB; typ se ověřuje podle obsahu souboru. V novém dokladu se vybrané soubory nahrají po uložení. Přílohu lze otevřít a smazat; se smazáním dokladu se smažou i přílohy.
+9. DPH podklady zahrnují vydané i přijaté doklady; náhled přiznání ukazuje daň na výstupu, odpočet a výsledek (daň k úhradě / nadměrný odpočet, ř. 64/65).
+
 ## 8. Řízení změn (Change Request)
 
 ### 8.1 Cíl

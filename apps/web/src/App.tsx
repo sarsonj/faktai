@@ -16,6 +16,8 @@ import { OnboardingSubjectPage } from './pages/OnboardingSubjectPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { SettingsSubjectPage } from './pages/SettingsSubjectPage';
 import { SettingsApiKeyPage } from './pages/SettingsApiKeyPage';
+import { ReceivedDocumentEditorPage } from './pages/ReceivedDocumentEditorPage';
+import { ReceivedDocumentsPage } from './pages/ReceivedDocumentsPage';
 import { TaxReportsPage } from './pages/TaxReportsPage';
 
 function ScrollToTopOnNavigate() {
@@ -61,6 +63,9 @@ function App() {
           <Route path="/invoices/:invoiceId" element={<InvoiceDetailPage />} />
           <Route path="/invoices/:invoiceId/edit" element={<InvoiceEditorPage mode="edit" />} />
           <Route path="/invoices/:invoiceId/copy" element={<InvoiceCopyPage />} />
+          <Route path="/received" element={<ReceivedDocumentsPage />} />
+          <Route path="/received/new" element={<ReceivedDocumentEditorPage mode="create" />} />
+          <Route path="/received/:documentId" element={<ReceivedDocumentEditorPage mode="edit" />} />
           <Route path="/settings/subject" element={<SettingsSubjectPage />} />
           <Route path="/settings/api" element={<SettingsApiKeyPage />} />
           <Route path="/tax-reports" element={<TaxReportsPage />} />

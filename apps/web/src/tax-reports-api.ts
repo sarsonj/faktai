@@ -43,11 +43,24 @@ export type VatReturnPreviewRows = {
   r22_export: string;
   r25_reverseCharge: string;
   r50_exempt: string;
+  r3_vat: string;
+  r4_vat: string;
+  r5_vat: string;
+  r6_vat: string;
+  r10_vat: string;
+  r11_vat: string;
+  r40_deduction: string;
+  r41_deduction: string;
+  r43_deduction: string;
+  r44_deduction: string;
   r62_outputVat: string;
+  r63_deduction: string;
+  r64_taxDue: string;
+  r65_excessDeduction: string;
 };
 
 export function previewVatReturn(
   payload: Omit<TaxReportRequest, 'reportType'>,
-): Promise<TaxReportPreview & { summary: { rows: VatReturnPreviewRows } }> {
+): Promise<TaxReportPreview & { receivedDocumentCount: number; summary: { rows: VatReturnPreviewRows } }> {
   return apiRequest('/tax-reports/preview', { method: 'POST', body: { ...payload, reportType: 'vat_return' } });
 }

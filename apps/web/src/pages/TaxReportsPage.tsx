@@ -45,7 +45,7 @@ function PreviewRow({ label, row, value }: { label: string; row: string; value: 
   return (
     <div className="flex items-baseline justify-between gap-4 py-1.5 text-sm">
       <dt className="text-muted-foreground">
-        <span className="mr-2 inline-block w-10 text-xs tabular-nums">ř. {row}</span>
+        <span className="mr-2 inline-block w-14 text-xs whitespace-nowrap tabular-nums">ř. {row}</span>
         {label}
       </dt>
       <dd className="m-0 font-medium tabular-nums">{formatMoney(value).replace(',00', '')}</dd>
@@ -155,23 +155,30 @@ function TaxReportsForm({ initialPeriodType }: { initialPeriodType: TaxPeriodTyp
             ) : rows ? (
               <>
                 <p className="m-0 text-sm text-muted-foreground">
-                  {preview.data.invoiceCount === 0
-                    ? 'V období nejsou žádné vystavené faktury.'
-                    : `Z ${preview.data.invoiceCount} vystavených faktur`}
+                  {preview.data.invoiceCount + preview.data.receivedDocumentCount === 0
+                    ? 'V období nejsou žádné doklady.'
+                    : `Z ${preview.data.invoiceCount} vydaných faktur a ${preview.data.receivedDocumentCount} přijatých dokladů`}
                 </p>
                 <dl className="m-0 divide-y">
-                  <PreviewRow row="1" label="Základ 21 %" value={rows.r1_base} />
                   <PreviewRow row="1" label="Daň 21 %" value={rows.r1_vat} />
-                  <PreviewRow row="2" label="Základ 12 %" value={rows.r2_base} />
                   <PreviewRow row="2" label="Daň 12 %" value={rows.r2_vat} />
+                  <PreviewRow row="3–4" label="Daň z pořízení zboží z EU" value={String(Number(rows.r3_vat) + Number(rows.r4_vat))} />
+                  <PreviewRow row="5–6" label="Daň ze služeb z EU" value={String(Number(rows.r5_vat) + Number(rows.r6_vat))} />
+                  <PreviewRow row="10–11" label="Daň z přijatého přenesení" value={String(Number(rows.r10_vat) + Number(rows.r11_vat))} />
                   <PreviewRow row="20" label="Dodání zboží do EU" value={rows.r20_euGoods} />
                   <PreviewRow row="21" label="Služby do EU" value={rows.r21_euServices} />
                   <PreviewRow row="22" label="Vývoz" value={rows.r22_export} />
                   <PreviewRow row="25" label="Přenesení daňové povinnosti" value={rows.r25_reverseCharge} />
+                  <PreviewRow row="40–41" label="Odpočet – tuzemsko" value={String(Number(rows.r40_deduction) + Number(rows.r41_deduction))} />
+                  <PreviewRow row="43–44" label="Odpočet – přenesení a EU" value={String(Number(rows.r43_deduction) + Number(rows.r44_deduction))} />
                   <PreviewRow row="50" label="Osvobozená plnění" value={rows.r50_exempt} />
+                  <PreviewRow row="62" label="Daň na výstupu celkem" value={rows.r62_outputVat} />
+                  <PreviewRow row="63" label="Odpočet celkem" value={rows.r63_deduction} />
                   <div className="flex items-baseline justify-between gap-4 pt-2.5">
-                    <dt className="font-semibold">Daň k úhradě</dt>
-                    <dd className="m-0 text-lg font-bold tabular-nums">{formatMoney(rows.r62_outputVat).replace(',00', '')}</dd>
+                    <dt className="font-semibold">{Number(rows.r65_excessDeduction) > 0 ? 'Nadměrný odpočet' : 'Daň k úhradě'}</dt>
+                    <dd className="m-0 text-lg font-bold tabular-nums">
+                      {formatMoney(Number(rows.r65_excessDeduction) > 0 ? rows.r65_excessDeduction : rows.r64_taxDue).replace(',00', '')}
+                    </dd>
                   </div>
                 </dl>
               </>
@@ -190,8 +197,8 @@ function TaxReportsForm({ initialPeriodType }: { initialPeriodType: TaxPeriodTyp
           </CardHeader>
           <CardContent className="flex flex-1 flex-col gap-4">
             <p className="m-0 text-sm text-muted-foreground">
-              Tuzemská plnění plátcům nad 10 000 Kč (A.4), ostatní souhrnně (A.5) a plnění v režimu přenesení
-              daňové povinnosti (A.1). XML se před stažením ověří proti schématu finanční správy.
+              Vydané: přenesení (A.1), plátcům nad 10 000 Kč (A.4), ostatní (A.5). Přijaté: z EU (A.2), přenesení
+              (B.1), nad 10 000 Kč (B.2), ostatní (B.3). XML se před stažením ověří proti schématu finanční správy.
             </p>
             <Button
               variant="outline"
@@ -214,7 +221,7 @@ export function TaxReportsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="DPH podklady" description="XML podání pro finanční úřad z vystavených faktur." />
+      <PageHeader title="DPH podklady" description="XML podání pro finanční úřad z vydaných faktur a přijatých dokladů." />
       {subject.isPending ? (
         <p className="m-0 text-muted-foreground">Načítám…</p>
       ) : subject.isError ? (

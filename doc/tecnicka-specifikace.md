@@ -77,6 +77,7 @@ V1 běží synchronně přes REST API; samostatný worker/queue není povinný.
 - **Prezentace**: `invoice/invoice.mapper.ts` (DB → tvar API odpovědí), `invoice/pdf/invoice-pdf.renderer.ts` (PDF, injektovatelná služba).
 - **Aplikační služby (Nest)**: `InvoiceService`, `TaxReportsService` – načítají a ukládají data přes Prismu a orchestrují doménu. `TaxReportsService` převede doklady období na DPH záznamy a z nich přes mapování sestaví XML.
 - Pravidlo: nový typ dokladu (přijatý doklad, opravný doklad) = nový převodník na DPH záznamy; mapování podání se nemění, jen začne zpracovávat i záznamy `input`.
+- Přijaté doklady (CR-0060): `vatEntriesFromReceivedDocument` → záznamy `input`; `TaxReportsService` načítá tuzemské přijaté doklady podle `deductionDate`, přenesení a EU podle `taxableSupplyDate`.
 
 ### 2.4 Komunikační pravidla
 - Frontend komunikuje pouze s API (`/api/v1/*`).
@@ -404,6 +405,18 @@ Pravidla:
   - platební tabulka,
   - položková tabulka,
   - QR + tabulka souhrnu DPH + zvýrazněný grand total.
+
+### 5.4.1 Received documents (CR-0060)
+1. `GET /received-documents?year=&q=&page=&pageSize=` – seznam (rok podle DUZP)
+2. `POST /received-documents` – založení (podporuje `Idempotency-Key`)
+3. `GET|PATCH|DELETE /received-documents/:id`
+4. `POST /received-documents/:id/attachments` – multipart, pole `file`; PDF/PNG/JPEG/WEBP/HEIC, max. 15 MB; typ se určuje podle signatury souboru (ne z `Content-Type`), jinak `415`
+5. `GET /received-documents/:id/attachments/:attachmentId` – stažení (`Content-Disposition: inline`, `X-Content-Type-Options: nosniff`)
+6. `DELETE /received-documents/:id/attachments/:attachmentId`
+
+Datový model: `ReceivedDocument` (enum `ReceivedVatRegime`, `taxableSupplyDate`, `deductionDate`, `totalWithoutVat`, `totalVat`, `totalPayable`), `ReceivedDocumentLine` (sazba, základ, DPH), `ReceivedDocumentAttachment` (metadata; soubor v `ATTACHMENTS_DIR` pod náhodným `storageKey`).
+Doména: `received-document/domain/received-calculation.ts` (výpočet, validace podle režimu), `tax/vat-id.ts` (VAT ID z EU).
+Úložiště: `storage/attachment-storage.service.ts`; `ATTACHMENTS_DIR` (výchozí `./storage/attachments`, v Docker image `/data/attachments`, v CapRoveru persistent directory `/data`).
 
 ### 5.5 Tax reports (Scope 5)
 1. `POST /tax-reports/preview`

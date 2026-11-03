@@ -24,13 +24,15 @@ Důležitá poznámka:
 - registrace a onboarding subjektu (včetně ARES/adresních lookupů),
 - vystavení a správa faktur,
 - PDF export faktur včetně QR platby,
-- XML exporty pro DPH přiznání a kontrolní hlášení,
+- přijaté doklady s přílohami (PDF/foto) a odpočtem DPH,
+- XML exporty pro DPH přiznání a kontrolní hlášení (výstup i vstup, ověřené proti XSD finanční správy),
+- osobní API klíč a REST API s OpenAPI dokumentací,
 - průběžné UX/UI iterace podle uživatelského feedbacku.
 
 ## Co plánujeme brzy
 
 - adresář firem,
-- výdajové doklady.
+- opravné daňové doklady (dobropisy).
 
 ## Autor
 

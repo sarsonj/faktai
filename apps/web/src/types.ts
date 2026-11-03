@@ -212,3 +212,79 @@ export type TaxReportPreview = {
   datasetHash: string;
   summary: Record<string, unknown>;
 };
+
+// Přijaté doklady (CR-0060)
+export type ReceivedVatRegime =
+  | 'domestic_standard'
+  | 'domestic_reverse_charge'
+  | 'eu_goods'
+  | 'eu_service'
+  | 'no_deduction';
+
+export type ReceivedDocumentLine = { vatRate: number; base: string; vat: string };
+
+export type ReceivedDocumentAttachment = {
+  id: string;
+  fileName: string;
+  contentType: string;
+  size: number;
+  createdAt: string;
+};
+
+export type ReceivedDocument = {
+  id: string;
+  documentNumber: string;
+  supplierName: string;
+  supplierIco: string | null;
+  supplierVatId: string | null;
+  supplierStreet: string | null;
+  supplierCity: string | null;
+  supplierPostalCode: string | null;
+  supplierCountryCode: string;
+  description: string | null;
+  issueDate: string | null;
+  taxableSupplyDate: string;
+  deductionDate: string;
+  dueDate: string | null;
+  paidAt: string | null;
+  vatRegime: ReceivedVatRegime;
+  reverseChargeCode: string | null;
+  totalWithoutVat: string;
+  totalVat: string;
+  totalPayable: string;
+  note: string | null;
+  lines: ReceivedDocumentLine[];
+  attachments: ReceivedDocumentAttachment[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ReceivedDocumentInput = {
+  documentNumber: string;
+  supplierName: string;
+  supplierIco?: string;
+  supplierVatId?: string;
+  supplierStreet?: string;
+  supplierCity?: string;
+  supplierPostalCode?: string;
+  supplierCountryCode?: string;
+  description?: string;
+  issueDate?: string;
+  taxableSupplyDate: string;
+  deductionDate?: string;
+  dueDate?: string;
+  paidAt?: string;
+  vatRegime: ReceivedVatRegime;
+  reverseChargeCode?: string;
+  note?: string;
+  lines: Array<{ vatRate: number; base: string; vat?: string }>;
+};
+
+export type ReceivedDocumentListResponse = {
+  items: ReceivedDocument[];
+  total: number;
+  page: number;
+  pageSize: number;
+  year: number;
+  availableYears: number[];
+};

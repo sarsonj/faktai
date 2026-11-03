@@ -4,6 +4,7 @@ import {
   ChartLine,
   ChevronsUpDown,
   FileText,
+  Inbox,
   KeyRound,
   LogOut,
   Menu,
@@ -29,7 +30,10 @@ type NavItem = { to: string; label: string; icon: LucideIcon };
 const NAV_SECTIONS: Array<{ title: string; items: NavItem[] }> = [
   {
     title: 'Doklady',
-    items: [{ to: '/invoices', label: 'Vydané faktury', icon: FileText }],
+    items: [
+      { to: '/invoices', label: 'Vydané faktury', icon: FileText },
+      { to: '/received', label: 'Přijaté doklady', icon: Inbox },
+    ],
   },
   {
     title: 'Daně',
