@@ -89,7 +89,7 @@ export function ItemsSection({
                   <SelectTrigger aria-label={`Sazba DPH položky ${n}`} className="w-full">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent data-ui>
+                  <SelectContent>
                     <SelectItem value="21">21 %</SelectItem>
                     <SelectItem value="12">12 %</SelectItem>
                     <SelectItem value="0">0 %</SelectItem>

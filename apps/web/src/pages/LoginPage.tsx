@@ -1,7 +1,11 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '../auth/auth-context';
+import { AuthFormHeader } from '../components/AuthFormHeader';
+import { Field } from '../components/app/Field';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -16,12 +20,10 @@ export function LoginPage() {
     event.preventDefault();
     setError(null);
     setLoading(true);
-
     try {
       const profile = await login(email, password);
       const fallback = profile.hasSubject ? '/invoices' : '/onboarding/subject';
-      const nextPath = location.state?.from?.pathname ?? fallback;
-      navigate(nextPath, { replace: true });
+      navigate(location.state?.from?.pathname ?? fallback, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Přihlášení selhalo');
     } finally {
@@ -30,32 +32,33 @@ export function LoginPage() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="form-stack auth-form">
-      <div className="auth-form-head">
-        <h2>Přihlášení</h2>
-        <p>Použijte e-mail a heslo k pokračování do aplikace.</p>
-      </div>
-
-      <label>
-        E-mail
-        <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" required />
-      </label>
-      <label>
-        Heslo
-        <input
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
+    <form onSubmit={(event) => void onSubmit(event)} className="flex flex-col gap-4">
+      <AuthFormHeader title="Přihlášení" description="Pokračujte e-mailem a heslem." />
+      <Field id="email" label="E-mail">
+        <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+      </Field>
+      <Field id="password" label="Heslo">
+        <Input
+          id="password"
           type="password"
+          autoComplete="current-password"
           required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
-      </label>
-      {error && <p className="error">{error}</p>}
-      <div className="auth-form-actions">
-        <button disabled={loading} type="submit">
-          {loading ? 'Přihlašuji...' : 'Přihlásit se'}
-        </button>
-        <Link to="/auth/forgot-password">Zapomenuté heslo</Link>
-      </div>
+      </Field>
+      {error && (
+        <p role="alert" className="m-0 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      <Button type="submit" disabled={loading}>
+        {loading && <Loader2 className="animate-spin" />}
+        Přihlásit se
+      </Button>
+      <Link to="/auth/forgot-password" className="self-center text-sm">
+        Zapomenuté heslo
+      </Link>
     </form>
   );
 }

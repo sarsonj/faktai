@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth-context';
 import { APP_SHORT_NAME } from '../brand';
 import { OnboardingSubjectWizard } from '../components/OnboardingSubjectWizard';
-import { SiteHeader } from '../components/SiteHeader';
+import { PublicLayout } from '../components/PublicLayout';
 import { ApiError } from '../lib-api';
 import { createSubject, getSubject } from '../subject-api';
 import type { SubjectInput } from '../types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function OnboardingSubjectPage() {
   const navigate = useNavigate();
@@ -16,27 +17,27 @@ export function OnboardingSubjectPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const run = async () => {
-      try {
-        await getSubject();
-        navigate('/invoices', { replace: true });
-      } catch (err) {
-        if (err instanceof ApiError && err.status === 404) {
-          setError(null);
-        } else {
+    let ignore = false;
+    getSubject()
+      .then(() => {
+        if (!ignore) navigate('/invoices', { replace: true });
+      })
+      .catch((err: unknown) => {
+        if (ignore) return;
+        if (!(err instanceof ApiError && err.status === 404)) {
           setError(err instanceof Error ? err.message : 'Načtení subjektu selhalo');
         }
-      } finally {
-        setLoading(false);
-      }
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => {
+      ignore = true;
     };
-
-    void run();
   }, [navigate]);
 
   const onSubmit = async (payload: SubjectInput) => {
     setSaving(true);
-    setError(null);
     try {
       await createSubject(payload);
       await refreshMe();
@@ -46,40 +47,31 @@ export function OnboardingSubjectPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <main className="app-shell">
-        <div className="page-stack">
-          <SiteHeader />
-          <section className="card">Načítám onboarding subjektu...</section>
-        </div>
-      </main>
-    );
-  }
-
   return (
-    <main className="app-shell">
-      <div className="page-stack">
-        <SiteHeader />
-        <section className="card">
-          <header className="page-head">
-            <div>
-              <p className="page-kicker">Nastavení profilu</p>
-              <h1 className="page-title">Pojďme nastavit váš profil</h1>
-              <p className="page-subtitle">
-                Projdeme to spolu ve 3 krocích. Jakmile profil uložíte, můžete v {APP_SHORT_NAME} začít vystavovat faktury.
-              </p>
-            </div>
-          </header>
-          {error && <p className="error">{error}</p>}
-          <OnboardingSubjectWizard
-            loading={saving}
-            onSubmit={onSubmit}
-            submitLabel="Dokončit nastavení profilu"
-            initialContactEmail={me?.email}
-          />
-        </section>
-      </div>
-    </main>
+    <PublicLayout showGuestActions={false} width="narrow">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Nastavení profilu</CardTitle>
+          <CardDescription>
+            Ve 3 krocích doplníme údaje pro fakturaci. Pak můžete v {APP_SHORT_NAME} začít vystavovat faktury.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p className="m-0 text-muted-foreground">Načítám…</p>
+          ) : (
+            <>
+              {error && <p className="m-0 mb-4 text-sm text-destructive">{error}</p>}
+              <OnboardingSubjectWizard
+                loading={saving}
+                onSubmit={onSubmit}
+                submitLabel="Dokončit nastavení"
+                initialContactEmail={me?.email}
+              />
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </PublicLayout>
   );
 }

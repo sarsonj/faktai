@@ -90,7 +90,7 @@ export function AppLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground lg:flex-row">
       <aside
-        data-ui
+       
         className="flex flex-col border-b border-sidebar-border bg-sidebar lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:shrink-0 lg:border-r lg:border-b-0"
       >
         <div className="flex items-center justify-between gap-3 px-4 py-3 lg:px-5 lg:pt-5 lg:pb-4">
@@ -143,7 +143,7 @@ export function AppLayout() {
                   <ChevronsUpDown className="size-4 text-muted-foreground" aria-hidden="true" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent data-ui align="end" side="top" className="w-60">
+              <DropdownMenuContent align="end" side="top" className="w-60">
                 <DropdownMenuLabel className="truncate font-normal text-muted-foreground">{me?.email}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => void onLogout()}>

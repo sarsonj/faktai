@@ -537,7 +537,6 @@ Poznámka:
   - `/`
   - `/onboarding/start`
   - `/auth/login`
-  - `/auth/register`
   - `/auth/forgot-password`
   - `/auth/reset-password`
   - `/onboarding/subject`
@@ -548,75 +547,39 @@ Poznámka:
   - `/invoices/:invoiceId/copy`
   - `/tax-reports`
   - `/settings/subject`
+  - `/settings/api`
 - Chráněné routy aplikace jsou seskupeny do společného layoutu (`AppLayout`) přes nested routing.
 
 ### 7.2 Stav a data
-- Server state: `TanStack Query`.
-- Form state: `React Hook Form`.
-- Validace formulářů: `Zod` schema shodná s backend DTO.
-- Kontext seznamu faktur držený v URL query parametrech.
-- Asistované vyhledávání subjektu/odběratele přes `registry-api.ts`.
+- Server state: `TanStack Query` (`QueryClientProvider` v `main.tsx`): seznam faktur (`['invoices', filtr]`), detail (`['invoice', id]`), subjekt (`['subject']`), náhled DPH (`['tax-preview', období]`). Po změně dokladu se aktualizuje cache detailu a zneplatní seznam.
+- Formuláře: lokální stav + sdílené čisté moduly se stavem a validací:
+  - editor faktury `features/invoice-editor/editor-state.ts` (výpočty zaokrouhlují po řádcích half-even stejně jako API, přijímají desetinnou čárku; testy ve Vitestu),
+  - subjekt `features/subject/subject-form-state.ts` (jedna validace pro nastavení i onboarding).
+- Kontext seznamu faktur (stav, hledání, stránka, rok) je v URL query parametrech.
 - Auth guard:
   - veřejné routy: `/`, `/auth/*`, `/onboarding/start`,
-  - ostatní routy vyžadují validní session (`/auth/me`).
+  - ostatní routy vyžadují validní session (`/auth/me`),
   - aplikační routy pod `AppLayout` vyžadují navíc existující subjekt (`me.hasSubject=true`), jinak redirect na `/onboarding/subject`.
 
-### 7.3 UI komponenty
-- Tabulka faktur: server-side pagination.
-- Formulář položek: dynamické řádky.
-- Globální toast provider.
-- Confirm modal pro destruktivní akce.
-- Breadcrumb navigace na detailu a editoru faktury.
-- KPI karty v detailu faktury (`celkem`, `základ daně`, `DPH`).
-- Editor položek s průběžným výpočtem řádkového součtu.
-- Sticky action bar v editoru faktury (akce dostupné i při delším scrollu).
-- Landing page (`LandingPage`) jako veřejný vstup do produktu.
-- Onboarding start stránka (`OnboardingStartPage`) pro registraci ve stejném UX toku jako onboarding subjektu.
-- Auth layout (`auth-layout`) se dvěma zónami: informační panel + formulářový panel.
-- Subject summary karty v onboardingu a nastavení subjektu.
-- Onboarding (`OnboardingSubjectWizard`) jako 3-krokový průvodce.
+### 7.3 UI komponenty (CR-0059)
+- Knihovny: **Tailwind CSS v4** (`@tailwindcss/vite`) + **shadcn/ui** (styl new-york, Radix UI, ikony lucide-react, toasty sonner). Komponenty shadcn v `src/components/ui` (generované CLI, upravují se jen výjimečně), alias `@/` → `src/`.
+- Aplikační komponenty v `src/components/app`:
+  - `PageHeader` – titulek, popis, akce stránky,
+  - `StatusBadge` – stav dokladu (tečka + text, barvy z tokenů `--status-*`),
+  - `Field` – popisek + prvek + nápověda,
+  - `RegistryLookup` – vyhledání v ARES / adresách s výběrem,
+  - `ConfirmProvider` + `useConfirm()` – potvrzovací dialog místo `window.confirm`.
+- Výsledky akcí se hlásí toastem (`toast.success/error`), chyby akcí nenahrazují obsah stránky.
+- Funkční celky: `features/invoice-editor` (sekce odběratele a položek), `features/subject` (sekce identifikace, sídla, DPH, plateb – skládá je `SubjectForm` i `OnboardingSubjectWizard`).
 
-### 7.4 Design foundation (UI)
-- Design tokens jsou definované centrálně v `apps/web/src/index.css`:
-  - barvy (`--primary`, `--secondary`, `--danger`, neutrals),
-  - typografie (`--font-body`, `--font-heading`),
-  - spacing/radius/stíny.
-- Komponentní stavy:
-  - formulářové prvky: `default/hover/focus/disabled`,
-  - tlačítka: `primary/secondary/danger` + disabled,
-  - stavové badge pro faktury: `draft/issued/overdue/paid/cancelled`.
-- Responsivní pravidla:
-  - breakpointy pro mobil/tablet jsou řešené přes media query v globálním stylesheetu,
-  - tabulky mají mobilní fallback se scroll kontejnerem.
-- App shell:
-  - `AppLayout` obsahuje globální sidebar navigaci a topbar.
-  - v `AppLayout` je topbar kompaktní a obsahuje pouze uživatelské menu (avatar + dropdown).
-  - logo v přihlášené části je pouze v sidebaru (`app-brand`), ne v content topbaru.
-  - stránkové filtry/akce se renderují pouze v obsahu modulu, nikoliv v globální navigaci.
-- Veřejné a onboarding obrazovky:
-  - používají komponentu `SiteHeader` pro konzistentní hlavičku (logo + auth akce / avatar).
-  - sdílí jednotný layout kontejner (`page-stack`) pro stabilní šířku a vertikální odsazení.
-- Layout hierarchy (Fáze 2):
-  - `page-head`: jednotná hlavička stránky (kicker + title + subtitle + page actions),
-  - `ui-section`: konzistentní obsahový panel pro logické bloky stránky,
-  - `ui-section-head`: lokální hlavička sekce pro kombinaci nadpisu a ovládacích prvků (filtry/sekční akce),
-  - `action-link`: link-styled CTA odpovídající vizuální logice tlačítek,
-  - `subject-form` a editor faktury používají sekční členění (`Základní údaje`, `Adresa`, `Položky`, ...).
-- Fakturační polish (Fáze 3):
-  - `breadcrumb` je samostatný prvek nad page headerem na detailu/editoru,
-  - `invoice-stats` poskytuje rychlý vizuální souhrn stavů v seznamu faktur,
-  - `invoice-item-total` zobrazuje per-item částku s DPH v editoru,
-  - `editor-action-bar` je sticky panel s primárními workflow akcemi.
-- Podpůrné moduly polish (Fáze 4):
-  - `auth-card`, `auth-layout`, `auth-aside`, `auth-panel` sjednocují vzhled auth sekce,
-  - `kpi-grid`/`kpi-card` jsou znovupoužité v onboardingu a správě subjektu.
-- Onboarding UX refresh:
-  - kroková navigace (`onboarding-steps`, `onboarding-step`) s lokální validací po krocích,
-  - registry lookup je dostupný v onboardingu, ale není součástí editace subjektu.
-  - onboarding krok DPH obsahuje volitelný kontakt pro FÚ (`contactPhone`, `contactEmail`),
-  - `contactEmail` je v onboardingu inicializován e-mailem přihlášeného uživatele (`me.email`) a zůstává editovatelný.
-  - kód banky je na frontendu validován proti lokálnímu číselníku ČNB (`apps/web/src/bank-codes.ts`); při shodě se název banky propisuje do labelu pole, při neshodě zůstává chyba až na submit validaci,
-  - onboarding start krok `Vytvoření účtu` má jednokolonový layout formuláře (`onboarding-account-form`).
+### 7.4 Design foundation (varianta A „Klidná přehlednost“)
+- Tokeny v `apps/web/src/index.css` (CSS proměnné shadcn: `--background`, `--foreground`, `--primary` = `#0f766e`, `--muted`, `--border`, `--destructive`…, plus `--status-*` pro stavy dokladů), písmo Inter.
+- App shell (`AppLayout`): bílý sidebar se sekcemi *Doklady* a *Daně*, dole nastavení a uživatelské menu (dropdown s odhlášením); pod `lg` se sidebar mění na horní lištu s rozbalovacím menu. Obsah má max. šířku 1080 px.
+- Veřejné stránky (`PublicLayout` + `SiteHeader`): landing, přihlášení (`AuthLayout` – informační sloupec + karta s formulářem), onboarding, 404.
+- Seznam faktur: záložky stavů s počty za celý rok (`statusCounts` z API), hledání, výběr roku, tabulka s akcemi „Stáhnout PDF“ + menu „⋯“ (otevřít, upravit, kopírovat, smazat).
+- Detail faktury: hlavička se stavem a kontextovou primární akcí (vystavit / označit jako uhrazenou), dialogy pro úhradu a změnu čísla, pokročilé akce v menu „⋯“.
+- Editor faktury: dvousloupcové rozvržení, vpravo lepící souhrn s akcemi.
+- Responzivita: tabulky se posouvají vodorovně v kontejneru, záložky stavů jsou posuvné, formulářové mřížky se na mobilu skládají do jednoho sloupce.
 
 ## 8. Výpočty a formátování
 

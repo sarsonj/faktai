@@ -97,7 +97,7 @@ export function SettingsApiKeyPage() {
   };
 
   return (
-    <div data-ui className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6">
       <PageHeader
         title="API klíč"
         description="Klíč umožní skriptům a integracím pracovat s doklady stejně jako vy v aplikaci."

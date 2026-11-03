@@ -135,7 +135,7 @@ export function InvoicesPage() {
   const to = data ? Math.min(data.page * data.pageSize, data.total) : 0;
 
   return (
-    <div data-ui className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5">
       <PageHeader
         title="Vydané faktury"
         description="Přehled vystavených dokladů a jejich úhrad."
@@ -150,8 +150,12 @@ export function InvoicesPage() {
       />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Tabs value={status} onValueChange={(value) => setQuery({ status: value as InvoiceListFilter, page: 1 })}>
-          <TabsList className="h-auto flex-wrap">
+        <Tabs
+          value={status}
+          onValueChange={(value) => setQuery({ status: value as InvoiceListFilter, page: 1 })}
+          className="max-w-full overflow-x-auto [scrollbar-width:none]"
+        >
+          <TabsList className="w-max">
             {FILTERS.map((filter) => (
               <TabsTrigger key={filter.value} value={filter.value} className="gap-1.5">
                 {filter.label}
@@ -176,7 +180,7 @@ export function InvoicesPage() {
             <SelectTrigger aria-label="Rok" className="w-24 bg-card">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent data-ui>
+            <SelectContent>
               {yearOptions.map((option) => (
                 <SelectItem key={option} value={String(option)}>
                   {option}
@@ -189,6 +193,19 @@ export function InvoicesPage() {
 
       {error && <p className="m-0 text-sm text-destructive">{error}</p>}
 
+      {data && data.items.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 rounded-xl border bg-card px-6 py-12 text-center">
+          <FilePlus2 className="size-8 text-muted-foreground" aria-hidden="true" />
+          <p className="m-0 text-muted-foreground">
+            {q || status !== 'all' ? 'Pro zadaný filtr nebyly nalezeny žádné doklady.' : 'Zatím nemáte žádné faktury.'}
+          </p>
+          <Button asChild variant="outline" size="sm">
+            <Link to={withContext('/invoices/new')} className="no-underline">
+              Vystavit fakturu
+            </Link>
+          </Button>
+        </div>
+      ) : (
       <div className="overflow-hidden rounded-xl border bg-card">
         <Table className="min-w-[720px]">
           <TableHeader>
@@ -209,23 +226,6 @@ export function InvoicesPage() {
               <TableRow>
                 <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
                   Načítám faktury…
-                </TableCell>
-              </TableRow>
-            )}
-            {data && data.items.length === 0 && (
-              <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={7} className="py-12">
-                  <div className="flex flex-col items-center gap-3 text-center">
-                    <FilePlus2 className="size-8 text-muted-foreground" aria-hidden="true" />
-                    <p className="m-0 text-muted-foreground">
-                      {q || status !== 'all' ? 'Pro zadaný filtr nebyly nalezeny žádné doklady.' : 'Zatím nemáte žádné faktury.'}
-                    </p>
-                    <Button asChild variant="outline" size="sm">
-                      <Link to={withContext('/invoices/new')} className="no-underline">
-                        Vystavit fakturu
-                      </Link>
-                    </Button>
-                  </div>
                 </TableCell>
               </TableRow>
             )}
@@ -275,7 +275,7 @@ export function InvoicesPage() {
                           </Button>
                         </span>
                       </TooltipTrigger>
-                      <TooltipContent data-ui>
+                      <TooltipContent>
                         {canExportPdf(item) ? 'Stáhnout PDF' : 'PDF jen pro vystavené faktury'}
                       </TooltipContent>
                     </Tooltip>
@@ -285,7 +285,7 @@ export function InvoicesPage() {
                           <MoreHorizontal />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent data-ui align="end" className="w-48">
+                      <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuItem onSelect={() => navigate(withContext(`/invoices/${item.id}`))}>
                           <Eye />
                           Otevřít
@@ -326,7 +326,7 @@ export function InvoicesPage() {
                 <SelectTrigger aria-label="Počet položek na stránku" size="sm" className="w-18">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent data-ui>
+                <SelectContent>
                   {PAGE_SIZES.map((size) => (
                     <SelectItem key={size} value={String(size)}>
                       {size}
@@ -351,6 +351,7 @@ export function InvoicesPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

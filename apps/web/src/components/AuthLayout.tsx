@@ -1,43 +1,46 @@
+import { Check } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { APP_SHORT_NAME, APP_TAGLINE } from '../brand';
+import { APP_TAGLINE } from '../brand';
 import { LANDING_HIGHLIGHTS } from '../landing-copy';
-import { SiteHeader } from './SiteHeader';
+import { PublicLayout } from './PublicLayout';
+import { Card, CardContent } from '@/components/ui/card';
 
 export function AuthLayout() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/auth/login';
 
   return (
-    <main className="app-shell auth-shell">
-      <div className="page-stack auth-page-stack">
-        <SiteHeader showGuestActions={false} />
-        <section className="card auth-card">
-          <div className="auth-layout">
-            <aside className="auth-aside">
-              <p className="page-kicker">{APP_SHORT_NAME}</p>
-              <h1 className="page-title">{APP_TAGLINE}</h1>
-              <p className="page-subtitle">
-                Přihlaste se ke svému účtu a pokračujte ve správě faktur, DPH podkladů a nastavení podnikání.
-              </p>
-              <ul className="auth-benefits">
-                {LANDING_HIGHLIGHTS.map((item) => (
-                  <li key={item.title}>{item.title}</li>
-                ))}
-              </ul>
-            </aside>
-
-            <div className="auth-panel">
-              <Outlet />
-              <hr />
-              <p className="auth-switch">
-                {!isLoginPage && <Link to="/auth/login">Přihlášení</Link>}
-                {!isLoginPage && ' | '}
-                <Link to="/onboarding/start">Vytvořit účet</Link>
-              </p>
-            </div>
-          </div>
-        </section>
+    <PublicLayout showGuestActions={false}>
+      <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2">
+        <div className="hidden flex-col gap-5 md:flex">
+          <h1 className="m-0 text-3xl font-bold tracking-tight">{APP_TAGLINE}</h1>
+          <p className="m-0 text-muted-foreground">
+            Faktury, PDF s QR platbou a XML podklady pro DPH na jednom místě.
+          </p>
+          <ul className="m-0 flex list-none flex-col gap-3 p-0">
+            {LANDING_HIGHLIGHTS.map((item) => (
+              <li key={item.title} className="flex gap-3 text-sm">
+                <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                {item.title}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col gap-6">
+            <Outlet />
+            <p className="m-0 border-t pt-4 text-center text-sm text-muted-foreground">
+              {!isLoginPage && (
+                <>
+                  <Link to="/auth/login">Přihlášení</Link>
+                  {' · '}
+                </>
+              )}
+              Nemáte účet? <Link to="/onboarding/start">Vytvořit účet</Link>
+            </p>
+          </CardContent>
+        </Card>
       </div>
-    </main>
+    </PublicLayout>
   );
 }

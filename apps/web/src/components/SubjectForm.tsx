@@ -1,15 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { FormEvent } from 'react';
-import { findBankByCode, normalizeBankCode } from '../bank-codes';
-import { searchRegistryAddresses, searchRegistryCompanies } from '../registry-api';
-import { getTaxOffices } from '../subject-api';
-import type {
-  RegistryAddressResult,
-  RegistryCompanyResult,
-  SubjectInput,
-  SubjectProfile,
-  TaxOfficeOption,
-} from '../types';
+import { useState, type FormEvent, type ReactNode } from 'react';
+import { Loader2, Save } from 'lucide-react';
+import type { SubjectInput, SubjectProfile } from '../types';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AddressFields, CompanyLookup, IdentityFields, PaymentFields, VatFields } from '../features/subject/SubjectSections';
+import { toInitialState, toSubjectInput, validateAll, type SubjectFormState } from '../features/subject/subject-form-state';
 
 type SubjectFormProps = {
   initial?: SubjectProfile;
@@ -19,526 +14,67 @@ type SubjectFormProps = {
   onSubmit: (payload: SubjectInput) => Promise<void>;
 };
 
-type FormState = {
-  firstName: string;
-  lastName: string;
-  businessName: string;
-  ico: string;
-  dic: string;
-  isVatPayer: boolean;
-  vatPeriodType: 'month' | 'quarter';
-  vatRegistrationDate: string;
-  taxOfficePracufo: string;
-  contactPhone: string;
-  contactEmail: string;
-  street: string;
-  city: string;
-  postalCode: string;
-  countryCode: string;
-  bankAccountPrefix: string;
-  bankAccountNumber: string;
-  bankCode: string;
-  defaultDueDays: string;
-};
-
-function normalizeIco(value: string): string {
-  return value.replace(/\s+/g, '');
+function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        {description && <CardDescription>{description}</CardDescription>}
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
+  );
 }
 
-function normalizePostalCode(value: string): string {
-  return value.replace(/\s+/g, '');
-}
-
-function normalizeCountryCode(value: string): string {
-  return value.replace(/\s+/g, '').toUpperCase();
-}
-
-function toInitialState(initial?: SubjectProfile): FormState {
-  return {
-    firstName: initial?.firstName ?? '',
-    lastName: initial?.lastName ?? '',
-    businessName: initial?.businessName ?? '',
-    ico: initial?.ico ?? '',
-    dic: initial?.dic ?? '',
-    isVatPayer: initial?.isVatPayer ?? false,
-    vatPeriodType: initial?.vatPeriodType ?? 'quarter',
-    vatRegistrationDate: initial?.vatRegistrationDate?.slice(0, 10) ?? '',
-    taxOfficePracufo: initial?.taxOfficePracufo ?? '',
-    contactPhone: initial?.contactPhone ?? '',
-    contactEmail: initial?.contactEmail ?? '',
-    street: initial?.street ?? '',
-    city: initial?.city ?? '',
-    postalCode: initial?.postalCode ?? '',
-    countryCode: initial?.countryCode ?? 'CZ',
-    bankAccountPrefix: initial?.bankAccountPrefix ?? '',
-    bankAccountNumber: initial?.bankAccountNumber ?? '',
-    bankCode: initial?.bankCode ?? '',
-    defaultDueDays: String(initial?.defaultDueDays ?? 14),
-  };
-}
-
-function formatCompanyResult(item: RegistryCompanyResult): string {
-  const location = [item.city, item.postalCode].filter(Boolean).join(', ');
-  return [item.name, `IČO ${item.ico}`, location].filter(Boolean).join(' | ');
-}
-
-function formatAddressResult(item: RegistryAddressResult): string {
-  const basic = [item.street, item.city, item.postalCode].filter(Boolean).join(', ');
-  return basic || item.displayName;
-}
-
-export function SubjectForm({
-  initial,
-  submitLabel,
-  loading = false,
-  showRegistryLookup = true,
-  onSubmit,
-}: SubjectFormProps) {
-  const [state, setState] = useState<FormState>(toInitialState(initial));
+/** Formulář subjektu pro nastavení – všechny sekce najednou, jedno uložení. */
+export function SubjectForm({ initial, submitLabel, loading = false, showRegistryLookup = true, onSubmit }: SubjectFormProps) {
+  const [state, setState] = useState<SubjectFormState>(() => toInitialState(initial));
   const [error, setError] = useState<string | null>(null);
-
-  const [companyQuery, setCompanyQuery] = useState('');
-  const [companyLoading, setCompanyLoading] = useState(false);
-  const [companyError, setCompanyError] = useState<string | null>(null);
-  const [companyResults, setCompanyResults] = useState<RegistryCompanyResult[]>([]);
-
-  const [addressQuery, setAddressQuery] = useState('');
-  const [addressLoading, setAddressLoading] = useState(false);
-  const [addressError, setAddressError] = useState<string | null>(null);
-  const [addressResults, setAddressResults] = useState<RegistryAddressResult[]>([]);
-  const [taxOfficeOptions, setTaxOfficeOptions] = useState<TaxOfficeOption[]>([]);
-  const [taxOfficeError, setTaxOfficeError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setState(toInitialState(initial));
-  }, [initial]);
-
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const items = await getTaxOffices();
-        setTaxOfficeOptions(items);
-      } catch (err) {
-        setTaxOfficeError(
-          err instanceof Error
-            ? err.message
-            : 'Načtení číselníku finančních úřadů selhalo.',
-        );
-      }
-    };
-
-    void run();
-  }, []);
-
-  const resolvedBank = useMemo(() => findBankByCode(state.bankCode), [state.bankCode]);
-  const bankCodeLabel = resolvedBank ? `Kód banky (${resolvedBank.name})` : 'Kód banky';
-
-  const payload = useMemo<SubjectInput>(() => {
-    return {
-      firstName: state.firstName,
-      lastName: state.lastName,
-      businessName: state.businessName || undefined,
-      ico: state.ico,
-      dic: state.dic || undefined,
-      isVatPayer: state.isVatPayer,
-      vatPeriodType: state.vatPeriodType,
-      vatRegistrationDate: state.isVatPayer ? state.vatRegistrationDate || undefined : undefined,
-      taxOfficePracufo: state.isVatPayer ? state.taxOfficePracufo || undefined : undefined,
-      contactPhone: state.contactPhone.trim() || undefined,
-      contactEmail: state.contactEmail.trim() || undefined,
-      street: state.street,
-      city: state.city,
-      postalCode: state.postalCode,
-      countryCode: state.countryCode,
-      bankAccountPrefix: state.bankAccountPrefix || undefined,
-      bankAccountNumber: state.bankAccountNumber,
-      bankCode: normalizeBankCode(state.bankCode),
-      defaultVariableSymbolType: 'ico',
-      defaultVariableSymbolValue: undefined,
-      defaultDueDays: Number(state.defaultDueDays),
-    };
-  }, [state]);
-
-  const applyCompanyResult = (item: RegistryCompanyResult) => {
-    setState((current) => ({
-      ...current,
-      businessName: item.name || current.businessName,
-      ico: item.ico || current.ico,
-      dic: item.dic ?? '',
-      street: item.street || current.street,
-      city: item.city || current.city,
-      postalCode: item.postalCode || current.postalCode,
-      countryCode: item.countryCode || current.countryCode,
-    }));
-    setCompanyResults([]);
-    setCompanyError(null);
-  };
-
-  const applyAddressResult = (item: RegistryAddressResult) => {
-    setState((current) => ({
-      ...current,
-      street: item.street || current.street,
-      city: item.city || current.city,
-      postalCode: item.postalCode || current.postalCode,
-      countryCode: item.countryCode || current.countryCode,
-    }));
-    setAddressResults([]);
-    setAddressError(null);
-  };
-
-  const handleCompanySearch = async () => {
-    const query = companyQuery.trim() || state.ico;
-    if (!query) {
-      setCompanyError('Zadejte IČO nebo název firmy.');
-      return;
-    }
-
-    setCompanyLoading(true);
-    setCompanyError(null);
-    setCompanyResults([]);
-
-    try {
-      const items = await searchRegistryCompanies(query);
-      setCompanyResults(items);
-      if (items.length === 0) {
-        setCompanyError('Žádný záznam v registru nebyl nalezen.');
-      }
-    } catch (err) {
-      setCompanyError(err instanceof Error ? err.message : 'Vyhledání v registru selhalo.');
-    } finally {
-      setCompanyLoading(false);
-    }
-  };
-
-  const handleAddressSearch = async () => {
-    const query = addressQuery.trim() || [state.street, state.city].filter(Boolean).join(' ');
-    if (query.trim().length < 3) {
-      setAddressError('Zadejte alespoň 3 znaky pro vyhledání adresy.');
-      return;
-    }
-
-    setAddressLoading(true);
-    setAddressError(null);
-    setAddressResults([]);
-
-    try {
-      const items = await searchRegistryAddresses(query);
-      setAddressResults(items);
-      if (items.length === 0) {
-        setAddressError('Adresa nebyla nalezena.');
-      }
-    } catch (err) {
-      setAddressError(err instanceof Error ? err.message : 'Vyhledání adresy selhalo.');
-    } finally {
-      setAddressLoading(false);
-    }
-  };
+  const patch = (next: Partial<SubjectFormState>) => setState((current) => ({ ...current, ...next }));
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
+    const validationError = validateAll(state);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setError(null);
-
-    if (!state.bankAccountNumber.trim()) {
-      setError('Doplňte číslo bankovního účtu.');
-      return;
-    }
-
-    const normalizedBankCode = normalizeBankCode(state.bankCode);
-    if (normalizedBankCode.length !== 4) {
-      setError('Kód banky musí mít 4 číslice.');
-      return;
-    }
-
-    if (!findBankByCode(normalizedBankCode)) {
-      setError('Kód banky není v aktuálním číselníku ČNB.');
-      return;
-    }
-
     try {
-      await onSubmit(payload);
+      await onSubmit(toSubjectInput(state));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Uložení selhalo.');
     }
   };
 
   return (
-    <form className="subject-form" onSubmit={handleSubmit}>
-      {showRegistryLookup && (
-        <section className="ui-section">
-          <h2>Načtení dat z registrů</h2>
-          <div className="form-grid form-grid-two">
-            <section className="lookup-box">
-              <h3>Načíst firmu z ARES</h3>
-              <div className="lookup-controls">
-                <input
-                  placeholder="IČO nebo název firmy"
-                  value={companyQuery}
-                  onChange={(event) => setCompanyQuery(event.target.value)}
-                />
-                <button type="button" className="secondary" disabled={companyLoading || loading} onClick={handleCompanySearch}>
-                  {companyLoading ? 'Načítám...' : 'Vyhledat'}
-                </button>
-              </div>
-              {companyError && <p className="error">{companyError}</p>}
-              {companyResults.length > 0 && (
-                <ul className="lookup-results">
-                  {companyResults.map((item) => (
-                    <li key={`${item.ico}-${item.name}`}>
-                      <button type="button" className="secondary" onClick={() => applyCompanyResult(item)}>
-                        Použít
-                      </button>
-                      <span>{formatCompanyResult(item)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section className="lookup-box">
-              <h3>Načíst adresu</h3>
-              <div className="lookup-controls">
-                <input
-                  placeholder="Ulice a číslo"
-                  value={addressQuery}
-                  onChange={(event) => setAddressQuery(event.target.value)}
-                />
-                <button type="button" className="secondary" disabled={addressLoading || loading} onClick={handleAddressSearch}>
-                  {addressLoading ? 'Načítám...' : 'Vyhledat adresu'}
-                </button>
-              </div>
-              {addressError && <p className="error">{addressError}</p>}
-              {addressResults.length > 0 && (
-                <ul className="lookup-results">
-                  {addressResults.map((item) => (
-                    <li key={item.id}>
-                      <button type="button" className="secondary" onClick={() => applyAddressResult(item)}>
-                        Použít
-                      </button>
-                      <span>{formatAddressResult(item)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </div>
-        </section>
-      )}
-
-      <section className="ui-section">
-        <h2>Základní údaje</h2>
-        <div className="form-grid form-grid-two">
-          <label>
-            Jméno
-            <input
-              value={state.firstName}
-              onChange={(event) => setState((current) => ({ ...current, firstName: event.target.value }))}
-              required
-            />
-          </label>
-          <label>
-            Příjmení
-            <input
-              value={state.lastName}
-              onChange={(event) => setState((current) => ({ ...current, lastName: event.target.value }))}
-              required
-            />
-          </label>
-          <label>
-            Obchodní název
-            <input
-              value={state.businessName}
-              onChange={(event) => setState((current) => ({ ...current, businessName: event.target.value }))}
-            />
-          </label>
-          <label>
-            IČO
-            <input
-              value={state.ico}
-              onChange={(event) =>
-                setState((current) => ({ ...current, ico: normalizeIco(event.target.value) }))
-              }
-              required
-            />
-          </label>
-          <label className="checkbox-row">
-            <span>Plátce DPH</span>
-            <input
-              checked={state.isVatPayer}
-              onChange={(event) => setState((current) => ({ ...current, isVatPayer: event.target.checked }))}
-              type="checkbox"
-            />
-          </label>
-          <label>
-            DIČ
-            <input
-              disabled={!state.isVatPayer}
-              value={state.dic}
-              onChange={(event) => setState((current) => ({ ...current, dic: event.target.value }))}
-            />
-          </label>
-          <label>
-            Datum registrace DPH
-            <input
-              disabled={!state.isVatPayer}
-              value={state.vatRegistrationDate}
-              onChange={(event) =>
-                setState((current) => ({ ...current, vatRegistrationDate: event.target.value }))
-              }
-              type="date"
-            />
-          </label>
-          <label>
-            Periodicita DPH
-            <select
-              disabled={!state.isVatPayer}
-              value={state.vatPeriodType}
-              onChange={(event) =>
-                setState((current) => ({
-                  ...current,
-                  vatPeriodType: event.target.value as 'month' | 'quarter',
-                }))
-              }
-            >
-              <option value="month">Měsíční</option>
-              <option value="quarter">Čtvrtletní</option>
-            </select>
-          </label>
-          <label>
-            Místní příslušnost FÚ
-            <select
-              disabled={!state.isVatPayer}
-              value={state.taxOfficePracufo}
-              onChange={(event) =>
-                setState((current) => ({ ...current, taxOfficePracufo: event.target.value }))
-              }
-              required={state.isVatPayer}
-            >
-              <option value="">Vyberte finanční úřad</option>
-              {taxOfficeOptions.map((item) => (
-                <option key={item.pracufo} value={item.pracufo}>
-                  {item.name} ({item.pracufo})
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Telefon pro FÚ (volitelné)
-            <input
-              value={state.contactPhone}
-              onChange={(event) => setState((current) => ({ ...current, contactPhone: event.target.value }))}
-              placeholder="+420 777 123 456"
-            />
-          </label>
-          <label>
-            E-mail pro FÚ (volitelné)
-            <input
-              type="email"
-              value={state.contactEmail}
-              onChange={(event) => setState((current) => ({ ...current, contactEmail: event.target.value }))}
-              placeholder="kontakt@example.cz"
-            />
-          </label>
+    <form className="flex flex-col gap-6" onSubmit={(event) => void handleSubmit(event)} noValidate>
+      <Section title="Identifikace" description="Údaje, které se zobrazují na fakturách jako dodavatel.">
+        <div className="flex flex-col gap-4">
+          {showRegistryLookup && <CompanyLookup state={state} patch={patch} />}
+          <IdentityFields state={state} patch={patch} disabled={loading} />
         </div>
-        <p className="helper-text">
-          Kontaktní údaje pro FÚ nejsou povinné, ale doporučujeme je vyplnit pro případný zpětný kontakt.
-        </p>
-      </section>
+      </Section>
+      <Section title="Sídlo">
+        <AddressFields state={state} patch={patch} disabled={loading} withLookup={showRegistryLookup} />
+      </Section>
+      <Section title="DPH a finanční úřad">
+        <VatFields state={state} patch={patch} disabled={loading} />
+      </Section>
+      <Section title="Platby" description="Bankovní účet pro QR platbu a výchozí splatnost nových faktur.">
+        <PaymentFields state={state} patch={patch} disabled={loading} />
+      </Section>
 
-      <section className="ui-section">
-        <h2>Adresa</h2>
-        <div className="form-grid form-grid-two">
-          <label>
-            Ulice
-            <input
-              value={state.street}
-              onChange={(event) => setState((current) => ({ ...current, street: event.target.value }))}
-              required
-            />
-          </label>
-          <label>
-            Město
-            <input
-              value={state.city}
-              onChange={(event) => setState((current) => ({ ...current, city: event.target.value }))}
-              required
-            />
-          </label>
-          <label>
-            PSČ
-            <input
-              value={state.postalCode}
-              onChange={(event) =>
-                setState((current) => ({ ...current, postalCode: normalizePostalCode(event.target.value) }))
-              }
-              required
-            />
-          </label>
-          <label>
-            Země
-            <input
-              value={state.countryCode}
-              onChange={(event) =>
-                setState((current) => ({ ...current, countryCode: normalizeCountryCode(event.target.value) }))
-              }
-              required
-            />
-          </label>
-        </div>
-      </section>
-
-      <section className="ui-section">
-        <h2>Platební a výchozí nastavení</h2>
-        <div className="form-grid form-grid-two">
-          <label>
-            Prefix účtu
-            <input
-              value={state.bankAccountPrefix}
-              onChange={(event) =>
-                setState((current) => ({ ...current, bankAccountPrefix: event.target.value }))
-              }
-            />
-          </label>
-          <label>
-            Číslo účtu
-            <input
-              value={state.bankAccountNumber}
-              onChange={(event) =>
-                setState((current) => ({ ...current, bankAccountNumber: event.target.value }))
-              }
-              required
-            />
-          </label>
-          <label>
-            {bankCodeLabel}
-            <input
-              value={state.bankCode}
-              onChange={(event) =>
-                setState((current) => ({
-                  ...current,
-                  bankCode: normalizeBankCode(event.target.value),
-                }))
-              }
-              required
-            />
-          </label>
-          <label>
-            Splatnost (dny)
-            <input
-              value={state.defaultDueDays}
-              onChange={(event) => setState((current) => ({ ...current, defaultDueDays: event.target.value }))}
-              required
-              type="number"
-            />
-          </label>
-        </div>
-      </section>
-
-      {error && <p className="error">{error}</p>}
-      {taxOfficeError && <p className="error">{taxOfficeError}</p>}
-      <div className="button-row">
-        <button disabled={loading} type="submit">
-          {loading ? 'Ukládám...' : submitLabel}
-        </button>
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        {error && (
+          <p role="alert" className="m-0 mr-auto text-sm text-destructive">
+            {error}
+          </p>
+        )}
+        <Button type="submit" disabled={loading}>
+          {loading ? <Loader2 className="animate-spin" /> : <Save />}
+          {submitLabel}
+        </Button>
       </div>
     </form>
   );

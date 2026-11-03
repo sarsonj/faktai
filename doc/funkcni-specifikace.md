@@ -786,10 +786,12 @@ Definovat jednotnou navigaci a informační architekturu aplikace tak, aby byly 
 - White-label branding per tenant.
 
 ### 6.3 Informační architektura (IA)
-Hlavní moduly:
-1. `Vydané faktury`
-2. `DPH podklady`
-3. `Nastavení subjektu`
+Hlavní moduly (sidebar, CR-0059):
+1. sekce *Doklady*: `Vydané faktury`
+2. sekce *Daně*: `DPH podklady`
+3. dole: `Nastavení subjektu`, `API klíč`, uživatelské menu (odhlášení)
+
+Seznam faktur má záložky stavů s počty za vybraný rok (Všechny, Koncepty, Neuhrazené, Po splatnosti, Uhrazené), vyhledávání a výběr roku. DPH podklady zobrazují před stažením XML náhled hlavních řádků přiznání a lhůtu pro podání.
 
 Sekundární obrazovky:
 1. `Detail faktury`

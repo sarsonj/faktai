@@ -1,16 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/*
- * Pořadí vrstev: původní styly (legacy) leží pod Tailwind komponentami/utilitami,
- * takže nové komponenty mají vždy přednost. Elementové selektory v legacy.css
- * navíc neplatí uvnitř oblastí s atributem `data-ui` (nové komponenty).
- * Po převedení všech obrazovek se legacy.css smaže (CR-0059 a navazující).
- */
-@layer theme, base, legacy, components, utilities;
-
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import './legacy.css' layer(legacy);
 
 @custom-variant dark (&:is(.dark *));
 
@@ -93,9 +84,16 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Textové odkazy; odkazy stylované jako tlačítka/menu mají vlastní utility třídy. */
+  a {
+    color: var(--primary);
+    text-underline-offset: 3px;
+  }
+  a:hover {
+    text-decoration-line: underline;
+  }
 }
 
-/* Nevrstvené – platí i pro dosud nepřevedené obrazovky. */
 body {
   margin: 0;
   background: var(--background);

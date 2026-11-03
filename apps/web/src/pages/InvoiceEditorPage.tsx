@@ -9,7 +9,7 @@ import { formatMoney } from '../lib/format';
 import { REVERSE_CHARGE_CODES, TAX_CLASSIFICATION_LABELS } from '../vat-regime';
 import type { InvoiceDetail, TaxClassification } from '../types';
 import { CustomerSection } from '../features/invoice-editor/CustomerSection';
-import { Field } from '../features/invoice-editor/Field';
+import { Field } from '../components/app/Field';
 import { ItemsSection } from '../features/invoice-editor/ItemsSection';
 import {
   calculateTotals,
@@ -280,7 +280,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
       : `Úprava faktury ${invoice?.invoiceNumber ?? ''}`;
 
   return (
-    <div data-ui className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6">
       <nav aria-label="Drobečková navigace" className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <Link to={backHref} className="text-muted-foreground no-underline hover:text-foreground">
           Vydané faktury
@@ -358,7 +358,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
                     <SelectTrigger id="tax-regime" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent data-ui>
+                    <SelectContent>
                       {TAX_CLASSIFICATIONS.map(([value, label]) => (
                         <SelectItem key={value} value={value}>
                           {label}
@@ -382,13 +382,13 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
                 >
                   <Select
                     disabled={readOnly}
-                    value={state.reverseChargeCode || undefined}
+                    value={state.reverseChargeCode}
                     onValueChange={(value) => patch({ reverseChargeCode: value })}
                   >
                     <SelectTrigger id="reverse-charge-code" className="w-full">
                       <SelectValue placeholder="Vyberte kód…" />
                     </SelectTrigger>
-                    <SelectContent data-ui>
+                    <SelectContent>
                       {REVERSE_CHARGE_CODES.map((item) => (
                         <SelectItem key={item.code} value={item.code}>
                           {item.code} – {item.label}

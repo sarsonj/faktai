@@ -128,7 +128,7 @@ export function InvoiceDetailPage() {
 
   if (!invoice) {
     return (
-      <div data-ui className="flex flex-col items-start gap-4">
+      <div className="flex flex-col items-start gap-4">
         <p className="m-0 text-destructive">
           {errorMessage(invoiceQuery.error, 'Faktura nebyla nalezena.')}
         </p>
@@ -235,7 +235,7 @@ export function InvoiceDetailPage() {
   };
 
   return (
-    <div data-ui className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6">
       <nav aria-label="Drobečková navigace" className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <Link to={backHref} className="text-muted-foreground no-underline hover:text-foreground">
           Vydané faktury
@@ -289,7 +289,7 @@ export function InvoiceDetailPage() {
                 <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent data-ui align="end" className="w-64">
+            <DropdownMenuContent align="end" className="w-64">
               <DropdownMenuItem onSelect={() => navigate(withContext(`/invoices/${invoice.id}/copy`))}>
                 <Copy />
                 Vytvořit kopii
@@ -436,7 +436,7 @@ export function InvoiceDetailPage() {
       </div>
 
       <Dialog open={paidDialogOpen} onOpenChange={setPaidDialogOpen}>
-        <DialogContent data-ui className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{isPaid ? 'Změnit datum úhrady' : 'Označit jako uhrazenou'}</DialogTitle>
             <DialogDescription>Faktura {invoice.invoiceNumber} · {formatMoney(invoice.totalWithVat)}</DialogDescription>
@@ -457,7 +457,7 @@ export function InvoiceDetailPage() {
       </Dialog>
 
       <Dialog open={numberDialogOpen} onOpenChange={setNumberDialogOpen}>
-        <DialogContent data-ui className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Změnit číslo dokladu</DialogTitle>
             <DialogDescription>Použijte jen ve výjimečných situacích – číslo musí být v řadě jedinečné.</DialogDescription>

@@ -3,7 +3,7 @@
 ## 0. Metadata
 - ID: `CR-0059`
 - Datum: `2026-11-03`
-- Stav: `Rozpracováno`
+- Stav: `Implementováno`
 - Priorita: `Should`
 - Technický dopad: `T2`
 
@@ -42,5 +42,35 @@
 3. Funkce aplikace se nemění.
 4. `legacy.css` je odstraněný.
 
-## 5. Implementace a ověření
-- Commit(y): průběžně po fázích.
+## 5. Doprovodné změny a opravy (z code review)
+- **API `GET /invoices`:**
+  - nový filtr `status=draft`,
+  - odpověď obsahuje `statusCounts`, tedy počty za celý rok bez filtru stavu (dříve web počítal jen aktuální stránku).
+- **Frontend:**
+  - TanStack Query (dříve nepoužitý) s cache a zrušením zastaralých požadavků; odstraňuje race conditions při přepínání filtrů,
+  - výpočty v editoru zaokrouhlují po řádcích stejně jako API a přijímají desetinnou čárku,
+  - chyby akcí na detailu faktury se zobrazují jako toast a nenahradí stránku.
+- **Sjednocení `SubjectForm` a `OnboardingSubjectWizard`:**
+  - sdílené sekce a validace, 1 222 → 619 řádků,
+  - DIČ je vždy editovatelné a povinné jen pro plátce.
+- **Úklid:**
+  - odstraněn nepoužívaný `RegisterPage` (registrace probíhá na `/onboarding/start`),
+  - po uložení editoru se přejde na detail faktury.
+- **První testy webu:** Vitest pro výpočty editoru.
+
+## 6. Implementace a ověření
+- Commit(y):
+  - fáze 1: `feat(web): Tailwind + shadcn/ui foundation and new app layout`,
+  - fáze 2: `feat(web): redesign invoice list and detail`,
+  - fáze 3: `feat(web): redesign invoice editor`,
+  - fáze 4: `feat(web): redesign settings, tax reports, auth and onboarding; drop legacy CSS`.
+- Test plan:
+  - typecheck, lint, Vitest a build webu; API testy včetně nového testu `statusCounts`,
+  - ruční průchod v prohlížeči proti PostgreSQL s ukázkovými daty:
+    - seznam: záložky s počty, menu akcí, potvrzení smazání,
+    - detail: úhrada přes dialog, toast,
+    - editor: ARES, položky s desetinnou čárkou, vystavení; částky se shodují s API,
+    - nastavení, DPH podklady s náhledem řádků přiznání, API klíč,
+    - landing, přihlášení, celý onboarding (registrace → 3 kroky → seznam),
+    - mobilní šířka 390 px (menu, seznam, prázdný stav).
+- Výsledek: vše prošlo.

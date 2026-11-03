@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import type { EditorState } from './editor-state';
-import { Field } from './Field';
+import { Field } from '../../components/app/Field';
 
 type CustomerFields = Pick<
   EditorState,

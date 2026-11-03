@@ -1,105 +1,56 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { findBankByCode } from '../bank-codes';
+import { toast } from 'sonner';
 import { SubjectForm } from '../components/SubjectForm';
+import { PageHeader } from '../components/app/PageHeader';
 import { getSubject, updateSubject } from '../subject-api';
-import type { SubjectInput, SubjectProfile } from '../types';
+import type { SubjectInput } from '../types';
 
 export function SettingsSubjectPage() {
-  const [subject, setSubject] = useState<SubjectProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const subject = useQuery({ queryKey: ['subject'], queryFn: getSubject });
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const payload = await getSubject();
-        setSubject(payload);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Načtení subjektu selhalo');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void run();
-  }, []);
 
   const onSubmit = async (payload: SubjectInput) => {
     setSaving(true);
-    setError(null);
-    setSuccess(null);
-
     try {
       const updated = await updateSubject(payload);
-      setSubject(updated);
-      setSuccess('Profil subjektu byl uložen.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Uložení subjektu selhalo');
-      throw err;
+      queryClient.setQueryData(['subject'], updated);
+      toast.success('Údaje subjektu byly uloženy.');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
-    return <section className="card card-narrow">Načítám subjekt...</section>;
-  }
-
-  if (!subject) {
-    return (
-      <section className="card card-narrow">
-        <p className="error">Subjekt nebyl nalezen.</p>
-        <Link to="/onboarding/subject">Přejít na onboarding</Link>
-      </section>
-    );
-  }
-
-  const subjectName = subject.businessName || `${subject.firstName} ${subject.lastName}`;
-  const bankAccount = `${subject.bankAccountPrefix ? `${subject.bankAccountPrefix}-` : ''}${subject.bankAccountNumber}/${subject.bankCode}`;
-  const bankName = findBankByCode(subject.bankCode)?.name;
-
   return (
-    <section className="card card-narrow">
-      <header className="page-head">
-        <div>
-          <p className="page-kicker">Nastavení</p>
-          <h1 className="page-title">Nastavení subjektu</h1>
-          <p className="page-subtitle">Úprava identifikačních, bankovních a daňových údajů pro fakturaci.</p>
-        </div>
-      </header>
-      {error && <p className="error">{error}</p>}
-      {success && <p>{success}</p>}
-      <section className="ui-section">
-        <div className="kpi-grid">
-          <article className="kpi-card">
-            <p>Subjekt</p>
-            <strong>{subjectName}</strong>
-          </article>
-          <article className="kpi-card">
-            <p>IČO / DIČ</p>
-            <strong>{subject.ico}{subject.dic ? ` / ${subject.dic}` : ''}</strong>
-          </article>
-          <article className="kpi-card">
-            <p>Režim DPH</p>
-            <strong>{subject.isVatPayer ? (subject.vatPeriodType === 'month' ? 'Plátce (měsíčně)' : 'Plátce (čtvrtletně)') : 'Neplátce'}</strong>
-          </article>
-          <article className="kpi-card">
-            <p>Bankovní účet</p>
-            <strong>{bankAccount}</strong>
-            {bankName && <small className="kpi-footnote">{bankName}</small>}
-          </article>
-        </div>
-      </section>
-      <SubjectForm
-        initial={subject}
-        loading={saving}
-        showRegistryLookup={false}
-        onSubmit={onSubmit}
-        submitLabel="Uložit změny"
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Nastavení subjektu"
+        description="Identifikační, daňové a bankovní údaje, které se propisují na nové faktury."
       />
-    </section>
+      {subject.isPending ? (
+        <p className="m-0 text-muted-foreground">Načítám subjekt…</p>
+      ) : !subject.data ? (
+        <div className="flex flex-col items-start gap-2">
+          <p className="m-0 text-destructive">
+            {subject.error instanceof Error ? subject.error.message : 'Subjekt nebyl nalezen.'}
+          </p>
+          <Link to="/onboarding/subject">Přejít na nastavení profilu</Link>
+        </div>
+      ) : (
+        <SubjectForm
+          initial={subject.data}
+          loading={saving}
+          showRegistryLookup={false}
+          onSubmit={onSubmit}
+          submitLabel="Uložit změny"
+        />
+      )}
+      <p className="m-0 text-sm text-muted-foreground">
+        Změny se projeví na nově vystavených fakturách. U již vystavené faktury lze údaje dodavatele aktualizovat
+        v jejím detailu (menu „⋯“ → Aktualizovat údaje dodavatele).
+      </p>
+    </div>
   );
 }

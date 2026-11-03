@@ -75,4 +75,4 @@
 | `CR-0056` | Upgrade Node.js na 24 LTS a reprodukovatelné Docker buildy | `Implementováno` | `Must` |
 | `CR-0057` | Refaktor domény a vrstva DPH záznamů | `Implementováno` | `Must` |
 | `CR-0058` | API klíče, OpenAPI dokumentace a idempotence | `Implementováno` | `Must` |
-| `CR-0059` | Redesign UI aplikace (varianta A, Tailwind + shadcn/ui) | `Rozpracováno` | `Should` |
+| `CR-0059` | Redesign UI aplikace (varianta A, Tailwind + shadcn/ui) | `Implementováno` | `Should` |
