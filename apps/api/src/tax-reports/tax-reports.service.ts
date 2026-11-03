@@ -13,7 +13,14 @@ import { XMLBuilder, XMLValidator } from 'fast-xml-parser';
 import { PrismaService } from '../prisma/prisma.service';
 import { TaxOfficesService } from '../tax-offices/tax-offices.service';
 import { formatDateOnlyCz, todayDateOnly } from '../utils/date-only';
-import { czVatIdNumber, isCzVatId } from '../tax/vat-regime';
+import { czVatIdNumber } from '../tax/vat-regime';
+import {
+  VatEntry,
+  isIssuedByVatPayer,
+  vatEntriesFromIssuedInvoice,
+} from '../tax/vat-entries';
+import { mapControlStatement } from './mapping/control-statement.mapping';
+import { mapVatReturn } from './mapping/vat-return.mapping';
 import { validateFuXml } from './fu-xsd-validator';
 import { TaxReportRequestDto } from './dto/tax-report-request.dto';
 
@@ -38,29 +45,6 @@ type TaxPreviewResult = {
   datasetHash: string;
   summary: Record<string, unknown>;
 };
-
-/** Hodnoty pro řádky přiznání DPH (DP3) agregované podle daňového režimu. */
-type VatFigures = {
-  /** ř. 1 – tuzemské zdanitelné plnění, základní sazba */
-  base21: Decimal;
-  vat21: Decimal;
-  /** ř. 2 – tuzemské zdanitelné plnění, snížená sazba */
-  base12: Decimal;
-  vat12: Decimal;
-  /** ř. 20 – dodání zboží do jiného členského státu (§ 64) */
-  euGoods: Decimal;
-  /** ř. 21 – poskytnutí služeb s místem plnění v jiném členském státě (§ 9 odst. 1) */
-  euServices: Decimal;
-  /** ř. 22 – vývoz zboží (§ 66) */
-  exportGoods: Decimal;
-  /** ř. 25 – plnění v režimu přenesení daňové povinnosti (dodavatel, § 92a) */
-  reverseCharge: Decimal;
-  /** ř. 50 – plnění osvobozená od daně bez nároku na odpočet (§ 51) */
-  exemptWithoutCredit: Decimal;
-};
-
-/** Limit pro uvádění dokladu v oddílu A.4 kontrolního hlášení (vč. DPH). */
-const KH_A4_THRESHOLD = new Decimal(10_000);
 
 @Injectable()
 export class TaxReportsService {
@@ -174,18 +158,15 @@ export class TaxReportsService {
     return createHash('sha256').update(JSON.stringify(payload)).digest('hex');
   }
 
-  private ensureClassifications(invoices: InvoiceWithItems[]): void {
-    const missing = invoices.find((invoice) => !invoice.taxClassification);
-    if (missing) {
-      throw new BadRequestException(
-        'Některé faktury nemají vyplněnou daňovou klasifikaci',
-      );
-    }
+  /** Doklady období převedené na DPH záznamy (vstup pro mapování podání). */
+  private toVatEntries(invoices: InvoiceWithItems[]): VatEntry[] {
+    return invoices
+      .filter((invoice) => isIssuedByVatPayer(invoice))
+      .flatMap((invoice) => vatEntriesFromIssuedInvoice(invoice));
   }
 
-  private buildVatReturnSummary(invoices: InvoiceWithItems[]) {
-    const figures = this.collectVatFigures(invoices);
-    const rows = this.vatReturnRows(figures);
+  private buildVatReturnSummary(entries: VatEntry[]) {
+    const rows = mapVatReturn(entries);
     return {
       rows: {
         r1_base: rows.base21,
@@ -202,28 +183,33 @@ export class TaxReportsService {
     };
   }
 
-  private buildControlStatementSummary(invoices: InvoiceWithItems[]) {
-    const sections = this.splitControlStatement(invoices);
+  private buildControlStatementSummary(entries: VatEntry[]) {
+    const kh = mapControlStatement(entries);
     return {
-      a1: sections.a1.map((invoice) => ({
-        invoiceId: invoice.id,
-        invoiceNumber: invoice.invoiceNumber,
-        customerName: invoice.customerName,
-        customerDic: invoice.customerDic,
-        reverseChargeCode: invoice.reverseChargeCode,
-        totalWithoutVat: invoice.totalWithoutVat.toString(),
+      a1: kh.a1.map((row) => ({
+        invoiceId: row.document.id,
+        invoiceNumber: row.document.number,
+        customerName: row.counterpartyName,
+        customerDic: row.customerVatId,
+        reverseChargeCode: row.reverseChargeCode,
+        totalWithoutVat: row.base.toFixed(2),
       })),
-      a4: sections.a4.map((invoice) => ({
-        invoiceId: invoice.id,
-        invoiceNumber: invoice.invoiceNumber,
-        customerName: invoice.customerName,
-        customerDic: invoice.customerDic,
-        totalWithVat: invoice.totalWithVat.toString(),
+      a4: kh.a4.map((row) => ({
+        invoiceId: row.document.id,
+        invoiceNumber: row.document.number,
+        customerName: row.counterpartyName,
+        customerDic: row.customerVatId,
+        totalWithVat: row.document.totalWithVat.toFixed(2),
       })),
-      a5: {
-        invoiceCount: sections.a5.length,
-        ...this.sumByRate(sections.a5),
-      },
+      a5: kh.a5
+        ? {
+            invoiceCount: kh.a5.documentCount,
+            base21: kh.a5.base21.toFixed(2),
+            vat21: kh.a5.vat21.toFixed(2),
+            base12: kh.a5.base12.toFixed(2),
+            vat12: kh.a5.vat12.toFixed(2),
+          }
+        : null,
     };
   }
 
@@ -258,16 +244,6 @@ export class TaxReportsService {
     return new Decimal(value)
       .toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
       .toFixed(2);
-  }
-
-  private formatWhole(value: Decimal.Value): string {
-    return new Decimal(value)
-      .toDecimalPlaces(0, Decimal.ROUND_HALF_UP)
-      .toFixed(0);
-  }
-
-  private normalizeVatId(value?: string | null): string {
-    return czVatIdNumber(value);
   }
 
   private toFuAttributes(
@@ -319,7 +295,7 @@ export class TaxReportsService {
       c_pop: buildingNumber,
       c_pracufo: taxOffice.pracufo,
       c_ufo: taxOffice.ufo,
-      dic: this.normalizeVatId(subject.dic),
+      dic: czVatIdNumber(subject.dic),
       jmeno: subject.firstName,
       prijmeni: subject.lastName,
       naz_obce: subject.city,
@@ -403,153 +379,6 @@ export class TaxReportsService {
     };
   }
 
-  /**
-   * Faktury vystavené v době, kdy dodavatel nebyl plátcem DPH (snapshot),
-   * do podání DPH nepatří.
-   */
-  private filterVatPayerInvoices(
-    invoices: InvoiceWithItems[],
-  ): InvoiceWithItems[] {
-    return invoices.filter((invoice) => {
-      const snapshot = invoice.supplierSnapshot;
-      if (
-        snapshot &&
-        typeof snapshot === 'object' &&
-        !Array.isArray(snapshot)
-      ) {
-        return (snapshot as Record<string, unknown>).isVatPayer !== false;
-      }
-      return true;
-    });
-  }
-
-  private invoiceLabel(invoice: InvoiceWithItems): string {
-    return invoice.invoiceNumber ?? invoice.id;
-  }
-
-  private sumByRate(invoices: InvoiceWithItems[]) {
-    let base21 = new Decimal(0);
-    let vat21 = new Decimal(0);
-    let base12 = new Decimal(0);
-    let vat12 = new Decimal(0);
-    for (const invoice of invoices) {
-      for (const item of invoice.items) {
-        const base = new Decimal(item.lineTotalWithoutVat.toString());
-        const vat = new Decimal(item.lineVatAmount.toString());
-        if (item.vatRate === 21) {
-          base21 = base21.add(base);
-          vat21 = vat21.add(vat);
-        } else if (item.vatRate === 12) {
-          base12 = base12.add(base);
-          vat12 = vat12.add(vat);
-        } else {
-          throw new BadRequestException(
-            `Faktura ${this.invoiceLabel(invoice)} má tuzemské zdanitelné plnění se sazbou ${item.vatRate} %. Opravte sazbu (21 % / 12 %) nebo daňový režim faktury.`,
-          );
-        }
-      }
-    }
-    return { base21, vat21, base12, vat12 };
-  }
-
-  private collectVatFigures(invoices: InvoiceWithItems[]): VatFigures {
-    const figures: VatFigures = {
-      base21: new Decimal(0),
-      vat21: new Decimal(0),
-      base12: new Decimal(0),
-      vat12: new Decimal(0),
-      euGoods: new Decimal(0),
-      euServices: new Decimal(0),
-      exportGoods: new Decimal(0),
-      reverseCharge: new Decimal(0),
-      exemptWithoutCredit: new Decimal(0),
-    };
-
-    for (const invoice of invoices) {
-      const base = new Decimal(invoice.totalWithoutVat.toString());
-      switch (invoice.taxClassification) {
-        case 'domestic_standard': {
-          const sums = this.sumByRate([invoice]);
-          figures.base21 = figures.base21.add(sums.base21);
-          figures.vat21 = figures.vat21.add(sums.vat21);
-          figures.base12 = figures.base12.add(sums.base12);
-          figures.vat12 = figures.vat12.add(sums.vat12);
-          break;
-        }
-        case 'domestic_reverse_charge':
-          figures.reverseCharge = figures.reverseCharge.add(base);
-          break;
-        case 'eu_goods':
-          figures.euGoods = figures.euGoods.add(base);
-          break;
-        case 'eu_service':
-          figures.euServices = figures.euServices.add(base);
-          break;
-        case 'export_third_country':
-          figures.exportGoods = figures.exportGoods.add(base);
-          break;
-        case 'exempt_without_credit':
-          figures.exemptWithoutCredit = figures.exemptWithoutCredit.add(base);
-          break;
-        default:
-          throw new BadRequestException(
-            `Faktura ${this.invoiceLabel(invoice)} nemá vyplněný daňový režim.`,
-          );
-      }
-    }
-
-    return figures;
-  }
-
-  /** Hodnoty řádků DP3 zaokrouhlené na celé koruny; ř. 62 je součet zaokrouhlených řádků. */
-  private vatReturnRows(figures: VatFigures) {
-    const vat21 = this.formatWhole(figures.vat21);
-    const vat12 = this.formatWhole(figures.vat12);
-    return {
-      base21: this.formatWhole(figures.base21),
-      vat21,
-      base12: this.formatWhole(figures.base12),
-      vat12,
-      euGoods: this.formatWhole(figures.euGoods),
-      euServices: this.formatWhole(figures.euServices),
-      exportGoods: this.formatWhole(figures.exportGoods),
-      reverseCharge: this.formatWhole(figures.reverseCharge),
-      exemptWithoutCredit: this.formatWhole(figures.exemptWithoutCredit),
-      outputVat: new Decimal(vat21).add(vat12).toFixed(0),
-    };
-  }
-
-  /**
-   * Rozdělení faktur do oddílů kontrolního hlášení:
-   * - A.1: plnění v režimu přenesení daňové povinnosti (dodavatel),
-   * - A.4: tuzemské plnění plátci (české DIČ) nad 10 000 Kč vč. DPH,
-   * - A.5: ostatní tuzemská plnění (do 10 000 Kč, nebo odběratel bez českého DIČ).
-   * Plnění do EU, vývoz a osvobozená plnění se v KH neuvádějí.
-   */
-  private splitControlStatement(invoices: InvoiceWithItems[]) {
-    const a1: InvoiceWithItems[] = [];
-    const a4: InvoiceWithItems[] = [];
-    const a5: InvoiceWithItems[] = [];
-
-    for (const invoice of invoices) {
-      if (invoice.taxClassification === 'domestic_reverse_charge') {
-        a1.push(invoice);
-      } else if (invoice.taxClassification === 'domestic_standard') {
-        const totalWithVat = new Decimal(invoice.totalWithVat.toString());
-        if (
-          isCzVatId(invoice.customerDic) &&
-          totalWithVat.gt(KH_A4_THRESHOLD)
-        ) {
-          a4.push(invoice);
-        } else {
-          a5.push(invoice);
-        }
-      }
-    }
-
-    return { a1, a4, a5 };
-  }
-
   private async validateXmlContent(
     xml: string,
     document: 'DP3' | 'KH1',
@@ -574,7 +403,7 @@ export class TaxReportsService {
   private buildFuVatReturnXml(
     subject: Subject,
     request: TaxReportRequestDto,
-    invoices: InvoiceWithItems[],
+    entries: VatEntry[],
   ): Promise<string> {
     const builder = new XMLBuilder({
       format: true,
@@ -582,7 +411,7 @@ export class TaxReportsService {
       suppressEmptyNode: true,
     });
 
-    const rows = this.vatReturnRows(this.collectVatFigures(invoices));
+    const rows = mapVatReturn(entries);
 
     const xmlPayload = {
       Pisemnost: {
@@ -682,7 +511,7 @@ export class TaxReportsService {
   private buildFuControlStatementXml(
     subject: Subject,
     request: TaxReportRequestDto,
-    invoices: InvoiceWithItems[],
+    entries: VatEntry[],
   ): Promise<string> {
     const builder = new XMLBuilder({
       format: true,
@@ -690,53 +519,30 @@ export class TaxReportsService {
       suppressEmptyNode: true,
     });
 
-    const sections = this.splitControlStatement(invoices);
-    const requireCustomerVatId = (invoice: InvoiceWithItems): string => {
-      if (!isCzVatId(invoice.customerDic)) {
-        throw new BadRequestException(
-          `Faktura ${this.invoiceLabel(invoice)} nemá české DIČ odběratele pro kontrolní hlášení.`,
-        );
-      }
-      return this.normalizeVatId(invoice.customerDic);
-    };
-
-    const vetaA1 = sections.a1.map((invoice) => {
-      if (!invoice.reverseChargeCode) {
-        throw new BadRequestException(
-          `Faktura ${this.invoiceLabel(invoice)} v režimu přenesení daňové povinnosti nemá kód předmětu plnění.`,
-        );
-      }
-      return this.toFuAttributes({
-        dic_odb: requireCustomerVatId(invoice),
-        c_evid_dd: this.invoiceLabel(invoice),
-        duzp: this.formatDateForFu(invoice.taxableSupplyDate),
-        zakl_dane1: this.formatDecimal(invoice.totalWithoutVat.toString()),
-        kod_pred_pl: invoice.reverseChargeCode,
-      });
-    });
-
-    const vetaA4 = sections.a4.map((invoice) => {
-      const sums = this.sumByRate([invoice]);
-      return this.toFuAttributes({
-        dic_odb: requireCustomerVatId(invoice),
-        c_evid_dd: this.invoiceLabel(invoice),
-        dppd: this.formatDateForFu(invoice.taxableSupplyDate),
-        zakl_dane1: this.formatDecimal(sums.base21),
-        dan1: this.formatDecimal(sums.vat21),
-        zakl_dane2: this.formatDecimal(sums.base12),
-        dan2: this.formatDecimal(sums.vat12),
+    const kh = mapControlStatement(entries);
+    const vetaA1 = kh.a1.map((row) =>
+      this.toFuAttributes({
+        dic_odb: row.customerVatId,
+        c_evid_dd: row.document.number,
+        duzp: this.formatDateForFu(row.taxableSupplyDate),
+        zakl_dane1: this.formatDecimal(row.base),
+        kod_pred_pl: row.reverseChargeCode,
+      }),
+    );
+    const vetaA4 = kh.a4.map((row) =>
+      this.toFuAttributes({
+        dic_odb: row.customerVatId,
+        c_evid_dd: row.document.number,
+        dppd: this.formatDateForFu(row.taxableSupplyDate),
+        zakl_dane1: this.formatDecimal(row.sums.base21),
+        dan1: this.formatDecimal(row.sums.vat21),
+        zakl_dane2: this.formatDecimal(row.sums.base12),
+        dan2: this.formatDecimal(row.sums.vat12),
         zakl_dane3: '0',
         dan3: '0',
         kod_rezim_pl: '0',
         zdph_44: 'N',
-      });
-    });
-
-    const a5Sums = this.sumByRate(sections.a5);
-    const a4Sums = this.sumByRate(sections.a4);
-    const reverseChargeBase = sections.a1.reduce(
-      (sum, invoice) => sum.add(invoice.totalWithoutVat.toString()),
-      new Decimal(0),
+      }),
     );
 
     // Pořadí vět podle XSD: D, P, A1, A2, A3, A4, A5, B1, B2, B3, C.
@@ -752,12 +558,12 @@ export class TaxReportsService {
     if (vetaA4.length > 0) {
       reportNode.VetaA4 = vetaA4;
     }
-    if (sections.a5.length > 0) {
+    if (kh.a5) {
       reportNode.VetaA5 = this.toFuAttributes({
-        zakl_dane1: this.formatDecimal(a5Sums.base21),
-        dan1: this.formatDecimal(a5Sums.vat21),
-        zakl_dane2: this.formatDecimal(a5Sums.base12),
-        dan2: this.formatDecimal(a5Sums.vat12),
+        zakl_dane1: this.formatDecimal(kh.a5.base21),
+        dan1: this.formatDecimal(kh.a5.vat21),
+        zakl_dane2: this.formatDecimal(kh.a5.base12),
+        dan2: this.formatDecimal(kh.a5.vat12),
         zakl_dane3: '0',
         dan3: '0',
       });
@@ -765,11 +571,11 @@ export class TaxReportsService {
 
     reportNode.VetaC = this.toFuAttributes({
       celk_zd_a2: '0',
-      obrat23: this.formatDecimal(a4Sums.base21.add(a5Sums.base21)),
-      obrat5: this.formatDecimal(a4Sums.base12.add(a5Sums.base12)),
+      obrat23: this.formatDecimal(kh.c.base21),
+      obrat5: this.formatDecimal(kh.c.base12),
       pln23: '0',
       pln5: '0',
-      pln_rez_pren: this.formatDecimal(reverseChargeBase),
+      pln_rez_pren: this.formatDecimal(kh.c.reverseChargeBase),
       rez_pren23: '0',
       rez_pren5: '0',
     });
@@ -791,6 +597,7 @@ export class TaxReportsService {
   private buildPreview(
     dto: TaxReportRequestDto,
     invoices: InvoiceWithItems[],
+    entries: VatEntry[],
   ): TaxPreviewResult {
     const datasetHash = this.computeDatasetHash(invoices);
     const schemaVersion = this.getSchemaVersion(dto.reportType);
@@ -804,7 +611,7 @@ export class TaxReportsService {
         schemaVersion,
         invoiceCount: invoices.length,
         datasetHash,
-        summary: this.buildVatReturnSummary(invoices),
+        summary: this.buildVatReturnSummary(entries),
       };
     }
 
@@ -816,7 +623,7 @@ export class TaxReportsService {
       schemaVersion,
       invoiceCount: invoices.length,
       datasetHash,
-      summary: this.buildControlStatementSummary(invoices),
+      summary: this.buildControlStatementSummary(entries),
     };
   }
 
@@ -842,12 +649,11 @@ export class TaxReportsService {
 
     const normalized = this.normalizePeriod(request);
     const range = this.resolvePeriodRange(normalized);
-    const invoices = this.filterVatPayerInvoices(
-      await this.getInvoicesForPeriod(subject.id, range),
-    );
+    const invoices = (
+      await this.getInvoicesForPeriod(subject.id, range)
+    ).filter((invoice) => isIssuedByVatPayer(invoice));
 
-    this.ensureClassifications(invoices);
-    return this.buildPreview(normalized, invoices);
+    return this.buildPreview(normalized, invoices, this.toVatEntries(invoices));
   }
 
   async export(userId: string, request: TaxReportRequestDto) {
@@ -857,15 +663,13 @@ export class TaxReportsService {
 
     const normalized = this.normalizePeriod(request);
     const range = this.resolvePeriodRange(normalized);
-    const invoices = this.filterVatPayerInvoices(
+    const entries = this.toVatEntries(
       await this.getInvoicesForPeriod(subject.id, range),
     );
-
-    this.ensureClassifications(invoices);
     const xml =
       normalized.reportType === 'vat_return'
-        ? await this.buildFuVatReturnXml(subject, normalized, invoices)
-        : await this.buildFuControlStatementXml(subject, normalized, invoices);
+        ? await this.buildFuVatReturnXml(subject, normalized, entries)
+        : await this.buildFuControlStatementXml(subject, normalized, entries);
 
     return {
       fileName: this.getExportFileName(subject, normalized),

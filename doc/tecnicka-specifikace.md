@@ -64,7 +64,21 @@ V1 běží synchronně přes REST API; samostatný worker/queue není povinný.
 4. `infra/docker` - Dockerfile, compose, init skripty
 5. `doc` - funkční + technická dokumentace
 
-### 2.3 Komunikační pravidla
+### 2.3 Vrstvy v API (CR-0057)
+- **Doména (čisté funkce, bez Nestu a DB)** – testuje se bez mocků:
+  - `invoice/domain/invoice-calculation.ts` – výpočet řádků a součtů, rekapitulace DPH,
+  - `invoice/domain/invoice-issue-validation.ts` – kontroly před vystavením,
+  - `invoice/domain/invoice-numbering.ts` – formát čísla dokladu,
+  - `invoice/domain/supplier-snapshot.ts` – snapshot dodavatele,
+  - `invoice/payment/payment-qr.ts` – IBAN a SPD payload,
+  - `tax/vat-regime.ts` – pravidla DPH režimů, číselník kódů předmětu plnění,
+  - `tax/vat-entries.ts` – **DPH záznamy**: normalizovaná podoba dokladů pro podání (směr výstup/vstup, režim, sazba, základ, daň, DUZP, doklad, protistrana),
+  - `tax-reports/mapping/vat-return.mapping.ts`, `control-statement.mapping.ts` – DPH záznamy → řádky přiznání / oddíly KH.
+- **Prezentace**: `invoice/invoice.mapper.ts` (DB → tvar API odpovědí), `invoice/pdf/invoice-pdf.renderer.ts` (PDF, injektovatelná služba).
+- **Aplikační služby (Nest)**: `InvoiceService`, `TaxReportsService` – načítají a ukládají data přes Prismu a orchestrují doménu. `TaxReportsService` převede doklady období na DPH záznamy a z nich přes mapování sestaví XML.
+- Pravidlo: nový typ dokladu (přijatý doklad, opravný doklad) = nový převodník na DPH záznamy; mapování podání se nemění, jen začne zpracovávat i záznamy `input`.
+
+### 2.4 Komunikační pravidla
 - Frontend komunikuje pouze s API (`/api/v1/*`).
 - API komunikuje s DB přes ORM.
 - Žádný přímý přístup z frontend do DB.

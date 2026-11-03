@@ -3,157 +3,49 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
-  UnprocessableEntityException,
 } from '@nestjs/common';
-import {
-  Invoice,
-  InvoiceItem,
-  InvoiceStatus,
-  PaymentMethod,
-  Prisma,
-  Subject,
-  TaxClassification,
-} from '@prisma/client';
-import Decimal from 'decimal.js';
-import PDFDocument from 'pdfkit';
+import { Prisma, Subject, TaxClassification } from '@prisma/client';
 import QRCode from 'qrcode';
-import { createHash } from 'node:crypto';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  NON_VAT_PAYER_INVOICE_NOTE,
-  STANDARD_VAT_RATES,
-  VAT_REGIME_INVOICE_NOTES,
-  chargesVat,
-  effectiveVatRate,
-  isCzVatId,
-} from '../tax/vat-regime';
-import {
-  addDaysDateOnly,
-  formatDateOnlyCz,
-  todayDateOnly,
-} from '../utils/date-only';
+import { addDaysDateOnly, todayDateOnly } from '../utils/date-only';
 import { ChangeInvoiceNumberDto } from './dto/change-invoice-number.dto';
 import { ListInvoicesQueryDto } from './dto/list-invoices.query.dto';
 import { InvoiceItemDto } from './dto/invoice-item.dto';
 import { UpsertInvoiceDto } from './dto/upsert-invoice.dto';
-
-export type InvoiceListItem = {
-  id: string;
-  invoiceNumber: string | null;
-  status: 'draft' | 'issued' | 'paid' | 'cancelled' | 'overdue';
-  customerName: string;
-  issueDate: string;
-  dueDate: string;
-  totalWithoutVat: string;
-  totalWithVat: string;
-  paidAt: string | null;
-  description: string;
-};
-
-type InvoiceListRow = Invoice & {
-  items: Array<Pick<InvoiceItem, 'description'>>;
-};
-
-export type InvoiceDetailItem = {
-  id: string;
-  position: number;
-  description: string;
-  quantity: string;
-  unit: string;
-  unitPrice: string;
-  vatRate: number;
-  lineTotalWithoutVat: string;
-  lineVatAmount: string;
-  lineTotalWithVat: string;
-};
-
-export type InvoiceDetail = {
-  id: string;
-  invoiceNumber: string | null;
-  status: 'draft' | 'issued' | 'paid' | 'cancelled' | 'overdue';
-  variableSymbol: string;
-  issueDate: string;
-  taxableSupplyDate: string;
-  dueDate: string;
-  paymentMethod: PaymentMethod;
-  taxClassification: TaxClassification | null;
-  reverseChargeCode: string | null;
-  customerName: string;
-  customerIco: string | null;
-  customerDic: string | null;
-  customerStreet: string;
-  customerCity: string;
-  customerPostalCode: string;
-  customerCountryCode: string;
-  note: string | null;
-  totalWithoutVat: string;
-  totalVat: string;
-  totalWithVat: string;
-  pdfVersion: number;
-  paidAt: string | null;
-  supplierBankAccountPrefix: string | null;
-  supplierBankAccountNumber: string;
-  supplierBankCode: string;
-  supplierIsVatPayer: boolean;
-  items: InvoiceDetailItem[];
-};
-
-type SupplierSnapshot = {
-  firstName: string;
-  lastName: string;
-  businessName: string | null;
-  ico: string;
-  dic: string | null;
-  street: string;
-  city: string;
-  postalCode: string;
-  countryCode: string;
-  bankAccountPrefix: string | null;
-  bankAccountNumber: string;
-  bankCode: string;
-  isVatPayer: boolean;
-};
-
-type ComputedItems = {
-  items: Array<{
-    position: number;
-    description: string;
-    quantity: string;
-    unit: string;
-    unitPrice: string;
-    vatRate: number;
-    lineTotalWithoutVat: string;
-    lineVatAmount: string;
-    lineTotalWithVat: string;
-  }>;
-  totalWithoutVat: string;
-  totalVat: string;
-  totalWithVat: string;
-};
-
-type PdfFontNames = {
-  regular: string;
-  bold: string;
-};
+import {
+  InvoiceDetail,
+  InvoiceListItem,
+  mapDetail,
+  mapListItem,
+} from './invoice.mapper';
+import { computeInvoiceTotals } from './domain/invoice-calculation';
+import { validateReadyToIssue } from './domain/invoice-issue-validation';
+import {
+  formatInvoiceNumber,
+  parseInvoiceSequenceForYear,
+} from './domain/invoice-numbering';
+import {
+  buildSupplierSnapshot,
+  resolveSupplierSnapshot,
+} from './domain/supplier-snapshot';
+import { buildSpdPayload, toCzIban } from './payment/payment-qr';
+import {
+  InvoicePdfRenderer,
+  createInvoicePdfHash,
+  sanitizeFileToken,
+} from './pdf/invoice-pdf.renderer';
 
 type DbClient = PrismaService | Prisma.TransactionClient;
 
 @Injectable()
 export class InvoiceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly pdfRenderer: InvoicePdfRenderer,
+  ) {}
 
   private startOfToday(): Date {
     return todayDateOnly();
-  }
-
-  private toEffectiveStatus(status: InvoiceStatus, dueDate: Date) {
-    const today = this.startOfToday();
-    if (status === 'issued' && dueDate < today) {
-      return 'overdue' as const;
-    }
-    return status;
   }
 
   private normalizePostalCode(postalCode: string): string {
@@ -200,27 +92,6 @@ export class InvoiceService {
     return addDaysDateOnly(date, days);
   }
 
-  private parseInvoiceSequenceForYear(
-    invoiceNumber: string | null,
-    year: number,
-  ): number | null {
-    if (!invoiceNumber) {
-      return null;
-    }
-
-    const match = invoiceNumber.match(new RegExp(`^${year}(\\d{6})$`));
-    if (!match) {
-      return null;
-    }
-
-    const parsed = Number.parseInt(match[1], 10);
-    if (!Number.isFinite(parsed) || parsed < 1) {
-      return null;
-    }
-
-    return parsed;
-  }
-
   private async getMaxAutoInvoiceSequenceForYear(
     db: DbClient,
     subjectId: string,
@@ -241,10 +112,7 @@ export class InvoiceService {
 
     let maxSequence = 0;
     for (const item of numbers) {
-      const sequence = this.parseInvoiceSequenceForYear(
-        item.invoiceNumber,
-        year,
-      );
+      const sequence = parseInvoiceSequenceForYear(item.invoiceNumber, year);
       if (sequence && sequence > maxSequence) {
         maxSequence = sequence;
       }
@@ -305,7 +173,7 @@ export class InvoiceService {
       },
     });
 
-    return this.formatInvoiceNumber(year, next.currentValue);
+    return formatInvoiceNumber(year, next.currentValue);
   }
 
   private resolveVariableSymbol(
@@ -353,175 +221,9 @@ export class InvoiceService {
       subject.id,
       year,
     );
-    const invoiceNumber = this.formatInvoiceNumber(year, maxSequence + 1);
+    const invoiceNumber = formatInvoiceNumber(year, maxSequence + 1);
 
     return { invoiceNumber };
-  }
-
-  private computeInvoiceTotals(
-    inputItems: InvoiceItemDto[],
-    regime: {
-      isVatPayer: boolean;
-      classification: TaxClassification | null | undefined;
-    },
-  ): ComputedItems {
-    if (inputItems.length === 0) {
-      throw new BadRequestException('Invoice must contain at least one item');
-    }
-
-    const computedItems = inputItems.map((item, index) => {
-      const quantity = new Decimal(item.quantity);
-      const unitPrice = new Decimal(item.unitPrice);
-      const vatRate = effectiveVatRate(
-        regime.isVatPayer,
-        regime.classification,
-        item.vatRate,
-      );
-
-      if (quantity.lte(0)) {
-        throw new BadRequestException(
-          'Item quantity must be greater than zero',
-        );
-      }
-
-      if (unitPrice.lt(0)) {
-        throw new BadRequestException('Item unit price cannot be negative');
-      }
-
-      const lineTotalWithoutVat = quantity
-        .mul(unitPrice)
-        .toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN);
-      const lineVatAmount = lineTotalWithoutVat
-        .mul(new Decimal(vatRate).div(100))
-        .toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN);
-      const lineTotalWithVat = lineTotalWithoutVat
-        .add(lineVatAmount)
-        .toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN);
-
-      return {
-        position: index + 1,
-        description: item.description.trim(),
-        quantity: quantity
-          .toDecimalPlaces(3, Decimal.ROUND_HALF_EVEN)
-          .toFixed(3),
-        unit: item.unit.trim(),
-        unitPrice: unitPrice
-          .toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN)
-          .toFixed(2),
-        vatRate,
-        lineTotalWithoutVat: lineTotalWithoutVat.toFixed(2),
-        lineVatAmount: lineVatAmount.toFixed(2),
-        lineTotalWithVat: lineTotalWithVat.toFixed(2),
-      };
-    });
-
-    const totalWithoutVat = computedItems
-      .reduce((sum, item) => sum.add(item.lineTotalWithoutVat), new Decimal(0))
-      .toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN);
-    const totalVat = computedItems
-      .reduce((sum, item) => sum.add(item.lineVatAmount), new Decimal(0))
-      .toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN);
-    const totalWithVat = totalWithoutVat
-      .add(totalVat)
-      .toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN);
-
-    return {
-      items: computedItems,
-      totalWithoutVat: totalWithoutVat.toFixed(2),
-      totalVat: totalVat.toFixed(2),
-      totalWithVat: totalWithVat.toFixed(2),
-    };
-  }
-
-  private buildSupplierSnapshot(subject: Subject): SupplierSnapshot {
-    return {
-      firstName: subject.firstName,
-      lastName: subject.lastName,
-      businessName: subject.businessName,
-      ico: subject.ico,
-      dic: subject.dic,
-      street: subject.street,
-      city: subject.city,
-      postalCode: subject.postalCode,
-      countryCode: subject.countryCode,
-      bankAccountPrefix: subject.bankAccountPrefix,
-      bankAccountNumber: subject.bankAccountNumber,
-      bankCode: subject.bankCode,
-      isVatPayer: subject.isVatPayer,
-    };
-  }
-
-  private formatInvoiceNumber(year: number, currentValue: number): string {
-    return `${year}${String(currentValue).padStart(6, '0')}`;
-  }
-
-  private mapListItem(row: InvoiceListRow): InvoiceListItem {
-    return {
-      id: row.id,
-      invoiceNumber: row.invoiceNumber,
-      status: this.toEffectiveStatus(row.status, row.dueDate),
-      customerName: row.customerName,
-      issueDate: row.issueDate.toISOString(),
-      dueDate: row.dueDate.toISOString(),
-      totalWithoutVat: row.totalWithoutVat.toString(),
-      totalWithVat: row.totalWithVat.toString(),
-      paidAt: row.paidAt?.toISOString() ?? null,
-      description: row.items[0]?.description?.slice(0, 120) ?? '',
-    };
-  }
-
-  private mapDetailItem(item: InvoiceItem): InvoiceDetailItem {
-    return {
-      id: item.id,
-      position: item.position,
-      description: item.description,
-      quantity: item.quantity.toString(),
-      unit: item.unit,
-      unitPrice: item.unitPrice.toString(),
-      vatRate: item.vatRate,
-      lineTotalWithoutVat: item.lineTotalWithoutVat.toString(),
-      lineVatAmount: item.lineVatAmount.toString(),
-      lineTotalWithVat: item.lineTotalWithVat.toString(),
-    };
-  }
-
-  private mapDetail(
-    row: Invoice & { items: InvoiceItem[]; subject: Subject },
-  ): InvoiceDetail {
-    const supplier = this.resolveSupplierSnapshot(row);
-
-    return {
-      id: row.id,
-      invoiceNumber: row.invoiceNumber,
-      status: this.toEffectiveStatus(row.status, row.dueDate),
-      variableSymbol: row.variableSymbol,
-      issueDate: row.issueDate.toISOString(),
-      taxableSupplyDate: row.taxableSupplyDate.toISOString(),
-      dueDate: row.dueDate.toISOString(),
-      paymentMethod: row.paymentMethod,
-      taxClassification: row.taxClassification,
-      reverseChargeCode: row.reverseChargeCode,
-      customerName: row.customerName,
-      customerIco: row.customerIco,
-      customerDic: row.customerDic,
-      customerStreet: row.customerStreet,
-      customerCity: row.customerCity,
-      customerPostalCode: row.customerPostalCode,
-      customerCountryCode: row.customerCountryCode,
-      note: row.note,
-      totalWithoutVat: row.totalWithoutVat.toString(),
-      totalVat: row.totalVat.toString(),
-      totalWithVat: row.totalWithVat.toString(),
-      pdfVersion: row.pdfVersion,
-      paidAt: row.paidAt?.toISOString() ?? null,
-      supplierBankAccountPrefix: supplier.bankAccountPrefix,
-      supplierBankAccountNumber: supplier.bankAccountNumber,
-      supplierBankCode: supplier.bankCode,
-      supplierIsVatPayer: supplier.isVatPayer,
-      items: row.items
-        .sort((a, b) => a.position - b.position)
-        .map((item) => this.mapDetailItem(item)),
-    };
   }
 
   private async getSubjectByUserOrThrow(userId: string): Promise<Subject> {
@@ -573,974 +275,6 @@ export class InvoiceService {
       taxableSupplyDate,
       dueDate,
     };
-  }
-
-  private resolveSupplierSnapshot(
-    invoice: Invoice & { subject: Subject },
-  ): SupplierSnapshot {
-    const raw = invoice.supplierSnapshot;
-    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-      return this.buildSupplierSnapshot(invoice.subject);
-    }
-
-    const snapshot = raw as Record<string, unknown>;
-    const fallback = this.buildSupplierSnapshot(invoice.subject);
-
-    return {
-      firstName:
-        typeof snapshot.firstName === 'string'
-          ? snapshot.firstName
-          : fallback.firstName,
-      lastName:
-        typeof snapshot.lastName === 'string'
-          ? snapshot.lastName
-          : fallback.lastName,
-      businessName:
-        typeof snapshot.businessName === 'string'
-          ? snapshot.businessName
-          : fallback.businessName,
-      ico: typeof snapshot.ico === 'string' ? snapshot.ico : fallback.ico,
-      dic: typeof snapshot.dic === 'string' ? snapshot.dic : fallback.dic,
-      street:
-        typeof snapshot.street === 'string' ? snapshot.street : fallback.street,
-      city: typeof snapshot.city === 'string' ? snapshot.city : fallback.city,
-      postalCode:
-        typeof snapshot.postalCode === 'string'
-          ? snapshot.postalCode
-          : fallback.postalCode,
-      countryCode:
-        typeof snapshot.countryCode === 'string'
-          ? snapshot.countryCode
-          : fallback.countryCode,
-      bankAccountPrefix:
-        typeof snapshot.bankAccountPrefix === 'string'
-          ? snapshot.bankAccountPrefix
-          : fallback.bankAccountPrefix,
-      bankAccountNumber:
-        typeof snapshot.bankAccountNumber === 'string'
-          ? snapshot.bankAccountNumber
-          : fallback.bankAccountNumber,
-      bankCode:
-        typeof snapshot.bankCode === 'string'
-          ? snapshot.bankCode
-          : fallback.bankCode,
-      isVatPayer:
-        typeof snapshot.isVatPayer === 'boolean'
-          ? snapshot.isVatPayer
-          : fallback.isVatPayer,
-    };
-  }
-
-  private toCzIban(
-    bankAccountPrefix: string | null,
-    bankAccountNumber: string,
-    bankCode: string,
-  ): string {
-    if (!/^\d{2,10}$/.test(bankAccountNumber)) {
-      throw new UnprocessableEntityException(
-        'Nevalidní číslo účtu pro QR platbu',
-      );
-    }
-    if (bankAccountPrefix && !/^\d{1,6}$/.test(bankAccountPrefix)) {
-      throw new UnprocessableEntityException(
-        'Nevalidní prefix účtu pro QR platbu',
-      );
-    }
-    if (!/^\d{4}$/.test(bankCode)) {
-      throw new UnprocessableEntityException(
-        'Nevalidní kód banky pro QR platbu',
-      );
-    }
-
-    const prefix = (bankAccountPrefix ?? '').padStart(6, '0');
-    const number = bankAccountNumber.padStart(10, '0');
-    const bban = `${bankCode}${prefix}${number}`;
-    const rearranged = `${bban}CZ00`;
-
-    let numeric = '';
-    for (const char of rearranged) {
-      if (/[A-Z]/.test(char)) {
-        numeric += String(char.charCodeAt(0) - 55);
-      } else {
-        numeric += char;
-      }
-    }
-
-    let remainder = 0;
-    for (const digit of numeric) {
-      remainder = (remainder * 10 + Number(digit)) % 97;
-    }
-
-    const checkDigits = String(98 - remainder).padStart(2, '0');
-    return `CZ${checkDigits}${bban}`;
-  }
-
-  private buildSpdPayload(
-    iban: string,
-    amount: string,
-    variableSymbol: string,
-  ): string {
-    return `SPD*1.0*ACC:${iban}*AM:${amount}*CC:CZK*X-VS:${variableSymbol}`;
-  }
-
-  private createPdfHash(input: {
-    invoice: Invoice & { items: InvoiceItem[] };
-    supplier: SupplierSnapshot;
-    spdPayload: string;
-  }): string {
-    const payload = {
-      id: input.invoice.id,
-      invoiceNumber: input.invoice.invoiceNumber,
-      variableSymbol: input.invoice.variableSymbol,
-      issueDate: input.invoice.issueDate.toISOString(),
-      dueDate: input.invoice.dueDate.toISOString(),
-      taxableSupplyDate: input.invoice.taxableSupplyDate.toISOString(),
-      taxClassification: input.invoice.taxClassification,
-      customerName: input.invoice.customerName,
-      customerIco: input.invoice.customerIco,
-      customerDic: input.invoice.customerDic,
-      customerStreet: input.invoice.customerStreet,
-      customerCity: input.invoice.customerCity,
-      customerPostalCode: input.invoice.customerPostalCode,
-      customerCountryCode: input.invoice.customerCountryCode,
-      note: input.invoice.note,
-      totalWithoutVat: input.invoice.totalWithoutVat.toString(),
-      totalVat: input.invoice.totalVat.toString(),
-      totalWithVat: input.invoice.totalWithVat.toString(),
-      supplier: input.supplier,
-      items: input.invoice.items
-        .sort((a, b) => a.position - b.position)
-        .map((item) => ({
-          position: item.position,
-          description: item.description,
-          quantity: item.quantity.toString(),
-          unit: item.unit,
-          unitPrice: item.unitPrice.toString(),
-          vatRate: item.vatRate,
-          lineTotalWithoutVat: item.lineTotalWithoutVat.toString(),
-          lineVatAmount: item.lineVatAmount.toString(),
-          lineTotalWithVat: item.lineTotalWithVat.toString(),
-        })),
-      spdPayload: input.spdPayload,
-    };
-
-    return createHash('sha256').update(JSON.stringify(payload)).digest('hex');
-  }
-
-  private formatMoney(value: string): string {
-    const numeric = Number(value);
-    return `${numeric.toLocaleString('cs-CZ', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })} Kč`;
-  }
-
-  private formatDateCz(value: Date): string {
-    return formatDateOnlyCz(value);
-  }
-
-  private formatSupplierBankAccount(supplier: SupplierSnapshot): string {
-    return supplier.bankAccountPrefix
-      ? `${supplier.bankAccountPrefix}-${supplier.bankAccountNumber}/${supplier.bankCode}`
-      : `${supplier.bankAccountNumber}/${supplier.bankCode}`;
-  }
-
-  private sanitizeFileToken(value: string): string {
-    return value
-      .trim()
-      .replace(/\s+/g, '')
-      .replace(/[^0-9A-Za-z_-]/g, '-')
-      .replace(/-+/g, '-');
-  }
-
-  private buildVatRows(items: InvoiceItem[]) {
-    const grouped = new Map<
-      number,
-      { base: Decimal; vat: Decimal; total: Decimal }
-    >();
-    for (const item of items) {
-      const current = grouped.get(item.vatRate) ?? {
-        base: new Decimal(0),
-        vat: new Decimal(0),
-        total: new Decimal(0),
-      };
-      current.base = current.base.add(item.lineTotalWithoutVat.toString());
-      current.vat = current.vat.add(item.lineVatAmount.toString());
-      current.total = current.total.add(item.lineTotalWithVat.toString());
-      grouped.set(item.vatRate, current);
-    }
-
-    return Array.from(grouped.entries())
-      .sort((a, b) => b[0] - a[0])
-      .map(([rate, values]) => ({
-        rate,
-        base: values.base.toFixed(2),
-        vat: values.vat.toFixed(2),
-        total: values.total.toFixed(2),
-      }));
-  }
-
-  private resolvePdfFontNames(doc: PDFKit.PDFDocument): PdfFontNames {
-    const candidates = [
-      join(__dirname, '../../assets/fonts'),
-      join(process.cwd(), 'assets/fonts'),
-      join(process.cwd(), 'apps/api/assets/fonts'),
-    ];
-
-    for (const base of candidates) {
-      const regular = join(base, 'NotoSans-Regular.ttf');
-      const bold = join(base, 'NotoSans-Bold.ttf');
-      if (existsSync(regular) && existsSync(bold)) {
-        doc.registerFont('TappyFaktur-Regular', regular);
-        doc.registerFont('TappyFaktur-Bold', bold);
-        return {
-          regular: 'TappyFaktur-Regular',
-          bold: 'TappyFaktur-Bold',
-        };
-      }
-    }
-
-    return {
-      regular: 'Helvetica',
-      bold: 'Helvetica-Bold',
-    };
-  }
-
-  private cleanInlineText(value?: string | null): string {
-    if (!value) {
-      return '';
-    }
-    return value.replace(/\s+/g, ' ').trim();
-  }
-
-  private drawSingleLine(
-    doc: PDFKit.PDFDocument,
-    text: string,
-    x: number,
-    y: number,
-    width: number,
-    fontName: string,
-    fontSize = 9,
-    align: 'left' | 'right' | 'center' | 'justify' = 'left',
-    color = '#111111',
-  ): void {
-    doc
-      .font(fontName)
-      .fontSize(fontSize)
-      .fillColor(color)
-      .text(this.cleanInlineText(text), x, y, {
-        width,
-        align,
-        lineBreak: false,
-        ellipsis: true,
-      });
-  }
-
-  private async renderPdf(input: {
-    invoice: Invoice & { items: InvoiceItem[] };
-    supplier: SupplierSnapshot;
-    qrDataUrl: string;
-    iban: string;
-  }): Promise<Buffer> {
-    const doc = new PDFDocument({
-      size: 'A4',
-      margin: 36,
-      bufferPages: true,
-    });
-
-    const chunks: Buffer[] = [];
-    const qrImage = Buffer.from(
-      input.qrDataUrl.replace(/^data:image\/png;base64,/, ''),
-      'base64',
-    );
-
-    return new Promise<Buffer>((resolve, reject) => {
-      doc.on('data', (chunk) => chunks.push(chunk as Buffer));
-      doc.on('end', () => resolve(Buffer.concat(chunks)));
-      doc.on('error', reject);
-
-      const fonts = this.resolvePdfFontNames(doc);
-      const left = doc.page.margins.left;
-      const top = doc.page.margins.top;
-      const contentWidth =
-        doc.page.width - doc.page.margins.left - doc.page.margins.right;
-      const right = left + contentWidth;
-      const colGap = 20;
-      const colWidth = (contentWidth - colGap) / 2;
-      const rightColX = left + colWidth + colGap;
-
-      const supplierName = input.supplier.businessName
-        ? input.supplier.businessName
-        : `${input.supplier.firstName} ${input.supplier.lastName}`;
-      const invoiceNumber =
-        input.invoice.invoiceNumber ?? input.invoice.id.slice(0, 8);
-
-      this.drawSingleLine(
-        doc,
-        'Dodavatel',
-        left,
-        top,
-        colWidth,
-        fonts.bold,
-        10,
-      );
-      this.drawSingleLine(
-        doc,
-        supplierName,
-        left,
-        top + 16,
-        colWidth,
-        fonts.regular,
-      );
-      this.drawSingleLine(
-        doc,
-        input.supplier.street,
-        left,
-        top + 30,
-        colWidth,
-        fonts.regular,
-      );
-      this.drawSingleLine(
-        doc,
-        `${input.supplier.postalCode} ${input.supplier.city}`,
-        left,
-        top + 44,
-        colWidth,
-        fonts.regular,
-      );
-      this.drawSingleLine(
-        doc,
-        input.supplier.countryCode === 'CZ'
-          ? 'Česká republika'
-          : input.supplier.countryCode,
-        left,
-        top + 58,
-        colWidth,
-        fonts.regular,
-      );
-      this.drawSingleLine(
-        doc,
-        `IČ: ${input.supplier.ico}${input.supplier.dic ? `    DIČ: ${input.supplier.dic}` : ''}`,
-        left,
-        top + 74,
-        colWidth,
-        fonts.regular,
-      );
-
-      const showVat = input.supplier.isVatPayer;
-      this.drawSingleLine(
-        doc,
-        showVat ? 'Faktura - daňový doklad' : 'Faktura',
-        rightColX,
-        top + 4,
-        colWidth - 104,
-        fonts.bold,
-        16,
-      );
-      doc.rect(right - 94, top, 94, 28).fill('#eeeeee');
-      this.drawSingleLine(
-        doc,
-        invoiceNumber,
-        right - 90,
-        top + 8,
-        86,
-        fonts.bold,
-        12,
-        'center',
-      );
-
-      this.drawSingleLine(
-        doc,
-        'Odběratel',
-        rightColX,
-        top + 98,
-        colWidth,
-        fonts.bold,
-        10,
-      );
-      this.drawSingleLine(
-        doc,
-        input.invoice.customerName,
-        rightColX,
-        top + 114,
-        colWidth,
-        fonts.regular,
-      );
-      this.drawSingleLine(
-        doc,
-        input.invoice.customerStreet,
-        rightColX,
-        top + 128,
-        colWidth,
-        fonts.regular,
-      );
-      this.drawSingleLine(
-        doc,
-        `${input.invoice.customerPostalCode} ${input.invoice.customerCity}`,
-        rightColX,
-        top + 142,
-        colWidth,
-        fonts.regular,
-      );
-      this.drawSingleLine(
-        doc,
-        input.invoice.customerCountryCode === 'CZ'
-          ? 'Česká republika'
-          : input.invoice.customerCountryCode,
-        rightColX,
-        top + 156,
-        colWidth,
-        fonts.regular,
-      );
-      const customerIdLine = [
-        input.invoice.customerIco ? `IČ: ${input.invoice.customerIco}` : '',
-        input.invoice.customerDic ? `DIČ: ${input.invoice.customerDic}` : '',
-      ]
-        .filter(Boolean)
-        .join('    ');
-      if (customerIdLine) {
-        this.drawSingleLine(
-          doc,
-          customerIdLine,
-          rightColX,
-          top + 170,
-          colWidth,
-          fonts.regular,
-        );
-      }
-
-      let y = top + 204;
-      this.drawSingleLine(doc, 'Způsob úhrady:', left, y, 92, fonts.regular, 9);
-      this.drawSingleLine(doc, 'Převodem', left + 72, y, 120, fonts.bold, 9);
-      y += 16;
-
-      const paymentTableTop = y;
-      const paymentTableHeight = 94;
-      const col1Width = 220;
-      const col2Width = 130;
-      const col3Width = contentWidth - col1Width - col2Width;
-      doc
-        .rect(left, paymentTableTop, contentWidth, paymentTableHeight)
-        .strokeColor('#d4d4d4')
-        .stroke();
-      doc
-        .moveTo(left + col1Width, paymentTableTop)
-        .lineTo(left + col1Width, paymentTableTop + paymentTableHeight)
-        .stroke();
-      doc
-        .moveTo(left + col1Width + col2Width, paymentTableTop)
-        .lineTo(
-          left + col1Width + col2Width,
-          paymentTableTop + paymentTableHeight,
-        )
-        .stroke();
-      doc
-        .moveTo(left, paymentTableTop + 20)
-        .lineTo(right, paymentTableTop + 20)
-        .stroke();
-
-      this.drawSingleLine(
-        doc,
-        'Bankovní účet',
-        left + 6,
-        paymentTableTop + 6,
-        col1Width - 12,
-        fonts.bold,
-        9,
-      );
-      this.drawSingleLine(
-        doc,
-        'Symbol',
-        left + col1Width + 6,
-        paymentTableTop + 6,
-        col2Width - 12,
-        fonts.bold,
-        9,
-      );
-      this.drawSingleLine(
-        doc,
-        'Datum',
-        left + col1Width + col2Width + 6,
-        paymentTableTop + 6,
-        col3Width - 12,
-        fonts.bold,
-        9,
-      );
-
-      this.drawSingleLine(
-        doc,
-        this.formatSupplierBankAccount(input.supplier),
-        left + 6,
-        paymentTableTop + 28,
-        col1Width - 12,
-        fonts.regular,
-        9,
-      );
-      this.drawSingleLine(
-        doc,
-        `IBAN: ${input.iban}`,
-        left + 6,
-        paymentTableTop + 42,
-        col1Width - 12,
-        fonts.regular,
-        9,
-      );
-
-      this.drawSingleLine(
-        doc,
-        'variabilní:',
-        left + col1Width + 6,
-        paymentTableTop + 28,
-        52,
-        fonts.regular,
-        9,
-      );
-      this.drawSingleLine(
-        doc,
-        input.invoice.variableSymbol,
-        left + col1Width + 58,
-        paymentTableTop + 28,
-        col2Width - 64,
-        fonts.bold,
-        9,
-      );
-      this.drawSingleLine(
-        doc,
-        'konstantní:',
-        left + col1Width + 6,
-        paymentTableTop + 42,
-        52,
-        fonts.regular,
-        9,
-      );
-      this.drawSingleLine(
-        doc,
-        '0308',
-        left + col1Width + 58,
-        paymentTableTop + 42,
-        col2Width - 64,
-        fonts.bold,
-        9,
-      );
-
-      this.drawSingleLine(
-        doc,
-        'vystavení:',
-        left + col1Width + col2Width + 6,
-        paymentTableTop + 28,
-        52,
-        fonts.regular,
-        9,
-      );
-      this.drawSingleLine(
-        doc,
-        this.formatDateCz(input.invoice.issueDate),
-        left + col1Width + col2Width + 58,
-        paymentTableTop + 28,
-        col3Width - 64,
-        fonts.bold,
-        9,
-      );
-      this.drawSingleLine(
-        doc,
-        'splatnosti:',
-        left + col1Width + col2Width + 6,
-        paymentTableTop + 42,
-        52,
-        fonts.regular,
-        9,
-      );
-      this.drawSingleLine(
-        doc,
-        this.formatDateCz(input.invoice.dueDate),
-        left + col1Width + col2Width + 58,
-        paymentTableTop + 42,
-        col3Width - 64,
-        fonts.bold,
-        9,
-      );
-      this.drawSingleLine(
-        doc,
-        'DUZP:',
-        left + col1Width + col2Width + 6,
-        paymentTableTop + 56,
-        52,
-        fonts.regular,
-        9,
-      );
-      this.drawSingleLine(
-        doc,
-        this.formatDateCz(input.invoice.taxableSupplyDate),
-        left + col1Width + col2Width + 58,
-        paymentTableTop + 56,
-        col3Width - 64,
-        fonts.bold,
-        9,
-      );
-
-      y = paymentTableTop + paymentTableHeight + 14;
-      this.drawSingleLine(
-        doc,
-        `Fakturujeme: ${input.invoice.note ?? input.invoice.items[0]?.description ?? ''}`,
-        left,
-        y,
-        contentWidth,
-        fonts.regular,
-        9,
-        'left',
-        '#222222',
-      );
-
-      y += 18;
-      const itemHeaderHeight = 18;
-      const itemRowHeight = 18;
-      const cols = showVat ? [170, 50, 64, 40, 72, 62, 65] : [283, 60, 90, 90];
-      const itemHeaders = showVat
-        ? [
-            'Označení dodávky',
-            'Počet m.j.',
-            'Cena za m.j.',
-            'DPH %',
-            'Bez DPH',
-            'DPH',
-            'Celkem',
-          ]
-        : ['Označení dodávky', 'Počet m.j.', 'Cena za m.j.', 'Celkem'];
-      // Spodní hranice obsahu stránky (nad patičkou).
-      const pageBodyBottom = doc.page.height - doc.page.margins.bottom - 32;
-
-      const drawItemHeader = () => {
-        doc.rect(left, y, contentWidth, itemHeaderHeight).fill('#f3f3f3');
-        let hx = left + 4;
-        for (let i = 0; i < itemHeaders.length; i += 1) {
-          this.drawSingleLine(
-            doc,
-            itemHeaders[i],
-            hx,
-            y + 6,
-            cols[i] - 8,
-            fonts.bold,
-            8,
-            i === 0 ? 'left' : 'right',
-          );
-          hx += cols[i];
-        }
-        y += itemHeaderHeight;
-        doc.moveTo(left, y).lineTo(right, y).strokeColor('#d4d4d4').stroke();
-      };
-
-      const startContinuationPage = () => {
-        doc.addPage();
-        y = doc.page.margins.top;
-        this.drawSingleLine(
-          doc,
-          `Faktura ${invoiceNumber} – pokračování`,
-          left,
-          y,
-          contentWidth,
-          fonts.bold,
-          10,
-        );
-        y += 22;
-      };
-
-      drawItemHeader();
-
-      const sortedItems = [...input.invoice.items].sort(
-        (a, b) => a.position - b.position,
-      );
-      for (const item of sortedItems) {
-        if (y + itemRowHeight > pageBodyBottom) {
-          startContinuationPage();
-          drawItemHeader();
-        }
-        const cells = showVat
-          ? [
-              item.description,
-              item.quantity.toString(),
-              item.unitPrice.toString(),
-              String(item.vatRate),
-              this.formatMoney(item.lineTotalWithoutVat.toString()),
-              this.formatMoney(item.lineVatAmount.toString()),
-              this.formatMoney(item.lineTotalWithVat.toString()),
-            ]
-          : [
-              item.description,
-              item.quantity.toString(),
-              item.unitPrice.toString(),
-              this.formatMoney(item.lineTotalWithVat.toString()),
-            ];
-        let cx = left + 4;
-        cells.forEach((cell, index) => {
-          const isLast = index === cells.length - 1;
-          this.drawSingleLine(
-            doc,
-            cell,
-            cx,
-            y + 5,
-            cols[index] - 8,
-            isLast ? fonts.bold : fonts.regular,
-            8.5,
-            index === 0 ? 'left' : 'right',
-          );
-          cx += cols[index];
-        });
-        y += itemRowHeight;
-        doc.moveTo(left, y).lineTo(right, y).strokeColor('#e5e5e5').stroke();
-      }
-
-      // Souhrn (QR + rekapitulace DPH + poznámka) se nedělí mezi stránky.
-      const vatRows = this.buildVatRows(sortedItems);
-      const vatHeaderH = 16;
-      const vatRowH = 16;
-      const vatBlockHeight = showVat
-        ? 8 + vatHeaderH + vatRowH * (vatRows.length + 1) + 10 + 26
-        : 40;
-      const legalNotes: string[] = [];
-      if (!showVat) {
-        legalNotes.push(NON_VAT_PAYER_INVOICE_NOTE);
-      } else if (input.invoice.taxClassification) {
-        const regimeNote =
-          VAT_REGIME_INVOICE_NOTES[input.invoice.taxClassification];
-        if (regimeNote) {
-          legalNotes.push(regimeNote);
-        }
-      }
-      const summaryHeight =
-        10 +
-        Math.max(115, vatBlockHeight) +
-        legalNotes.length * 16 +
-        (input.invoice.note ? 20 : 0);
-      if (y + summaryHeight > pageBodyBottom) {
-        startContinuationPage();
-      }
-
-      y += 10;
-      doc.image(qrImage, left, y, { width: 95, height: 95 });
-      this.drawSingleLine(
-        doc,
-        'QR Platba',
-        left + 2,
-        y + 100,
-        100,
-        fonts.bold,
-        10,
-      );
-
-      const vatTableX = left + 190;
-      const vatTableY = y + 8;
-      const vatTableW = contentWidth - 190;
-      let vy = vatTableY;
-      if (showVat) {
-        const vatCols = [62, 88, 88, vatTableW - 238];
-        doc.rect(vatTableX, vatTableY, vatTableW, vatHeaderH).fill('#f3f3f3');
-        let vx = vatTableX + 4;
-        for (const [index, heading] of [
-          'Sazba DPH',
-          'Základ',
-          'Výše DPH',
-          'Celkem',
-        ].entries()) {
-          this.drawSingleLine(
-            doc,
-            heading,
-            vx,
-            vatTableY + 5,
-            vatCols[index] - 8,
-            fonts.bold,
-            8,
-            index === 0 ? 'left' : 'right',
-          );
-          vx += vatCols[index];
-        }
-
-        vy = vatTableY + vatHeaderH;
-        for (const row of vatRows) {
-          vx = vatTableX + 4;
-          this.drawSingleLine(
-            doc,
-            `${row.rate} %`,
-            vx,
-            vy + 5,
-            vatCols[0] - 8,
-            fonts.regular,
-            8.5,
-          );
-          vx += vatCols[0];
-          this.drawSingleLine(
-            doc,
-            this.formatMoney(row.base),
-            vx,
-            vy + 5,
-            vatCols[1] - 8,
-            fonts.regular,
-            8.5,
-            'right',
-          );
-          vx += vatCols[1];
-          this.drawSingleLine(
-            doc,
-            this.formatMoney(row.vat),
-            vx,
-            vy + 5,
-            vatCols[2] - 8,
-            fonts.regular,
-            8.5,
-            'right',
-          );
-          vx += vatCols[2];
-          this.drawSingleLine(
-            doc,
-            this.formatMoney(row.total),
-            vx,
-            vy + 5,
-            vatCols[3] - 8,
-            fonts.bold,
-            8.5,
-            'right',
-          );
-          vy += vatRowH;
-          doc
-            .moveTo(vatTableX, vy)
-            .lineTo(vatTableX + vatTableW, vy)
-            .strokeColor('#e5e5e5')
-            .stroke();
-        }
-
-        vx = vatTableX + 4;
-        this.drawSingleLine(
-          doc,
-          'CELKEM',
-          vx,
-          vy + 5,
-          vatCols[0] - 8,
-          fonts.bold,
-          8.5,
-        );
-        vx += vatCols[0];
-        this.drawSingleLine(
-          doc,
-          this.formatMoney(input.invoice.totalWithoutVat.toString()),
-          vx,
-          vy + 5,
-          vatCols[1] - 8,
-          fonts.bold,
-          8.5,
-          'right',
-        );
-        vx += vatCols[1];
-        this.drawSingleLine(
-          doc,
-          this.formatMoney(input.invoice.totalVat.toString()),
-          vx,
-          vy + 5,
-          vatCols[2] - 8,
-          fonts.bold,
-          8.5,
-          'right',
-        );
-        vx += vatCols[2];
-        this.drawSingleLine(
-          doc,
-          this.formatMoney(input.invoice.totalWithVat.toString()),
-          vx,
-          vy + 5,
-          vatCols[3] - 8,
-          fonts.bold,
-          8.5,
-          'right',
-        );
-
-        vy += vatRowH + 10;
-      }
-      this.drawSingleLine(
-        doc,
-        `Celkem k úhradě: ${this.formatMoney(input.invoice.totalWithVat.toString())}`,
-        vatTableX,
-        vy,
-        vatTableW,
-        fonts.bold,
-        14,
-        'right',
-      );
-
-      let noteY = Math.max(vy + 26, y + 120);
-      for (const legalNote of legalNotes) {
-        this.drawSingleLine(
-          doc,
-          legalNote,
-          left,
-          noteY,
-          contentWidth,
-          fonts.bold,
-          9,
-          'left',
-          '#222222',
-        );
-        noteY += 16;
-      }
-      if (input.invoice.note) {
-        this.drawSingleLine(
-          doc,
-          `Poznámka: ${input.invoice.note}`,
-          left,
-          noteY,
-          contentWidth,
-          fonts.regular,
-          9,
-          'left',
-          '#333333',
-        );
-      }
-
-      // Patička se strankováním na každé stránce.
-      const range = doc.bufferedPageRange();
-      const printedAt = this.formatDateCz(this.startOfToday());
-      for (let pageIndex = 0; pageIndex < range.count; pageIndex += 1) {
-        doc.switchToPage(range.start + pageIndex);
-        const footerY = doc.page.height - doc.page.margins.bottom - 16;
-        doc
-          .moveTo(left, footerY - 12)
-          .lineTo(right, footerY - 12)
-          .strokeColor('#d8d8d8')
-          .stroke();
-        this.drawSingleLine(
-          doc,
-          `Vytiskl(a): ${input.supplier.firstName} ${input.supplier.lastName}, ${printedAt}`,
-          left,
-          footerY,
-          200,
-          fonts.regular,
-          7.5,
-          'left',
-          '#555555',
-        );
-        this.drawSingleLine(
-          doc,
-          'Vystaveno v aplikaci FaktAI',
-          left + 200,
-          footerY,
-          220,
-          fonts.regular,
-          7.5,
-          'center',
-          '#555555',
-        );
-        this.drawSingleLine(
-          doc,
-          `Strana ${pageIndex + 1}/${range.count}`,
-          right - 70,
-          footerY,
-          70,
-          fonts.regular,
-          7.5,
-          'right',
-          '#555555',
-        );
-      }
-
-      doc.end();
-    });
   }
 
   async listInvoices(userId: string, query: ListInvoicesQueryDto) {
@@ -1622,7 +356,7 @@ export class InvoiceService {
     ]);
 
     return {
-      items: rows.map((row) => this.mapListItem(row)),
+      items: rows.map((row) => mapListItem(row)),
       total,
       page,
       pageSize,
@@ -1640,7 +374,7 @@ export class InvoiceService {
       subject.id,
       invoiceId,
     );
-    return this.mapDetail(invoice);
+    return mapDetail(invoice);
   }
 
   async createDraft(
@@ -1648,7 +382,7 @@ export class InvoiceService {
     dto: UpsertInvoiceDto,
   ): Promise<InvoiceDetail> {
     const subject = await this.getSubjectByUserOrThrow(userId);
-    const computed = this.computeInvoiceTotals(dto.items, {
+    const computed = computeInvoiceTotals(dto.items, {
       isVatPayer: subject.isVatPayer,
       classification: dto.taxClassification,
     });
@@ -1738,8 +472,8 @@ export class InvoiceService {
     const isVatPayer =
       current.status === 'draft'
         ? subject.isVatPayer
-        : this.resolveSupplierSnapshot(current).isVatPayer;
-    const computed = this.computeInvoiceTotals(dto.items, {
+        : resolveSupplierSnapshot(current).isVatPayer;
+    const computed = computeInvoiceTotals(dto.items, {
       isVatPayer,
       classification: dto.taxClassification,
     });
@@ -1827,7 +561,7 @@ export class InvoiceService {
         vatRate: item.vatRate,
       }));
 
-    const computed = this.computeInvoiceTotals(copiedItems, {
+    const computed = computeInvoiceTotals(copiedItems, {
       isVatPayer: subject.isVatPayer,
       classification: source.taxClassification,
     });
@@ -1880,68 +614,6 @@ export class InvoiceService {
     throw new ConflictException('Failed to assign unique invoice number.');
   }
 
-  private validateReadyToIssue(
-    invoice: Invoice & { items: InvoiceItem[] },
-    subject: Subject,
-  ): void {
-    if (invoice.items.length === 0) {
-      throw new BadRequestException(
-        'Invoice must have at least one item before issue',
-      );
-    }
-
-    if (!subject.isVatPayer) {
-      if (invoice.items.some((item) => item.vatRate !== 0)) {
-        throw new BadRequestException(
-          'Neplátce DPH nemůže vystavit fakturu s DPH. Uložte fakturu znovu, položky se přepočítají bez DPH.',
-        );
-      }
-      return;
-    }
-
-    const classification = invoice.taxClassification;
-    if (!classification) {
-      throw new BadRequestException(
-        'Tax classification is required before issue',
-      );
-    }
-
-    if (
-      (classification === 'eu_service' || classification === 'eu_goods') &&
-      !invoice.customerDic
-    ) {
-      throw new BadRequestException(
-        'Customer DIC is required for EU tax classification',
-      );
-    }
-
-    if (classification === 'domestic_reverse_charge') {
-      if (!isCzVatId(invoice.customerDic)) {
-        throw new BadRequestException(
-          'Pro režim přenesení daňové povinnosti je povinné české DIČ odběratele.',
-        );
-      }
-      if (!invoice.reverseChargeCode) {
-        throw new BadRequestException(
-          'Pro režim přenesení daňové povinnosti vyberte kód předmětu plnění.',
-        );
-      }
-    }
-
-    if (chargesVat(true, classification)) {
-      const allowedRates: readonly number[] = STANDARD_VAT_RATES;
-      if (invoice.items.some((item) => !allowedRates.includes(item.vatRate))) {
-        throw new BadRequestException(
-          'Položky tuzemského zdanitelného plnění musí mít sazbu 21 % nebo 12 %. Pro plnění bez DPH zvolte odpovídající daňový režim.',
-        );
-      }
-    } else if (invoice.items.some((item) => item.vatRate !== 0)) {
-      throw new BadRequestException(
-        'Ve zvoleném daňovém režimu se DPH neúčtuje. Uložte fakturu znovu, položky se přepočítají bez DPH.',
-      );
-    }
-  }
-
   async issueInvoice(
     userId: string,
     invoiceId: string,
@@ -1956,7 +628,7 @@ export class InvoiceService {
       throw new ConflictException('Invoice cannot be issued in current status');
     }
 
-    this.validateReadyToIssue(current, subject);
+    validateReadyToIssue(current, subject);
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       try {
@@ -1976,7 +648,7 @@ export class InvoiceService {
               status: 'issued',
               invoiceNumber,
               variableSymbol,
-              supplierSnapshot: this.buildSupplierSnapshot(subject),
+              supplierSnapshot: buildSupplierSnapshot(subject),
             },
           });
         });
@@ -2116,7 +788,7 @@ export class InvoiceService {
     await this.prisma.invoice.update({
       where: { id: current.id },
       data: {
-        supplierSnapshot: this.buildSupplierSnapshot(subject),
+        supplierSnapshot: buildSupplierSnapshot(subject),
       },
     });
 
@@ -2151,13 +823,13 @@ export class InvoiceService {
       );
     }
 
-    const supplier = this.resolveSupplierSnapshot(invoice);
-    const iban = this.toCzIban(
+    const supplier = resolveSupplierSnapshot(invoice);
+    const iban = toCzIban(
       supplier.bankAccountPrefix,
       supplier.bankAccountNumber,
       supplier.bankCode,
     );
-    const spdPayload = this.buildSpdPayload(
+    const spdPayload = buildSpdPayload(
       iban,
       invoice.totalWithVat.toString(),
       invoice.variableSymbol,
@@ -2168,7 +840,7 @@ export class InvoiceService {
       width: 160,
     });
 
-    const payloadHash = this.createPdfHash({
+    const payloadHash = createInvoicePdfHash({
       invoice,
       supplier,
       spdPayload,
@@ -2212,15 +884,15 @@ export class InvoiceService {
       });
     });
 
-    const pdfBuffer = await this.renderPdf({
+    const pdfBuffer = await this.pdfRenderer.render({
       invoice,
       supplier,
       qrDataUrl,
       iban,
     });
 
-    const safeIco = this.sanitizeFileToken(supplier.ico || 'ICO');
-    const safeInvoiceNumber = this.sanitizeFileToken(
+    const safeIco = sanitizeFileToken(supplier.ico || 'ICO');
+    const safeInvoiceNumber = sanitizeFileToken(
       invoice.invoiceNumber ?? invoice.id,
     );
     return {

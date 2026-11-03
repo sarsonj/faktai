@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { InvoiceService } from './invoice.service';
+import { InvoicePdfRenderer } from './pdf/invoice-pdf.renderer';
 
 function buildInvoice(
   itemCount: number,
@@ -94,7 +95,7 @@ describe('InvoiceService PDF export', () => {
         async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx),
       ),
     } as any;
-    const service = new InvoiceService(prisma);
+    const service = new InvoiceService(prisma, new InvoicePdfRenderer());
     const result = await service.exportInvoicePdf('user-1', 'inv-1');
     return result.content;
   }

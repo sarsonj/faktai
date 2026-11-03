@@ -1,4 +1,5 @@
 import { InvoiceService } from './invoice.service';
+import { InvoicePdfRenderer } from './pdf/invoice-pdf.renderer';
 
 describe('InvoiceService', () => {
   const prisma = {
@@ -15,7 +16,7 @@ describe('InvoiceService', () => {
     $transaction: jest.fn(async (ops: Promise<unknown>[]) => Promise.all(ops)),
   } as any;
 
-  const service = new InvoiceService(prisma);
+  const service = new InvoiceService(prisma, new InvoicePdfRenderer());
 
   beforeEach(() => {
     jest.clearAllMocks();

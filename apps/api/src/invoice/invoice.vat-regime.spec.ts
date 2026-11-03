@@ -1,8 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
-import { InvoiceService } from './invoice.service';
+import { computeInvoiceTotals } from './domain/invoice-calculation';
+import { validateReadyToIssue } from './domain/invoice-issue-validation';
+
+// Fixtury obsahují jen pole, která validace čte.
+const check = (invoice: object, subject: object) =>
+  validateReadyToIssue(invoice as any, subject as any);
 
 describe('InvoiceService – VAT regimes', () => {
-  const service = new InvoiceService({} as any) as any;
   const items = [
     {
       description: 'A',
@@ -21,7 +25,7 @@ describe('InvoiceService – VAT regimes', () => {
   ];
 
   it('charges VAT for a VAT payer with domestic standard regime', () => {
-    const result = service.computeInvoiceTotals(items, {
+    const result = computeInvoiceTotals(items, {
       isVatPayer: true,
       classification: 'domestic_standard',
     });
@@ -35,8 +39,8 @@ describe('InvoiceService – VAT regimes', () => {
     'eu_goods',
     'export_third_country',
     'exempt_without_credit',
-  ])('does not charge VAT in %s regime', (classification) => {
-    const result = service.computeInvoiceTotals(items, {
+  ])('does not charge VAT in %s regime', (classification: any) => {
+    const result = computeInvoiceTotals(items, {
       isVatPayer: true,
       classification,
     });
@@ -47,7 +51,7 @@ describe('InvoiceService – VAT regimes', () => {
   });
 
   it('never charges VAT for a non-payer', () => {
-    const result = service.computeInvoiceTotals(items, {
+    const result = computeInvoiceTotals(items, {
       isVatPayer: false,
       classification: 'domestic_standard',
     });
@@ -66,18 +70,15 @@ describe('InvoiceService – VAT regimes', () => {
   const nonPayer = { isVatPayer: false };
 
   it('accepts a valid domestic invoice', () => {
-    expect(() => service.validateReadyToIssue(issuable(), payer)).not.toThrow();
+    expect(() => check(issuable(), payer)).not.toThrow();
   });
 
   it('rejects VAT on a non-payer invoice, but does not require classification', () => {
     expect(() =>
-      service.validateReadyToIssue(
-        issuable({ taxClassification: null }),
-        nonPayer,
-      ),
+      check(issuable({ taxClassification: null }), nonPayer),
     ).toThrow(BadRequestException);
     expect(() =>
-      service.validateReadyToIssue(
+      check(
         issuable({ taxClassification: null, items: [{ vatRate: 0 }] }),
         nonPayer,
       ),
@@ -90,16 +91,11 @@ describe('InvoiceService – VAT regimes', () => {
       items: [{ vatRate: 0 }],
     };
     expect(() =>
-      service.validateReadyToIssue(
-        issuable({ ...base, reverseChargeCode: '4' }),
-        payer,
-      ),
+      check(issuable({ ...base, reverseChargeCode: '4' }), payer),
     ).not.toThrow();
-    expect(() => service.validateReadyToIssue(issuable(base), payer)).toThrow(
-      'kód předmětu plnění',
-    );
+    expect(() => check(issuable(base), payer)).toThrow('kód předmětu plnění');
     expect(() =>
-      service.validateReadyToIssue(
+      check(
         issuable({
           ...base,
           reverseChargeCode: '4',
@@ -111,17 +107,14 @@ describe('InvoiceService – VAT regimes', () => {
   });
 
   it('rejects 0 % items in domestic standard regime', () => {
-    expect(() =>
-      service.validateReadyToIssue(
-        issuable({ items: [{ vatRate: 0 }] }),
-        payer,
-      ),
-    ).toThrow('21 % nebo 12 %');
+    expect(() => check(issuable({ items: [{ vatRate: 0 }] }), payer)).toThrow(
+      '21 % nebo 12 %',
+    );
   });
 
   it('rejects VAT items in a zero-rated regime (legacy drafts)', () => {
     expect(() =>
-      service.validateReadyToIssue(
+      check(
         issuable({ taxClassification: 'eu_service', items: [{ vatRate: 21 }] }),
         payer,
       ),
