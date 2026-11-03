@@ -9,6 +9,7 @@ import {
 } from '../invoice-api';
 import { addDaysToDateInputValue, todayDateInputValue } from '../date-utils';
 import { searchRegistryCompanies } from '../registry-api';
+import { REVERSE_CHARGE_CODES } from '../vat-regime';
 import { getSubject } from '../subject-api';
 import type {
   InvoiceDetail,
@@ -39,6 +40,7 @@ type EditorState = {
   taxableSupplyDate: string;
   dueDate: string;
   taxClassification: TaxClassification;
+  reverseChargeCode: string;
   customerName: string;
   customerIco: string;
   customerDic: string;
@@ -52,7 +54,7 @@ type EditorState = {
 
 const TAX_CLASSIFICATIONS: Array<{ value: TaxClassification; label: string }> = [
   { value: 'domestic_standard', label: 'Tuzemské zdanitelné plnění' },
-  { value: 'domestic_reverse_charge', label: 'Tuzemské reverse charge' },
+  { value: 'domestic_reverse_charge', label: 'Tuzemské reverse charge (přenesení daňové povinnosti)' },
   { value: 'eu_service', label: 'Služba do EU' },
   { value: 'eu_goods', label: 'Dodání zboží do EU' },
   { value: 'export_third_country', label: 'Export mimo EU' },
@@ -88,6 +90,7 @@ function createDefaultState(defaultDueDays = 14): EditorState {
     taxableSupplyDate: issueDate,
     dueDate,
     taxClassification: 'domestic_standard',
+    reverseChargeCode: '',
     customerName: '',
     customerIco: '',
     customerDic: '',
@@ -108,6 +111,7 @@ function fromInvoice(invoice: InvoiceDetail): EditorState {
     taxableSupplyDate: toDateInputValue(invoice.taxableSupplyDate),
     dueDate: toDateInputValue(invoice.dueDate),
     taxClassification: invoice.taxClassification ?? 'domestic_standard',
+    reverseChargeCode: invoice.reverseChargeCode ?? '',
     customerName: invoice.customerName,
     customerIco: invoice.customerIco ?? '',
     customerDic: invoice.customerDic ?? '',
@@ -140,6 +144,7 @@ function createStateFromCopySource(
     taxableSupplyDate: base.issueDate,
     dueDate: addDaysToDateInputValue(base.issueDate, defaultDueDays),
     taxClassification: source.taxClassification ?? base.taxClassification,
+    reverseChargeCode: source.reverseChargeCode ?? '',
     customerName: source.customerName,
     customerIco: source.customerIco ?? '',
     customerDic: source.customerDic ?? '',
@@ -169,6 +174,10 @@ function toPayload(state: EditorState): InvoiceUpsertInput {
     taxableSupplyDate: state.taxableSupplyDate,
     dueDate: state.dueDate,
     taxClassification: state.taxClassification,
+    reverseChargeCode:
+      state.taxClassification === 'domestic_reverse_charge'
+        ? state.reverseChargeCode || undefined
+        : undefined,
     customerName: state.customerName,
     customerIco: state.customerIco || undefined,
     customerDic: state.customerDic || undefined,
@@ -187,7 +196,12 @@ function toPayload(state: EditorState): InvoiceUpsertInput {
   };
 }
 
-function calculateTotals(items: EditorItemState[]) {
+// DPH se účtuje jen plátcem v režimu tuzemského zdanitelného plnění (stejně jako na API).
+function chargesVat(isVatPayer: boolean, classification: TaxClassification): boolean {
+  return isVatPayer && classification === 'domestic_standard';
+}
+
+function calculateTotals(items: EditorItemState[], vatCharged: boolean) {
   let withoutVat = 0;
   let vat = 0;
 
@@ -195,7 +209,7 @@ function calculateTotals(items: EditorItemState[]) {
     const quantity = Number(item.quantity || 0);
     const unitPrice = Number(item.unitPrice || 0);
     const lineWithout = quantity * unitPrice;
-    const lineVat = lineWithout * (Number(item.vatRate) / 100);
+    const lineVat = vatCharged ? lineWithout * (Number(item.vatRate) / 100) : 0;
 
     withoutVat += lineWithout;
     vat += lineVat;
@@ -208,10 +222,10 @@ function calculateTotals(items: EditorItemState[]) {
   };
 }
 
-function calculateItemTotalWithVat(item: EditorItemState): number {
+function calculateItemTotalWithVat(item: EditorItemState, vatCharged: boolean): number {
   const quantity = Number(item.quantity || 0);
   const unitPrice = Number(item.unitPrice || 0);
-  const vatRate = Number(item.vatRate || 0);
+  const vatRate = vatCharged ? Number(item.vatRate || 0) : 0;
   const lineWithoutVat = quantity * unitPrice;
   const lineVat = lineWithoutVat * (vatRate / 100);
   const total = lineWithoutVat + lineVat;
@@ -243,6 +257,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   const [customerLookupLoading, setCustomerLookupLoading] = useState(false);
   const [customerLookupError, setCustomerLookupError] = useState<string | null>(null);
   const [customerLookupResults, setCustomerLookupResults] = useState<RegistryCompanyResult[]>([]);
+  const [isVatPayer, setIsVatPayer] = useState(true);
   const reserveRequestIdRef = useRef(0);
   // ID konceptu vytvořeného v tomto editoru (create mode). Když vytvoření projde,
   // ale vystavení selže, další pokus koncept jen aktualizuje místo založení nového.
@@ -294,6 +309,22 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
       }
     }
   }, [mode]);
+
+  useEffect(() => {
+    let ignore = false;
+    getSubject()
+      .then((subject) => {
+        if (!ignore) {
+          setIsVatPayer(subject.isVatPayer);
+        }
+      })
+      .catch(() => {
+        // Bez subjektu necháváme výchozí zobrazení plátce; API pravidla vynutí samo.
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (mode !== 'create') {
@@ -351,7 +382,8 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   const backHref = `/invoices${listQuery ? `?${listQuery}` : ''}`;
   const advancedEdit = searchParams.get('advanced') === '1';
 
-  const totals = useMemo(() => calculateTotals(state.items), [state.items]);
+  const vatCharged = chargesVat(isVatPayer, state.taxClassification);
+  const totals = useMemo(() => calculateTotals(state.items, vatCharged), [state.items, vatCharged]);
   const readOnly =
     mode === 'edit' && invoice?.status === 'paid' && !advancedEdit;
 
@@ -626,25 +658,48 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
               onChange={(event) => setState((current) => ({ ...current, dueDate: event.target.value }))}
             />
           </label>
-          <label>
-            Daňová klasifikace
-            <select
-              disabled={readOnly}
-              value={state.taxClassification}
-              onChange={(event) =>
-                setState((current) => ({
-                  ...current,
-                  taxClassification: event.target.value as TaxClassification,
-                }))
-              }
-            >
-              {TAX_CLASSIFICATIONS.map((classification) => (
-                <option key={classification.value} value={classification.value}>
-                  {classification.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          {isVatPayer ? (
+            <label>
+              Daňový režim
+              <select
+                disabled={readOnly}
+                value={state.taxClassification}
+                onChange={(event) =>
+                  setState((current) => ({
+                    ...current,
+                    taxClassification: event.target.value as TaxClassification,
+                  }))
+                }
+              >
+                {TAX_CLASSIFICATIONS.map((classification) => (
+                  <option key={classification.value} value={classification.value}>
+                    {classification.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <p className="helper-text">Nejste plátce DPH – faktura se vystaví bez DPH.</p>
+          )}
+          {isVatPayer && state.taxClassification === 'domestic_reverse_charge' && (
+            <label>
+              Kód předmětu plnění (kontrolní hlášení)
+              <select
+                disabled={readOnly}
+                value={state.reverseChargeCode}
+                onChange={(event) =>
+                  setState((current) => ({ ...current, reverseChargeCode: event.target.value }))
+                }
+              >
+                <option value="">Vyberte…</option>
+                {REVERSE_CHARGE_CODES.map((item) => (
+                  <option key={item.code} value={item.code}>
+                    {item.code} – {item.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
       </section>
 
@@ -842,6 +897,7 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
                 value={item.unitPrice}
                 onChange={(event) => updateItem(index, { unitPrice: event.target.value })}
               />
+              {vatCharged ? (
               <select
                 aria-label={`DPH položky ${index + 1}`}
                 disabled={readOnly}
@@ -852,7 +908,10 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
                 <option value="12">12 %</option>
                 <option value="21">21 %</option>
               </select>
-              <div className="invoice-item-total">Celkem: {formatMoney(calculateItemTotalWithVat(item))}</div>
+              ) : (
+                <span className="helper-text">bez DPH</span>
+              )}
+              <div className="invoice-item-total">Celkem: {formatMoney(calculateItemTotalWithVat(item, vatCharged))}</div>
               {!readOnly && state.items.length > 1 && (
                 <button type="button" className="danger" onClick={() => removeItem(index)}>
                   Odebrat
@@ -879,10 +938,12 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
             <span>Bez DPH</span>
             <strong>{formatMoney(totals.withoutVat)}</strong>
           </div>
-          <div className="totals-row">
-            <span>DPH</span>
-            <strong>{formatMoney(totals.vat)}</strong>
-          </div>
+          {vatCharged && (
+            <div className="totals-row">
+              <span>DPH</span>
+              <strong>{formatMoney(totals.vat)}</strong>
+            </div>
+          )}
           <div className="totals-row totals-row-final">
             <span>Celkem</span>
             <strong>{formatMoney(totals.withVat)}</strong>

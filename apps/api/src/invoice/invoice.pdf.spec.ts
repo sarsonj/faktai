@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { InvoiceService } from './invoice.service';
 
-function buildInvoice(itemCount: number) {
+function buildInvoice(itemCount: number, overrides: Record<string, unknown> = {}, isVatPayer = true) {
   const items = Array.from({ length: itemCount }, (_, index) => ({
     id: `item-${index + 1}`,
     invoiceId: 'inv-1',
@@ -29,7 +29,7 @@ function buildInvoice(itemCount: number) {
     bankAccountPrefix: null,
     bankAccountNumber: '123456789',
     bankCode: '0100',
-    isVatPayer: true,
+    isVatPayer,
   };
   return {
     id: 'inv-1',
@@ -59,6 +59,7 @@ function buildInvoice(itemCount: number) {
     paidAt: null,
     items,
     subject,
+    ...overrides,
   };
 }
 
@@ -67,8 +68,12 @@ function countPages(pdf: Buffer): number {
 }
 
 describe('InvoiceService PDF export', () => {
-  async function exportWithItems(itemCount: number): Promise<Buffer> {
-    const invoice = buildInvoice(itemCount);
+  async function exportWithItems(
+    itemCount: number,
+    overrides: Record<string, unknown> = {},
+    isVatPayer = true,
+  ): Promise<Buffer> {
+    const invoice = buildInvoice(itemCount, overrides, isVatPayer);
     const tx = {
       invoice: {
         findUnique: jest.fn().mockResolvedValue({ pdfVersion: 0, pdfPayloadHash: null }),
@@ -94,5 +99,18 @@ describe('InvoiceService PDF export', () => {
   it('renders all items of a long invoice across multiple pages', async () => {
     const pdf = await exportWithItems(80);
     expect(countPages(pdf)).toBeGreaterThanOrEqual(3);
+  });
+
+  it('renders a non-VAT-payer invoice', async () => {
+    const pdf = await exportWithItems(3, {}, false);
+    expect(countPages(pdf)).toBe(1);
+  });
+
+  it('renders a reverse charge invoice', async () => {
+    const pdf = await exportWithItems(3, {
+      taxClassification: 'domestic_reverse_charge',
+      reverseChargeCode: '4',
+    });
+    expect(countPages(pdf)).toBe(1);
   });
 });

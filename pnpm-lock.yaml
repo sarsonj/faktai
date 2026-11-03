@@ -67,6 +67,9 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
+      xmllint-wasm:
+        specifier: 4.0.2
+        version: 4.0.2
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.2.0
@@ -3980,6 +3983,10 @@ packages:
   write-file-atomic@5.0.1:
     resolution: {integrity: sha512-+QU2zd6OTD8XWIJCbffaiQeH9U73qIqafo1x6V1snCWYGJf6cVE0cDR4D8xRzcEnfI21IFrUPzPGtcPf8AC+Rw==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
+
+  xmllint-wasm@4.0.2:
+    resolution: {integrity: sha512-tJxQzA9krv9gaQxYFJ/NVrpLf/wpWYPKjweCLMNbjooBTsW7/O26pyc3Pd0Lp0oTLUMFir/MEX3ybY/hhRjIpw==}
+    engines: {node: '>=12.4.0'}
 
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
@@ -8103,6 +8110,8 @@ snapshots:
     dependencies:
       imurmurhash: 0.1.4
       signal-exit: 4.1.0
+
+  xmllint-wasm@4.0.2: {}
 
   xtend@4.0.2: {}
 

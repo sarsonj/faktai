@@ -1,9 +1,11 @@
 import { PaymentMethod, TaxClassification } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
+import { REVERSE_CHARGE_CODE_VALUES } from '../../tax/vat-regime';
 import {
   ArrayMinSize,
   IsArray,
   IsDateString,
+  IsIn,
   IsEnum,
   IsOptional,
   IsString,
@@ -55,6 +57,15 @@ export class UpsertInvoiceDto {
   @IsOptional()
   @IsEnum(TaxClassification, { message: 'Daňová klasifikace není platná.' })
   taxClassification?: TaxClassification;
+
+  @Transform(({ value }) =>
+    typeof value === 'string' && value.trim() === '' ? undefined : value,
+  )
+  @IsOptional()
+  @IsIn(REVERSE_CHARGE_CODE_VALUES, {
+    message: 'Kód předmětu plnění pro přenesení daňové povinnosti není platný.',
+  })
+  reverseChargeCode?: string;
 
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString({ message: 'Název odběratele musí být text.' })

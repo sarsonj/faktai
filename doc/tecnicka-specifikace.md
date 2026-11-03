@@ -182,6 +182,7 @@ Pravidla:
   - `eu_goods`
   - `export_third_country`
   - `exempt_without_credit`
+- `reverse_charge_code` nullable `VARCHAR(4)` – kód předmětu plnění pro KH A.1, vyplněný jen u `domestic_reverse_charge`
 - Odběratel snapshot:
   - `customer_name`, `customer_ico`, `customer_dic`
   - `customer_street`, `customer_city`, `customer_postal_code`, `customer_country_code`
@@ -617,7 +618,9 @@ Poznámka:
 
 ### 10.1 Obecně
 - Každý typ podání má vlastní mapper dat -> XML model.
-- Nad výsledkem probíhá XSD validace.
+- Nad výsledkem probíhá XSD validace (`xmllint-wasm`, bez nativních závislostí; `apps/api/src/tax-reports/fu-xsd-validator.ts`).
+- Atributy s prázdnou hodnotou se do XML nevypisují (XSD je u typovaných atributů odmítá); telefon se normalizuje bez mezer (max. 14 znaků).
+- Pravidla DPH režimů (kdy se účtuje DPH, doložky na PDF, kódy předmětu plnění) jsou v `apps/api/src/tax/vat-regime.ts`; web má zrcadlový číselník kódů v `apps/web/src/vat-regime.ts`.
 - Chyby mapování/validace vrací `422` s detailním listem problémů.
 - Pro `vat_return` a `control_statement` se používá FU-compatible struktura atributových vět (`Veta*`).
 - Pro mapování místní příslušnosti FÚ se používá číselník `apps/api/assets/tax/c_ufo.xml`.
@@ -630,6 +633,7 @@ Poznámka:
 Mapování v1:
 1. `Přiznání k DPH` -> `Pisemnost/DPHDP3`
 2. `Kontrolní hlášení` -> `Pisemnost/DPHKH1`
+   - mapování řádků/oddílů viz funkční specifikace 5.7.1 a 5.7.2.
 3. Referenční struktury: `doc/examples/iDoklad_DPH3_2025Q04B`, `doc/examples/iDoklad_DPHKH_2025Q04B`
 
 ### 10.3 Strategie verzování běhů

@@ -660,21 +660,41 @@ Povolené hodnoty:
 - `exempt_without_credit` (osvobozené bez nároku).
 
 Pravidla:
-1. `taxClassification` je povinné při vystavení faktury.
+1. `taxClassification` je povinné při vystavení faktury plátcem DPH. Neplátce klasifikaci nevybírá.
 2. `eu_service` a `eu_goods` vyžadují vyplněné DIČ odběratele.
 3. Klasifikace určuje, zda se faktura promítá do `Přiznání k DPH`, `Kontrolního hlášení`, nebo do jejich kombinace.
+4. DPH se na faktuře účtuje jen u `domestic_standard` (sazby 21 % / 12 %). U ostatních režimů je faktura bez DPH (sazba položek se na API přepočítá na 0 %) a PDF obsahuje povinnou doložku (§ 29 ZDPH), např. „Daň odvede zákazník“ u přenesení daňové povinnosti a služeb do EU, „osvobozeno od daně podle § 64 / § 66 / § 51“ u dodání do EU, vývozu a osvobozených plnění.
+5. `domestic_standard` při vystavení vyžaduje u všech položek sazbu 21 % nebo 12 %; plnění bez DPH se vystavují s odpovídajícím režimem.
+6. `domestic_reverse_charge` vyžaduje české DIČ odběratele a `kód předmětu plnění` (`reverseChargeCode`, číselník FS pro KH oddíl A.1, např. `4` – stavební a montážní práce).
+7. Neplátce DPH vystavuje vždy fakturu bez DPH: PDF má nadpis `Faktura` (ne „daňový doklad“), nemá sloupce a rekapitulaci DPH a obsahuje text „Dodavatel není plátcem DPH.“
 
 ### 5.7 Výpočet podkladů
 
 #### 5.7.1 Přiznání k DPH
-- Systém agreguje základy daně a DPH podle sazeb a typu plnění.
-- Výstupem je datová struktura odpovídající řádkům přiznání (vnitřní mapování).
-- Částky se zaokrouhlují dle daňových pravidel na celé Kč při exportu tam, kde to schéma vyžaduje.
+- Systém agreguje základy daně a DPH podle sazeb a typu plnění. Mapování na řádky přiznání:
+
+| Daňový režim | Řádek DP3 | Atribut XML |
+| --- | --- | --- |
+| `domestic_standard` 21 % | ř. 1 (základ, daň) | `Veta1.obrat23`, `Veta1.dan23` |
+| `domestic_standard` 12 % | ř. 2 (základ, daň) | `Veta1.obrat5`, `Veta1.dan5` |
+| `eu_goods` | ř. 20 | `Veta2.dod_zb` |
+| `eu_service` | ř. 21 | `Veta2.pln_sluzby` |
+| `export_third_country` | ř. 22 | `Veta2.pln_vyvoz` |
+| `domestic_reverse_charge` (dodavatel) | ř. 25 | `Veta2.pln_rez_pren` |
+| `exempt_without_credit` | ř. 50 | `Veta5.plnosv_kf` |
+| daň na výstupu celkem | ř. 62, 64 | `Veta6.dan_zocelk`, `Veta6.dano_da` |
+
+- Řádky „na vstupu“ (ř. 3–13, např. pořízení zboží z EU nebo přijetí plnění v režimu přenesení) aplikace nevyplňuje – eviduje jen vydané faktury.
+- Částky se zaokrouhlují na celé Kč po řádcích; ř. 62 je součtem zaokrouhlených řádků.
+- Faktury vystavené v době, kdy dodavatel nebyl plátcem DPH (snapshot dodavatele), se do podání nezahrnují.
 
 #### 5.7.2 Kontrolní hlášení
-- Zahrnují se tuzemská zdanitelná plnění a další položky požadované strukturou kontrolního hlášení.
-- Výstup respektuje členění kontrolního hlášení podle oddílů a typů plnění.
-- Systém validuje povinné identifikační údaje partnera tam, kde je to pro daný oddíl nutné.
+- Oddíl A.1: faktury `domestic_reverse_charge` (dodavatel), po dokladech s `dic_odb`, `duzp`, `zakl_dane1` a `kod_pred_pl`.
+- Oddíl A.4: faktury `domestic_standard` odběrateli s českým DIČ a celkovou částkou nad 10 000 Kč vč. DPH, po dokladech s rozpadem podle sazeb (`zakl_dane1/dan1` = 21 %, `zakl_dane2/dan2` = 12 %).
+- Oddíl A.5: ostatní faktury `domestic_standard` (do 10 000 Kč vč. DPH nebo odběratel bez českého DIČ) souhrnně podle sazeb.
+- Věta C: `obrat23`/`obrat5` = součet A.4 + A.5 (odpovídá ř. 1 a 2 přiznání), `pln_rez_pren` = součet A.1 (ř. 25).
+- Plnění do EU, vývoz a osvobozená plnění se v kontrolním hlášení neuvádějí.
+- IČO odběratele se nikdy nepoužívá místo DIČ.
 
 ### 5.8 XML export
 1. XML se generuje podle aktuálního technického schématu finanční správy podporovaného aplikací.
@@ -699,8 +719,9 @@ Pravidla:
          - výsledkem je atribut `c_ufo` z nalezeného řádku (např. `458`).
 4. Aplikace pouze generuje soubor; podání do datové schránky provádí uživatel.
 5. `Přiznání k DPH` používá strukturu `Pisemnost/DPHDP3` s větami `VetaD`, `VetaP`, `Veta1` až `Veta6`.
-6. `Kontrolní hlášení` používá strukturu `Pisemnost/DPHKH1` s větami v pořadí `VetaD`, `VetaP`, `VetaA4`, `VetaC`.
-7. Referenční příklady formátu jsou v:
+6. `Kontrolní hlášení` používá strukturu `Pisemnost/DPHKH1` s větami v pořadí `VetaD`, `VetaP`, `VetaA1`, `VetaA4`, `VetaA5`, `VetaC` (prázdné oddíly se vynechávají).
+7. Před vrácením souboru se XML validuje proti XSD finanční správy (`apps/api/assets/xsd/`); nevalidní výstup vrací `422` se seznamem chyb.
+8. Referenční příklady formátu jsou v:
    - `doc/examples/iDoklad_DPH3_2025Q04B`
    - `doc/examples/iDoklad_DPHKH_2025Q04B`
 

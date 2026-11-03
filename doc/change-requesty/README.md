@@ -69,3 +69,4 @@
 | `CR-0050` | Pořadí vět v kontrolním hlášení | `Implementováno` | `Must` |
 | `CR-0051` | Výchozí datum dokladu a globální rate limit | `Implementováno` | `Must` |
 | `CR-0052` | Vícestránkové PDF, duplicitní koncepty a logování chyb | `Implementováno` | `Must` |
+| `CR-0053` | DPH režimy faktur a oprava exportů pro FÚ | `Implementováno` | `Must` |

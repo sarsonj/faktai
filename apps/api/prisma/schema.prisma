@@ -123,6 +123,7 @@ model Invoice {
   dueDate             DateTime
   paymentMethod       PaymentMethod @default(bank_transfer)
   taxClassification   TaxClassification?
+  reverseChargeCode   String?       @db.VarChar(4)
   customerName        String
   customerIco         String?
   customerDic         String?

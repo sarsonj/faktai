@@ -22,6 +22,14 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  NON_VAT_PAYER_INVOICE_NOTE,
+  STANDARD_VAT_RATES,
+  VAT_REGIME_INVOICE_NOTES,
+  chargesVat,
+  effectiveVatRate,
+  isCzVatId,
+} from '../tax/vat-regime';
+import {
   addDaysDateOnly,
   formatDateOnlyCz,
   todayDateOnly,
@@ -71,6 +79,7 @@ export type InvoiceDetail = {
   dueDate: string;
   paymentMethod: PaymentMethod;
   taxClassification: TaxClassification | null;
+  reverseChargeCode: string | null;
   customerName: string;
   customerIco: string | null;
   customerDic: string | null;
@@ -87,6 +96,7 @@ export type InvoiceDetail = {
   supplierBankAccountPrefix: string | null;
   supplierBankAccountNumber: string;
   supplierBankCode: string;
+  supplierIsVatPayer: boolean;
   items: InvoiceDetailItem[];
 };
 
@@ -306,6 +316,16 @@ export class InvoiceService {
     return candidate;
   }
 
+  private resolveReverseChargeCode(
+    classification: TaxClassification | null | undefined,
+    code: string | null | undefined,
+  ): string | null {
+    if (classification !== 'domestic_reverse_charge') {
+      return null;
+    }
+    return this.normalizeOptionalText(code ?? undefined);
+  }
+
   private isInvoiceNumberUniqueViolation(error: unknown): boolean {
     if (!(error instanceof Prisma.PrismaClientKnownRequestError)) {
       return false;
@@ -332,7 +352,13 @@ export class InvoiceService {
     return { invoiceNumber };
   }
 
-  private computeInvoiceTotals(inputItems: InvoiceItemDto[]): ComputedItems {
+  private computeInvoiceTotals(
+    inputItems: InvoiceItemDto[],
+    regime: {
+      isVatPayer: boolean;
+      classification: TaxClassification | null | undefined;
+    },
+  ): ComputedItems {
     if (inputItems.length === 0) {
       throw new BadRequestException('Invoice must contain at least one item');
     }
@@ -340,6 +366,11 @@ export class InvoiceService {
     const computedItems = inputItems.map((item, index) => {
       const quantity = new Decimal(item.quantity);
       const unitPrice = new Decimal(item.unitPrice);
+      const vatRate = effectiveVatRate(
+        regime.isVatPayer,
+        regime.classification,
+        item.vatRate,
+      );
 
       if (quantity.lte(0)) {
         throw new BadRequestException(
@@ -355,7 +386,7 @@ export class InvoiceService {
         .mul(unitPrice)
         .toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN);
       const lineVatAmount = lineTotalWithoutVat
-        .mul(new Decimal(item.vatRate).div(100))
+        .mul(new Decimal(vatRate).div(100))
         .toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN);
       const lineTotalWithVat = lineTotalWithoutVat
         .add(lineVatAmount)
@@ -371,7 +402,7 @@ export class InvoiceService {
         unitPrice: unitPrice
           .toDecimalPlaces(2, Decimal.ROUND_HALF_EVEN)
           .toFixed(2),
-        vatRate: item.vatRate,
+        vatRate,
         lineTotalWithoutVat: lineTotalWithoutVat.toFixed(2),
         lineVatAmount: lineVatAmount.toFixed(2),
         lineTotalWithVat: lineTotalWithVat.toFixed(2),
@@ -463,6 +494,7 @@ export class InvoiceService {
       dueDate: row.dueDate.toISOString(),
       paymentMethod: row.paymentMethod,
       taxClassification: row.taxClassification,
+      reverseChargeCode: row.reverseChargeCode,
       customerName: row.customerName,
       customerIco: row.customerIco,
       customerDic: row.customerDic,
@@ -479,6 +511,7 @@ export class InvoiceService {
       supplierBankAccountPrefix: supplier.bankAccountPrefix,
       supplierBankAccountNumber: supplier.bankAccountNumber,
       supplierBankCode: supplier.bankCode,
+      supplierIsVatPayer: supplier.isVatPayer,
       items: row.items
         .sort((a, b) => a.position - b.position)
         .map((item) => this.mapDetailItem(item)),
@@ -859,7 +892,8 @@ export class InvoiceService {
         fonts.regular,
       );
 
-      this.drawSingleLine(doc, 'Faktura - daňový doklad', rightColX, top + 4, colWidth - 104, fonts.bold, 16);
+      const showVat = input.supplier.isVatPayer;
+      this.drawSingleLine(doc, showVat ? 'Faktura - daňový doklad' : 'Faktura', rightColX, top + 4, colWidth - 104, fonts.bold, 16);
       doc.rect(right - 94, top, 94, 28).fill('#eeeeee');
       this.drawSingleLine(doc, invoiceNumber, right - 90, top + 8, 86, fonts.bold, 12, 'center');
 
@@ -991,8 +1025,12 @@ export class InvoiceService {
       y += 18;
       const itemHeaderHeight = 18;
       const itemRowHeight = 18;
-      const cols = [170, 50, 64, 40, 72, 62, 65];
-      const itemHeaders = ['Označení dodávky', 'Počet m.j.', 'Cena za m.j.', 'DPH %', 'Bez DPH', 'DPH', 'Celkem'];
+      const cols = showVat
+        ? [170, 50, 64, 40, 72, 62, 65]
+        : [283, 60, 90, 90];
+      const itemHeaders = showVat
+        ? ['Označení dodávky', 'Počet m.j.', 'Cena za m.j.', 'DPH %', 'Bez DPH', 'DPH', 'Celkem']
+        : ['Označení dodávky', 'Počet m.j.', 'Cena za m.j.', 'Celkem'];
       // Spodní hranice obsahu stránky (nad patičkou).
       const pageBodyBottom = doc.page.height - doc.page.margins.bottom - 32;
 
@@ -1039,47 +1077,37 @@ export class InvoiceService {
           startContinuationPage();
           drawItemHeader();
         }
+        const cells = showVat
+          ? [
+              item.description,
+              item.quantity.toString(),
+              item.unitPrice.toString(),
+              String(item.vatRate),
+              this.formatMoney(item.lineTotalWithoutVat.toString()),
+              this.formatMoney(item.lineVatAmount.toString()),
+              this.formatMoney(item.lineTotalWithVat.toString()),
+            ]
+          : [
+              item.description,
+              item.quantity.toString(),
+              item.unitPrice.toString(),
+              this.formatMoney(item.lineTotalWithVat.toString()),
+            ];
         let cx = left + 4;
-        this.drawSingleLine(doc, item.description, cx, y + 5, cols[0] - 8, fonts.regular, 8.5);
-        cx += cols[0];
-        this.drawSingleLine(doc, item.quantity.toString(), cx, y + 5, cols[1] - 8, fonts.regular, 8.5, 'right');
-        cx += cols[1];
-        this.drawSingleLine(doc, item.unitPrice.toString(), cx, y + 5, cols[2] - 8, fonts.regular, 8.5, 'right');
-        cx += cols[2];
-        this.drawSingleLine(doc, String(item.vatRate), cx, y + 5, cols[3] - 8, fonts.regular, 8.5, 'right');
-        cx += cols[3];
-        this.drawSingleLine(
-          doc,
-          this.formatMoney(item.lineTotalWithoutVat.toString()),
-          cx,
-          y + 5,
-          cols[4] - 8,
-          fonts.regular,
-          8.5,
-          'right',
-        );
-        cx += cols[4];
-        this.drawSingleLine(
-          doc,
-          this.formatMoney(item.lineVatAmount.toString()),
-          cx,
-          y + 5,
-          cols[5] - 8,
-          fonts.regular,
-          8.5,
-          'right',
-        );
-        cx += cols[5];
-        this.drawSingleLine(
-          doc,
-          this.formatMoney(item.lineTotalWithVat.toString()),
-          cx,
-          y + 5,
-          cols[6] - 8,
-          fonts.bold,
-          8.5,
-          'right',
-        );
+        cells.forEach((cell, index) => {
+          const isLast = index === cells.length - 1;
+          this.drawSingleLine(
+            doc,
+            cell,
+            cx,
+            y + 5,
+            cols[index] - 8,
+            isLast ? fonts.bold : fonts.regular,
+            8.5,
+            index === 0 ? 'left' : 'right',
+          );
+          cx += cols[index];
+        });
         y += itemRowHeight;
         doc.moveTo(left, y).lineTo(right, y).strokeColor('#e5e5e5').stroke();
       }
@@ -1088,9 +1116,23 @@ export class InvoiceService {
       const vatRows = this.buildVatRows(sortedItems);
       const vatHeaderH = 16;
       const vatRowH = 16;
-      const vatBlockHeight = 8 + vatHeaderH + vatRowH * (vatRows.length + 1) + 10 + 26;
+      const vatBlockHeight = showVat
+        ? 8 + vatHeaderH + vatRowH * (vatRows.length + 1) + 10 + 26
+        : 40;
+      const legalNotes: string[] = [];
+      if (!showVat) {
+        legalNotes.push(NON_VAT_PAYER_INVOICE_NOTE);
+      } else if (input.invoice.taxClassification) {
+        const regimeNote = VAT_REGIME_INVOICE_NOTES[input.invoice.taxClassification];
+        if (regimeNote) {
+          legalNotes.push(regimeNote);
+        }
+      }
       const summaryHeight =
-        10 + Math.max(115, vatBlockHeight) + (input.invoice.note ? 20 : 0);
+        10 +
+        Math.max(115, vatBlockHeight) +
+        legalNotes.length * 16 +
+        (input.invoice.note ? 20 : 0);
       if (y + summaryHeight > pageBodyBottom) {
         startContinuationPage();
       }
@@ -1102,74 +1144,77 @@ export class InvoiceService {
       const vatTableX = left + 190;
       const vatTableY = y + 8;
       const vatTableW = contentWidth - 190;
-      const vatCols = [62, 88, 88, vatTableW - 238];
-      doc.rect(vatTableX, vatTableY, vatTableW, vatHeaderH).fill('#f3f3f3');
-      let vx = vatTableX + 4;
-      for (const [index, heading] of ['Sazba DPH', 'Základ', 'Výše DPH', 'Celkem'].entries()) {
+      let vy = vatTableY;
+      if (showVat) {
+        const vatCols = [62, 88, 88, vatTableW - 238];
+        doc.rect(vatTableX, vatTableY, vatTableW, vatHeaderH).fill('#f3f3f3');
+        let vx = vatTableX + 4;
+        for (const [index, heading] of ['Sazba DPH', 'Základ', 'Výše DPH', 'Celkem'].entries()) {
+          this.drawSingleLine(
+            doc,
+            heading,
+            vx,
+            vatTableY + 5,
+            vatCols[index] - 8,
+            fonts.bold,
+            8,
+            index === 0 ? 'left' : 'right',
+          );
+          vx += vatCols[index];
+        }
+
+        vy = vatTableY + vatHeaderH;
+        for (const row of vatRows) {
+          vx = vatTableX + 4;
+          this.drawSingleLine(doc, `${row.rate} %`, vx, vy + 5, vatCols[0] - 8, fonts.regular, 8.5);
+          vx += vatCols[0];
+          this.drawSingleLine(doc, this.formatMoney(row.base), vx, vy + 5, vatCols[1] - 8, fonts.regular, 8.5, 'right');
+          vx += vatCols[1];
+          this.drawSingleLine(doc, this.formatMoney(row.vat), vx, vy + 5, vatCols[2] - 8, fonts.regular, 8.5, 'right');
+          vx += vatCols[2];
+          this.drawSingleLine(doc, this.formatMoney(row.total), vx, vy + 5, vatCols[3] - 8, fonts.bold, 8.5, 'right');
+          vy += vatRowH;
+          doc.moveTo(vatTableX, vy).lineTo(vatTableX + vatTableW, vy).strokeColor('#e5e5e5').stroke();
+        }
+
+        vx = vatTableX + 4;
+        this.drawSingleLine(doc, 'CELKEM', vx, vy + 5, vatCols[0] - 8, fonts.bold, 8.5);
+        vx += vatCols[0];
         this.drawSingleLine(
           doc,
-          heading,
+          this.formatMoney(input.invoice.totalWithoutVat.toString()),
           vx,
-          vatTableY + 5,
-          vatCols[index] - 8,
+          vy + 5,
+          vatCols[1] - 8,
           fonts.bold,
-          8,
-          index === 0 ? 'left' : 'right',
+          8.5,
+          'right',
         );
-        vx += vatCols[index];
-      }
-
-      let vy = vatTableY + vatHeaderH;
-      for (const row of vatRows) {
-        vx = vatTableX + 4;
-        this.drawSingleLine(doc, `${row.rate} %`, vx, vy + 5, vatCols[0] - 8, fonts.regular, 8.5);
-        vx += vatCols[0];
-        this.drawSingleLine(doc, this.formatMoney(row.base), vx, vy + 5, vatCols[1] - 8, fonts.regular, 8.5, 'right');
         vx += vatCols[1];
-        this.drawSingleLine(doc, this.formatMoney(row.vat), vx, vy + 5, vatCols[2] - 8, fonts.regular, 8.5, 'right');
+        this.drawSingleLine(
+          doc,
+          this.formatMoney(input.invoice.totalVat.toString()),
+          vx,
+          vy + 5,
+          vatCols[2] - 8,
+          fonts.bold,
+          8.5,
+          'right',
+        );
         vx += vatCols[2];
-        this.drawSingleLine(doc, this.formatMoney(row.total), vx, vy + 5, vatCols[3] - 8, fonts.bold, 8.5, 'right');
-        vy += vatRowH;
-        doc.moveTo(vatTableX, vy).lineTo(vatTableX + vatTableW, vy).strokeColor('#e5e5e5').stroke();
+        this.drawSingleLine(
+          doc,
+          this.formatMoney(input.invoice.totalWithVat.toString()),
+          vx,
+          vy + 5,
+          vatCols[3] - 8,
+          fonts.bold,
+          8.5,
+          'right',
+        );
+
+        vy += vatRowH + 10;
       }
-
-      vx = vatTableX + 4;
-      this.drawSingleLine(doc, 'CELKEM', vx, vy + 5, vatCols[0] - 8, fonts.bold, 8.5);
-      vx += vatCols[0];
-      this.drawSingleLine(
-        doc,
-        this.formatMoney(input.invoice.totalWithoutVat.toString()),
-        vx,
-        vy + 5,
-        vatCols[1] - 8,
-        fonts.bold,
-        8.5,
-        'right',
-      );
-      vx += vatCols[1];
-      this.drawSingleLine(
-        doc,
-        this.formatMoney(input.invoice.totalVat.toString()),
-        vx,
-        vy + 5,
-        vatCols[2] - 8,
-        fonts.bold,
-        8.5,
-        'right',
-      );
-      vx += vatCols[2];
-      this.drawSingleLine(
-        doc,
-        this.formatMoney(input.invoice.totalWithVat.toString()),
-        vx,
-        vy + 5,
-        vatCols[3] - 8,
-        fonts.bold,
-        8.5,
-        'right',
-      );
-
-      vy += vatRowH + 10;
       this.drawSingleLine(
         doc,
         `Celkem k úhradě: ${this.formatMoney(input.invoice.totalWithVat.toString())}`,
@@ -1181,7 +1226,11 @@ export class InvoiceService {
         'right',
       );
 
-      const noteY = Math.max(vy + 26, y + 120);
+      let noteY = Math.max(vy + 26, y + 120);
+      for (const legalNote of legalNotes) {
+        this.drawSingleLine(doc, legalNote, left, noteY, contentWidth, fonts.bold, 9, 'left', '#222222');
+        noteY += 16;
+      }
       if (input.invoice.note) {
         this.drawSingleLine(
           doc,
@@ -1345,7 +1394,10 @@ export class InvoiceService {
     dto: UpsertInvoiceDto,
   ): Promise<InvoiceDetail> {
     const subject = await this.getSubjectByUserOrThrow(userId);
-    const computed = this.computeInvoiceTotals(dto.items);
+    const computed = this.computeInvoiceTotals(dto.items, {
+      isVatPayer: subject.isVatPayer,
+      classification: dto.taxClassification,
+    });
     const { issueDate, taxableSupplyDate, dueDate } = this.resolveInvoiceDates(
       subject,
       dto,
@@ -1373,6 +1425,10 @@ export class InvoiceService {
             dueDate,
             paymentMethod: dto.paymentMethod ?? 'bank_transfer',
             taxClassification: dto.taxClassification,
+            reverseChargeCode: this.resolveReverseChargeCode(
+              dto.taxClassification,
+              dto.reverseChargeCode,
+            ),
             customerName: dto.customerName.trim(),
             customerIco: this.normalizeIco(dto.customerIco),
             customerDic: this.normalizeOptionalText(dto.customerDic),
@@ -1420,7 +1476,15 @@ export class InvoiceService {
       throw new ConflictException('Cancelled invoice cannot be edited');
     }
 
-    const computed = this.computeInvoiceTotals(dto.items);
+    // U vystavené faktury platí plátcovství ze snapshotu dodavatele.
+    const isVatPayer =
+      current.status === 'draft'
+        ? subject.isVatPayer
+        : this.resolveSupplierSnapshot(current).isVatPayer;
+    const computed = this.computeInvoiceTotals(dto.items, {
+      isVatPayer,
+      classification: dto.taxClassification,
+    });
     const { issueDate, taxableSupplyDate, dueDate } = this.resolveInvoiceDates(
       subject,
       dto,
@@ -1447,6 +1511,10 @@ export class InvoiceService {
             dueDate,
             paymentMethod: dto.paymentMethod ?? 'bank_transfer',
             taxClassification: dto.taxClassification,
+            reverseChargeCode: this.resolveReverseChargeCode(
+              dto.taxClassification,
+              dto.reverseChargeCode,
+            ),
             customerName: dto.customerName.trim(),
             customerIco: this.normalizeIco(dto.customerIco),
             customerDic: this.normalizeOptionalText(dto.customerDic),
@@ -1499,7 +1567,10 @@ export class InvoiceService {
         vatRate: item.vatRate,
       }));
 
-    const computed = this.computeInvoiceTotals(copiedItems);
+    const computed = this.computeInvoiceTotals(copiedItems, {
+      isVatPayer: subject.isVatPayer,
+      classification: source.taxClassification,
+    });
     const issueYear = issueDate.getUTCFullYear();
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -1519,6 +1590,7 @@ export class InvoiceService {
             dueDate,
             paymentMethod: source.paymentMethod,
             taxClassification: source.taxClassification,
+            reverseChargeCode: source.reverseChargeCode,
             customerName: source.customerName,
             customerIco: source.customerIco,
             customerDic: source.customerDic,
@@ -1550,6 +1622,7 @@ export class InvoiceService {
 
   private validateReadyToIssue(
     invoice: Invoice & { items: InvoiceItem[] },
+    subject: Subject,
   ): void {
     if (invoice.items.length === 0) {
       throw new BadRequestException(
@@ -1557,19 +1630,54 @@ export class InvoiceService {
       );
     }
 
-    if (!invoice.taxClassification) {
+    if (!subject.isVatPayer) {
+      if (invoice.items.some((item) => item.vatRate !== 0)) {
+        throw new BadRequestException(
+          'Neplátce DPH nemůže vystavit fakturu s DPH. Uložte fakturu znovu, položky se přepočítají bez DPH.',
+        );
+      }
+      return;
+    }
+
+    const classification = invoice.taxClassification;
+    if (!classification) {
       throw new BadRequestException(
         'Tax classification is required before issue',
       );
     }
 
     if (
-      (invoice.taxClassification === 'eu_service' ||
-        invoice.taxClassification === 'eu_goods') &&
+      (classification === 'eu_service' || classification === 'eu_goods') &&
       !invoice.customerDic
     ) {
       throw new BadRequestException(
         'Customer DIC is required for EU tax classification',
+      );
+    }
+
+    if (classification === 'domestic_reverse_charge') {
+      if (!isCzVatId(invoice.customerDic)) {
+        throw new BadRequestException(
+          'Pro režim přenesení daňové povinnosti je povinné české DIČ odběratele.',
+        );
+      }
+      if (!invoice.reverseChargeCode) {
+        throw new BadRequestException(
+          'Pro režim přenesení daňové povinnosti vyberte kód předmětu plnění.',
+        );
+      }
+    }
+
+    if (chargesVat(true, classification)) {
+      const allowedRates: readonly number[] = STANDARD_VAT_RATES;
+      if (invoice.items.some((item) => !allowedRates.includes(item.vatRate))) {
+        throw new BadRequestException(
+          'Položky tuzemského zdanitelného plnění musí mít sazbu 21 % nebo 12 %. Pro plnění bez DPH zvolte odpovídající daňový režim.',
+        );
+      }
+    } else if (invoice.items.some((item) => item.vatRate !== 0)) {
+      throw new BadRequestException(
+        'Ve zvoleném daňovém režimu se DPH neúčtuje. Uložte fakturu znovu, položky se přepočítají bez DPH.',
       );
     }
   }
@@ -1588,7 +1696,7 @@ export class InvoiceService {
       throw new ConflictException('Invoice cannot be issued in current status');
     }
 
-    this.validateReadyToIssue(current);
+    this.validateReadyToIssue(current, subject);
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       try {

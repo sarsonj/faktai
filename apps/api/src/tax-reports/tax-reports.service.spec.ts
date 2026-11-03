@@ -158,7 +158,7 @@ describe('TaxReportsService', () => {
     expect(result.xml).toContain('c_orient="12"');
     expect(result.xml).toContain('c_pracufo="2705"');
     expect(result.xml).toContain('c_ufo="458"');
-    expect(result.xml).toContain('c_telef="+420 777 604 080"');
+    expect(result.xml).toContain('c_telef="+420777604080"');
     expect(result.xml).toContain('email="fu-kontakt@example.cz"');
     expect(result.fileName).toContain('77052030_DPH_20254Q.xml');
   });

@@ -138,6 +138,7 @@ export type InvoiceDetail = {
   dueDate: string;
   paymentMethod: PaymentMethod;
   taxClassification: TaxClassification | null;
+  reverseChargeCode: string | null;
   customerName: string;
   customerIco: string | null;
   customerDic: string | null;
@@ -154,6 +155,7 @@ export type InvoiceDetail = {
   supplierBankAccountPrefix: string | null;
   supplierBankAccountNumber: string;
   supplierBankCode: string;
+  supplierIsVatPayer: boolean;
   items: InvoiceItem[];
 };
 
@@ -173,6 +175,7 @@ export type InvoiceUpsertInput = {
   dueDate?: string;
   paymentMethod?: PaymentMethod;
   taxClassification?: TaxClassification;
+  reverseChargeCode?: string;
   customerName: string;
   customerIco?: string;
   customerDic?: string;
