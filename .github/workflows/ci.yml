@@ -12,6 +12,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
+          # pnpm se aktivuje přes corepack až v dalším kroku
+          package-manager-cache: false
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       # build zahrnuje `prisma generate`, které potřebuje typecheck i lint API

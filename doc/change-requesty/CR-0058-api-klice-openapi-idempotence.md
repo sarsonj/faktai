@@ -67,3 +67,5 @@
   - ruční kontrola stránky API klíč v prohlížeči,
   - typecheck, lint, testy (73) a build.
 - Výsledek: vše prošlo.
+
+- Následná oprava: `actions/setup-node@v5` ve výchozím stavu zapíná cache pro pnpm ještě před `corepack enable` a CI selhávalo („Unable to locate executable file: pnpm“) → `package-manager-cache: false`.
