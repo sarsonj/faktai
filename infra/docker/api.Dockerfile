@@ -29,5 +29,9 @@ COPY --from=build /app/packages/shared/package.json ./packages/shared/package.js
 COPY --from=build /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=build /app/package.json ./package.json
 WORKDIR /app/apps/api
+# Přílohy přijatých dokladů – v produkci perzistentní volume (CR-0060)
+ENV ATTACHMENTS_DIR=/data/attachments
+RUN mkdir -p /data/attachments
+VOLUME ["/data"]
 EXPOSE 4000
 CMD ["./scripts/start-with-migrations.sh"]

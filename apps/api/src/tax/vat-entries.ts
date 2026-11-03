@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { Prisma, TaxClassification } from '@prisma/client';
+import { Prisma, ReceivedVatRegime, TaxClassification } from '@prisma/client';
 import Decimal from 'decimal.js';
 import { chargesVat } from './vat-regime';
 
@@ -23,9 +23,16 @@ export type VatEntryDocument = {
   totalWithVat: Decimal;
 };
 
+/**
+ * Režim plnění. U `output` je to režim vydané faktury, u `input` režim přijatého dokladu
+ * (`domestic_standard` = odpočet z tuzemska, `domestic_reverse_charge` / `eu_goods` /
+ * `eu_service` = daň vyměřuje příjemce a zároveň ji odečítá).
+ */
+export type VatEntryRegime = TaxClassification | ReceivedVatRegime;
+
 export type VatEntry = {
   direction: VatDirection;
-  regime: TaxClassification;
+  regime: VatEntryRegime;
   /** Sazba DPH v % (21 | 12 | 0). */
   rate: number;
   base: Decimal;
@@ -108,6 +115,55 @@ export function vatEntriesFromIssuedInvoice(
       vatId: invoice.customerDic,
     },
     reverseChargeCode: invoice.reverseChargeCode,
+  }));
+}
+
+export type ReceivedDocumentForVat = Prisma.ReceivedDocumentGetPayload<{
+  include: { lines: true };
+}>;
+
+/**
+ * Převod přijatého dokladu na DPH záznamy (směr `input`, jeden záznam na sazbu).
+ * Doklady bez nároku na odpočet a řádky bez daně (sazba 0) se do podání nepromítají.
+ */
+export function vatEntriesFromReceivedDocument(
+  document: ReceivedDocumentForVat,
+): VatEntry[] {
+  if (document.vatRegime === 'no_deduction') {
+    return [];
+  }
+  const byRate = new Map<number, { base: Decimal; vat: Decimal }>();
+  for (const line of document.lines) {
+    if (line.vatRate !== 21 && line.vatRate !== 12) continue;
+    const current = byRate.get(line.vatRate) ?? {
+      base: new Decimal(0),
+      vat: new Decimal(0),
+    };
+    current.base = current.base.add(line.base.toString());
+    current.vat = current.vat.add(line.vat.toString());
+    byRate.set(line.vatRate, current);
+  }
+  const totalWithVat = new Decimal(document.totalWithoutVat.toString()).add(
+    document.totalVat.toString(),
+  );
+  const entryDocument: VatEntryDocument = {
+    id: document.id,
+    number: document.documentNumber,
+    totalWithVat,
+  };
+  return [...byRate.entries()].map(([rate, sums]) => ({
+    direction: 'input' as const,
+    regime: document.vatRegime,
+    rate,
+    base: sums.base,
+    vat: sums.vat,
+    taxableSupplyDate: document.taxableSupplyDate,
+    document: entryDocument,
+    counterparty: {
+      name: document.supplierName,
+      vatId: document.supplierVatId,
+    },
+    reverseChargeCode: document.reverseChargeCode,
   }));
 }
 

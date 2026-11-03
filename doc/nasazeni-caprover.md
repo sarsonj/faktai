@@ -53,6 +53,14 @@ Poznámka:
    - `captain-definition-api.json`
 6. Deployni app.
 
+### 4.2.1 Perzistentní úložiště příloh (CR-0060)
+1. V appce API otevřete *App Configs → Persistent Directories* a přidejte adresář:
+   - **Path in App:** `/data`
+   - **Label:** např. `faktai-attachments` (CapRover vytvoří pojmenovaný volume).
+2. Ověřte proměnnou `ATTACHMENTS_DIR=/data/attachments` (je i výchozí v Docker image).
+3. Uložte a nasaďte znovu. Bez perzistentního adresáře by se přílohy přijatých dokladů při každém nasazení ztratily.
+4. Zálohování: přílohy nejsou v databázi – zálohujte i volume `/data` (spolu s Postgresem).
+
 ### 4.3 Vytvoření appky WEB
 1. Vytvoř app `fakturai-web`.
 2. V `App Configs` nastav:

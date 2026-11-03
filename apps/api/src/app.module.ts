@@ -11,6 +11,7 @@ import { InvoiceModule } from './invoice/invoice.module';
 import { TaxReportsModule } from './tax-reports/tax-reports.module';
 import { RequestContextMiddleware } from './common/request-context.middleware';
 import { RegistryModule } from './registry/registry.module';
+import { ReceivedDocumentModule } from './received-document/received-document.module';
 import { THROTTLER_OPTIONS } from './common/throttling';
 
 @Module({
@@ -23,6 +24,7 @@ import { THROTTLER_OPTIONS } from './common/throttling';
     InvoiceModule,
     RegistryModule,
     TaxReportsModule,
+    ReceivedDocumentModule,
   ],
   controllers: [AppController],
   providers: [

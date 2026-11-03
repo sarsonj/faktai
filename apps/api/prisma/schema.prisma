@@ -112,6 +112,7 @@ model Subject {
   invoices                   Invoice[]
   numberSequences            InvoiceNumberSequence[]
   taxReportRuns              TaxReportRun[]
+  receivedDocuments          ReceivedDocument[]
 }
 
 model Invoice {
@@ -252,4 +253,85 @@ model IdempotencyRecord {
 
   @@unique([userId, key])
   @@index([createdAt])
+}
+
+/// Režim DPH přijatého dokladu (CR-0060).
+enum ReceivedVatRegime {
+  /// Tuzemské plnění od plátce s DPH – odpočet ř. 40/41, KH B.2/B.3
+  domestic_standard
+  /// Přenesení daňové povinnosti – příjemce přizná daň (ř. 10/11) a odečte (ř. 43/44), KH B.1
+  domestic_reverse_charge
+  /// Pořízení zboží z jiného členského státu – ř. 3/4 + ř. 43/44, KH A.2
+  eu_goods
+  /// Přijetí služby z jiného členského státu (§ 9 odst. 1) – ř. 5/6 + ř. 43/44, KH A.2
+  eu_service
+  /// Bez nároku na odpočet (neplátce, osobní spotřeba…) – do podání nevstupuje
+  no_deduction
+}
+
+/// Přijatý doklad (faktura od dodavatele) – CR-0060.
+model ReceivedDocument {
+  id                  String            @id @default(uuid())
+  subjectId           String
+  /// Evidenční číslo dokladu dodavatele (KH c_evid_dd).
+  documentNumber      String            @db.VarChar(60)
+  supplierName        String
+  supplierIco         String?           @db.VarChar(8)
+  /// DIČ (CZ…) nebo VAT ID z jiného členského státu včetně kódu státu.
+  supplierVatId       String?           @db.VarChar(20)
+  supplierStreet      String?
+  supplierCity        String?
+  supplierPostalCode  String?
+  supplierCountryCode String            @default("CZ") @db.VarChar(2)
+  description         String?
+  issueDate           DateTime?
+  /// DUZP / datum povinnosti přiznat daň.
+  taxableSupplyDate   DateTime
+  /// Období, ve kterém se uplatňuje odpočet (tuzemská plnění).
+  deductionDate       DateTime
+  dueDate             DateTime?
+  paidAt              DateTime?
+  vatRegime           ReceivedVatRegime
+  reverseChargeCode   String?           @db.VarChar(4)
+  totalWithoutVat     Decimal           @db.Decimal(15, 2)
+  /// DPH z dokladu (tuzemsko) nebo vyměřená příjemcem (přenesení, EU).
+  totalVat            Decimal           @db.Decimal(15, 2)
+  /// Částka k úhradě dodavateli.
+  totalPayable        Decimal           @db.Decimal(15, 2)
+  note                String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  subject             Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  lines               ReceivedDocumentLine[]
+  attachments         ReceivedDocumentAttachment[]
+
+  @@index([subjectId, taxableSupplyDate])
+  @@index([subjectId, deductionDate])
+}
+
+/// Rozpis DPH přijatého dokladu po sazbách.
+model ReceivedDocumentLine {
+  id         String           @id @default(uuid())
+  documentId String
+  position   Int
+  vatRate    Int
+  base       Decimal          @db.Decimal(15, 2)
+  vat        Decimal          @db.Decimal(15, 2)
+  document   ReceivedDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, position])
+}
+
+/// Příloha přijatého dokladu; soubor leží v ATTACHMENTS_DIR pod `storageKey`.
+model ReceivedDocumentAttachment {
+  id          String           @id @default(uuid())
+  documentId  String
+  fileName    String
+  contentType String           @db.VarChar(100)
+  size        Int
+  storageKey  String           @unique
+  createdAt   DateTime         @default(now())
+  document    ReceivedDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
 }

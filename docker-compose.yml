@@ -25,6 +25,8 @@ services:
       API_PORT: 4000
       WEB_ORIGIN: http://localhost:3000
       DATABASE_URL: postgresql://tappy:tappy@db:5432/tappyfaktur?schema=public
+    volumes:
+      - attachments:/data
     ports:
       - "4000:4000"
     depends_on:
@@ -44,4 +46,5 @@ services:
       - api
 
 volumes:
+  attachments:
   postgres_data:

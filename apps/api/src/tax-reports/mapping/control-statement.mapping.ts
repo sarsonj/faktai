@@ -6,6 +6,7 @@ import {
   groupEntriesByDocument,
   sumEntries,
 } from '../../tax/vat-entries';
+import { parseForeignEuVatId } from '../../tax/vat-id';
 import { czVatIdNumber, isCzVatId } from '../../tax/vat-regime';
 
 /** Limit pro uvádění dokladu v oddílu A.4 kontrolního hlášení (vč. DPH). */
@@ -36,11 +37,36 @@ export type ControlStatementA4Row = {
   sums: RateSums;
 };
 
+/** A.2 – plnění z EU, u nichž daň přiznává příjemce. */
+export type ControlStatementA2Row = {
+  document: VatEntryDocument;
+  supplierCountryCode: string;
+  supplierVatNumber: string;
+  taxableSupplyDate: Date;
+  sums: RateSums;
+};
+
+/** B.1 / B.2 – přijatá plnění po dokladech (dodavatel s českým DIČ). */
+export type ControlStatementBRow = {
+  document: VatEntryDocument;
+  /** Kmenová (číselná) část DIČ dodavatele. */
+  supplierVatId: string;
+  taxableSupplyDate: Date;
+  sums: RateSums;
+  /** Jen B.1. */
+  reverseChargeCode?: string;
+};
+
 export type ControlStatement = {
   a1: ControlStatementA1Row[];
+  a2: ControlStatementA2Row[];
   a4: ControlStatementA4Row[];
   /** Souhrn oddílu A.5; `null`, pokud v něm nic není. */
   a5: (RateSums & { documentCount: number }) | null;
+  b1: ControlStatementBRow[];
+  b2: ControlStatementBRow[];
+  /** Souhrn oddílu B.3; `null`, pokud v něm nic není. */
+  b3: (RateSums & { documentCount: number }) | null;
   /** Věta C – kontrolní součty navázané na řádky přiznání. */
   c: {
     /** ř. 1 přiznání (A.4 + A.5) */
@@ -49,6 +75,16 @@ export type ControlStatement = {
     base12: Decimal;
     /** ř. 25 přiznání (A.1) */
     reverseChargeBase: Decimal;
+    /** ř. 3–6 přiznání (A.2) */
+    a2Base: Decimal;
+    /** ř. 40 přiznání (B.2 + B.3) */
+    inputBase21: Decimal;
+    /** ř. 41 přiznání (B.2 + B.3) */
+    inputBase12: Decimal;
+    /** ř. 10 přiznání (B.1) */
+    reverseChargeReceivedBase21: Decimal;
+    /** ř. 11 přiznání (B.1) */
+    reverseChargeReceivedBase12: Decimal;
   };
 };
 
@@ -61,10 +97,72 @@ function sumByRate(entries: VatEntry[]): RateSums {
 function requireCzVatId(entry: VatEntry): string {
   if (!isCzVatId(entry.counterparty.vatId)) {
     throw new BadRequestException(
-      `Faktura ${entry.document.number} nemá české DIČ odběratele pro kontrolní hlášení.`,
+      entry.direction === 'output'
+        ? `Faktura ${entry.document.number} nemá české DIČ odběratele pro kontrolní hlášení.`
+        : `Přijatý doklad ${entry.document.number} nemá české DIČ dodavatele pro kontrolní hlášení.`,
     );
   }
   return czVatIdNumber(entry.counterparty.vatId);
+}
+
+/** Přijatá plnění (směr `input`) → oddíly A.2, B.1, B.2, B.3. */
+function mapReceived(entries: VatEntry[]) {
+  const a2: ControlStatementA2Row[] = [];
+  const b1: ControlStatementBRow[] = [];
+  const b2: ControlStatementBRow[] = [];
+  const b3Entries: VatEntry[] = [];
+  let b3DocumentCount = 0;
+
+  for (const group of groupEntriesByDocument(
+    entries.filter((entry) => entry.direction === 'input'),
+  )) {
+    const first = group.entries[0];
+    const sums = sumByRate(group.entries);
+
+    if (first.regime === 'eu_goods' || first.regime === 'eu_service') {
+      const vatId = parseForeignEuVatId(first.counterparty.vatId);
+      if (!vatId) {
+        throw new BadRequestException(
+          `Přijatý doklad ${group.document.number} nemá platné VAT ID dodavatele z EU pro kontrolní hlášení.`,
+        );
+      }
+      a2.push({
+        document: group.document,
+        supplierCountryCode: vatId.countryCode,
+        supplierVatNumber: vatId.number,
+        taxableSupplyDate: first.taxableSupplyDate,
+        sums,
+      });
+    } else if (first.regime === 'domestic_reverse_charge') {
+      if (!first.reverseChargeCode) {
+        throw new BadRequestException(
+          `Přijatý doklad ${group.document.number} v režimu přenesení daňové povinnosti nemá kód předmětu plnění.`,
+        );
+      }
+      b1.push({
+        document: group.document,
+        supplierVatId: requireCzVatId(first),
+        taxableSupplyDate: first.taxableSupplyDate,
+        sums,
+        reverseChargeCode: first.reverseChargeCode,
+      });
+    } else if (first.regime === 'domestic_standard') {
+      const supplierVatId = requireCzVatId(first);
+      if (group.document.totalWithVat.gt(KH_A4_THRESHOLD)) {
+        b2.push({
+          document: group.document,
+          supplierVatId,
+          taxableSupplyDate: first.taxableSupplyDate,
+          sums,
+        });
+      } else {
+        b3Entries.push(...group.entries);
+        b3DocumentCount += 1;
+      }
+    }
+  }
+
+  return { a2, b1, b2, b3Entries, b3DocumentCount };
 }
 
 /**
@@ -77,6 +175,7 @@ function requireCzVatId(entry: VatEntry): string {
  */
 export function mapControlStatement(entries: VatEntry[]): ControlStatement {
   const output = entries.filter((entry) => entry.direction === 'output');
+  const received = mapReceived(entries);
   const a1: ControlStatementA1Row[] = [];
   const a4: ControlStatementA4Row[] = [];
   const a5Entries: VatEntry[] = [];
@@ -133,12 +232,31 @@ export function mapControlStatement(entries: VatEntry[]): ControlStatement {
     new Decimal(0),
   );
 
+  const b3Sums = sumByRate(received.b3Entries);
+  const b2Sum = (pick: (sums: RateSums) => Decimal) =>
+    received.b2.reduce(
+      (total, row) => total.add(pick(row.sums)),
+      new Decimal(0),
+    );
+  const b1Sum = (pick: (sums: RateSums) => Decimal) =>
+    received.b1.reduce(
+      (total, row) => total.add(pick(row.sums)),
+      new Decimal(0),
+    );
+
   return {
     a1,
+    a2: received.a2,
     a4,
     a5:
       a5DocumentCount > 0
         ? { ...a5Sums, documentCount: a5DocumentCount }
+        : null,
+    b1: received.b1,
+    b2: received.b2,
+    b3:
+      received.b3DocumentCount > 0
+        ? { ...b3Sums, documentCount: received.b3DocumentCount }
         : null,
     c: {
       base21: a4Base21.add(a5Sums.base21),
@@ -147,6 +265,14 @@ export function mapControlStatement(entries: VatEntry[]): ControlStatement {
         (sum, row) => sum.add(row.base),
         new Decimal(0),
       ),
+      a2Base: received.a2.reduce(
+        (sum, row) => sum.add(row.sums.base21).add(row.sums.base12),
+        new Decimal(0),
+      ),
+      inputBase21: b2Sum((sums) => sums.base21).add(b3Sums.base21),
+      inputBase12: b2Sum((sums) => sums.base12).add(b3Sums.base12),
+      reverseChargeReceivedBase21: b1Sum((sums) => sums.base21),
+      reverseChargeReceivedBase12: b1Sum((sums) => sums.base12),
     },
   };
 }

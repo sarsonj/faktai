@@ -18,6 +18,7 @@ import {
   VatEntry,
   isIssuedByVatPayer,
   vatEntriesFromIssuedInvoice,
+  vatEntriesFromReceivedDocument,
 } from '../tax/vat-entries';
 import { mapControlStatement } from './mapping/control-statement.mapping';
 import { mapVatReturn } from './mapping/vat-return.mapping';
@@ -42,6 +43,7 @@ type TaxPreviewResult = {
   value: number;
   schemaVersion: string;
   invoiceCount: number;
+  receivedDocumentCount: number;
   datasetHash: string;
   summary: Record<string, unknown>;
 };
@@ -158,11 +160,46 @@ export class TaxReportsService {
     return createHash('sha256').update(JSON.stringify(payload)).digest('hex');
   }
 
+  /**
+   * Přijaté doklady období (CR-0060): tuzemské podle data uplatnění odpočtu,
+   * plnění s daní přiznanou příjemcem (přenesení, EU) podle DUZP.
+   */
+  private async getReceivedForPeriod(subjectId: string, range: PeriodRange) {
+    const period = { gte: range.start, lt: range.endExclusive };
+    return this.prisma.receivedDocument.findMany({
+      where: {
+        subjectId,
+        OR: [
+          { vatRegime: 'domestic_standard', deductionDate: period },
+          {
+            vatRegime: {
+              in: ['domestic_reverse_charge', 'eu_goods', 'eu_service'],
+            },
+            taxableSupplyDate: period,
+          },
+        ],
+      },
+      include: { lines: true },
+      orderBy: [{ taxableSupplyDate: 'asc' }, { documentNumber: 'asc' }],
+    });
+  }
+
   /** Doklady období převedené na DPH záznamy (vstup pro mapování podání). */
-  private toVatEntries(invoices: InvoiceWithItems[]): VatEntry[] {
-    return invoices
-      .filter((invoice) => isIssuedByVatPayer(invoice))
-      .flatMap((invoice) => vatEntriesFromIssuedInvoice(invoice));
+  private async collectPeriod(subjectId: string, range: PeriodRange) {
+    const [allInvoices, received] = await Promise.all([
+      this.getInvoicesForPeriod(subjectId, range),
+      this.getReceivedForPeriod(subjectId, range),
+    ]);
+    const invoices = allInvoices.filter((invoice) =>
+      isIssuedByVatPayer(invoice),
+    );
+    const entries: VatEntry[] = [
+      ...invoices.flatMap((invoice) => vatEntriesFromIssuedInvoice(invoice)),
+      ...received.flatMap((document) =>
+        vatEntriesFromReceivedDocument(document),
+      ),
+    ];
+    return { invoices, received, entries };
   }
 
   private buildVatReturnSummary(entries: VatEntry[]) {
@@ -178,7 +215,20 @@ export class TaxReportsService {
         r22_export: rows.exportGoods,
         r25_reverseCharge: rows.reverseCharge,
         r50_exempt: rows.exemptWithoutCredit,
+        r3_vat: rows.euGoodsAcq21.vat,
+        r4_vat: rows.euGoodsAcq12.vat,
+        r5_vat: rows.euServiceAcq21.vat,
+        r6_vat: rows.euServiceAcq12.vat,
+        r10_vat: rows.reverseChargeReceived21.vat,
+        r11_vat: rows.reverseChargeReceived12.vat,
+        r40_deduction: rows.domesticInput21.deduction,
+        r41_deduction: rows.domesticInput12.deduction,
+        r43_deduction: rows.selfAssessedInput21.deduction,
+        r44_deduction: rows.selfAssessedInput12.deduction,
         r62_outputVat: rows.outputVat,
+        r63_deduction: rows.deductionVat,
+        r64_taxDue: rows.taxDue,
+        r65_excessDeduction: rows.excessDeduction,
       },
     };
   }
@@ -430,28 +480,28 @@ export class TaxReportsService {
           Veta1: this.toFuAttributes({
             dan23: rows.vat21,
             dan5: rows.vat12,
-            dan_pzb23: '0',
-            dan_pzb5: '0',
-            dan_psl23_e: '0',
-            dan_psl5_e: '0',
+            dan_pzb23: rows.euGoodsAcq21.vat,
+            dan_pzb5: rows.euGoodsAcq12.vat,
+            dan_psl23_e: rows.euServiceAcq21.vat,
+            dan_psl5_e: rows.euServiceAcq12.vat,
             dan_dzb23: '0',
             dan_dzb5: '0',
             dan_pdop_nrg: '0',
-            dan_rpren23: '0',
-            dan_rpren5: '0',
+            dan_rpren23: rows.reverseChargeReceived21.vat,
+            dan_rpren5: rows.reverseChargeReceived12.vat,
             dan_psl23_z: '0',
             dan_psl5_z: '0',
             obrat23: rows.base21,
             obrat5: rows.base12,
-            p_zb23: '0',
-            p_zb5: '0',
-            p_sl23_e: '0',
-            p_sl5_e: '0',
+            p_zb23: rows.euGoodsAcq21.base,
+            p_zb5: rows.euGoodsAcq12.base,
+            p_sl23_e: rows.euServiceAcq21.base,
+            p_sl5_e: rows.euServiceAcq12.base,
             dov_zb23: '0',
             dov_zb5: '0',
             p_dop_nrg: '0',
-            rez_pren23: '0',
-            rez_pren5: '0',
+            rez_pren23: rows.reverseChargeReceived21.base,
+            rez_pren5: rows.reverseChargeReceived12.base,
             p_sl23_z: '0',
             p_sl5_z: '0',
           }),
@@ -472,18 +522,19 @@ export class TaxReportsService {
             opr_dluz: '0',
           }),
           Veta4: this.toFuAttributes({
-            pln23: '0',
-            pln5: '0',
+            // ř. 40/41 (základ, odpočet v plné výši), ř. 43/44, ř. 46
+            pln23: rows.domesticInput21.base,
+            pln5: rows.domesticInput12.base,
             dov_cu: '0',
-            nar_zdp23: '0',
-            nar_zdp5: '0',
+            nar_zdp23: rows.selfAssessedInput21.base,
+            nar_zdp5: rows.selfAssessedInput12.base,
             nar_maj: '0',
-            odp_tuz23_nar: '0',
-            odp_tuz5_nar: '0',
+            odp_tuz23_nar: rows.domesticInput21.deduction,
+            odp_tuz5_nar: rows.domesticInput12.deduction,
             odp_cu_nar: '0',
-            od_zdp23: '0',
-            od_zdp5: '0',
-            odp_sum_nar: '0',
+            od_zdp23: rows.selfAssessedInput21.deduction,
+            od_zdp5: rows.selfAssessedInput12.deduction,
+            odp_sum_nar: rows.deductionTotal,
             od_maj: '0',
             odp_tuz23: '0',
             odp_tuz5: '0',
@@ -496,9 +547,9 @@ export class TaxReportsService {
           }),
           Veta6: this.toFuAttributes({
             dan_zocelk: rows.outputVat,
-            odp_zocelk: '0',
-            dano_da: rows.outputVat,
-            dano_no: '0',
+            odp_zocelk: rows.deductionVat,
+            dano_da: rows.taxDue,
+            dano_no: rows.excessDeduction,
           }),
         },
       },
@@ -545,6 +596,48 @@ export class TaxReportsService {
       }),
     );
 
+    const rateAttributes = (sums: {
+      base21: Decimal;
+      vat21: Decimal;
+      base12: Decimal;
+      vat12: Decimal;
+    }) => ({
+      zakl_dane1: this.formatDecimal(sums.base21),
+      dan1: this.formatDecimal(sums.vat21),
+      zakl_dane2: this.formatDecimal(sums.base12),
+      dan2: this.formatDecimal(sums.vat12),
+      zakl_dane3: '0',
+      dan3: '0',
+    });
+    const vetaA2 = kh.a2.map((row) =>
+      this.toFuAttributes({
+        k_stat: row.supplierCountryCode,
+        vatid_dod: row.supplierVatNumber,
+        c_evid_dd: row.document.number,
+        dppd: this.formatDateForFu(row.taxableSupplyDate),
+        ...rateAttributes(row.sums),
+      }),
+    );
+    const vetaB1 = kh.b1.map((row) =>
+      this.toFuAttributes({
+        dic_dod: row.supplierVatId,
+        c_evid_dd: row.document.number,
+        duzp: this.formatDateForFu(row.taxableSupplyDate),
+        ...rateAttributes(row.sums),
+        kod_pred_pl: row.reverseChargeCode ?? '',
+      }),
+    );
+    const vetaB2 = kh.b2.map((row) =>
+      this.toFuAttributes({
+        dic_dod: row.supplierVatId,
+        c_evid_dd: row.document.number,
+        dppd: this.formatDateForFu(row.taxableSupplyDate),
+        ...rateAttributes(row.sums),
+        pomer: 'N',
+        zdph_44: 'N',
+      }),
+    );
+
     // Pořadí vět podle XSD: D, P, A1, A2, A3, A4, A5, B1, B2, B3, C.
     const reportNode: Record<string, unknown> = {
       ...this.toFuAttributes({ verzePis: '01.02.01' }),
@@ -554,6 +647,9 @@ export class TaxReportsService {
 
     if (vetaA1.length > 0) {
       reportNode.VetaA1 = vetaA1;
+    }
+    if (vetaA2.length > 0) {
+      reportNode.VetaA2 = vetaA2;
     }
     if (vetaA4.length > 0) {
       reportNode.VetaA4 = vetaA4;
@@ -568,16 +664,25 @@ export class TaxReportsService {
         dan3: '0',
       });
     }
+    if (vetaB1.length > 0) {
+      reportNode.VetaB1 = vetaB1;
+    }
+    if (vetaB2.length > 0) {
+      reportNode.VetaB2 = vetaB2;
+    }
+    if (kh.b3) {
+      reportNode.VetaB3 = this.toFuAttributes(rateAttributes(kh.b3));
+    }
 
     reportNode.VetaC = this.toFuAttributes({
-      celk_zd_a2: '0',
+      celk_zd_a2: this.formatDecimal(kh.c.a2Base),
       obrat23: this.formatDecimal(kh.c.base21),
       obrat5: this.formatDecimal(kh.c.base12),
-      pln23: '0',
-      pln5: '0',
+      pln23: this.formatDecimal(kh.c.inputBase21),
+      pln5: this.formatDecimal(kh.c.inputBase12),
       pln_rez_pren: this.formatDecimal(kh.c.reverseChargeBase),
-      rez_pren23: '0',
-      rez_pren5: '0',
+      rez_pren23: this.formatDecimal(kh.c.reverseChargeReceivedBase21),
+      rez_pren5: this.formatDecimal(kh.c.reverseChargeReceivedBase12),
     });
 
     const xmlPayload = {
@@ -597,6 +702,7 @@ export class TaxReportsService {
   private buildPreview(
     dto: TaxReportRequestDto,
     invoices: InvoiceWithItems[],
+    receivedCount: number,
     entries: VatEntry[],
   ): TaxPreviewResult {
     const datasetHash = this.computeDatasetHash(invoices);
@@ -610,6 +716,7 @@ export class TaxReportsService {
         value: dto.value,
         schemaVersion,
         invoiceCount: invoices.length,
+        receivedDocumentCount: receivedCount,
         datasetHash,
         summary: this.buildVatReturnSummary(entries),
       };
@@ -622,6 +729,7 @@ export class TaxReportsService {
       value: dto.value,
       schemaVersion,
       invoiceCount: invoices.length,
+      receivedDocumentCount: receivedCount,
       datasetHash,
       summary: this.buildControlStatementSummary(entries),
     };
@@ -649,11 +757,11 @@ export class TaxReportsService {
 
     const normalized = this.normalizePeriod(request);
     const range = this.resolvePeriodRange(normalized);
-    const invoices = (
-      await this.getInvoicesForPeriod(subject.id, range)
-    ).filter((invoice) => isIssuedByVatPayer(invoice));
-
-    return this.buildPreview(normalized, invoices, this.toVatEntries(invoices));
+    const { invoices, received, entries } = await this.collectPeriod(
+      subject.id,
+      range,
+    );
+    return this.buildPreview(normalized, invoices, received.length, entries);
   }
 
   async export(userId: string, request: TaxReportRequestDto) {
@@ -663,9 +771,7 @@ export class TaxReportsService {
 
     const normalized = this.normalizePeriod(request);
     const range = this.resolvePeriodRange(normalized);
-    const entries = this.toVatEntries(
-      await this.getInvoicesForPeriod(subject.id, range),
-    );
+    const { entries } = await this.collectPeriod(subject.id, range);
     const xml =
       normalized.reportType === 'vat_return'
         ? await this.buildFuVatReturnXml(subject, normalized, entries)

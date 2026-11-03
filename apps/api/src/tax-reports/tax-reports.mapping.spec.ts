@@ -67,6 +67,7 @@ describe('TaxReportsService – mapping to FU rows', () => {
   const prisma = {
     subject: { findUnique: jest.fn() },
     invoice: { findMany: jest.fn() },
+    receivedDocument: { findMany: jest.fn().mockResolvedValue([]) },
   } as any;
   const config = { get: jest.fn(() => undefined) } as any;
   const taxOfficesService = {
@@ -226,7 +227,7 @@ describe('TaxReportsService – mapping to FU rows', () => {
       obrat23: '61000.00',
       obrat5: '1000.00',
       pln_rez_pren: '9000.00',
-      rez_pren23: '0',
+      rez_pren23: '0.00',
     });
 
     const order = ['<VetaA1', '<VetaA4', '<VetaA5', '<VetaC'].map((tag) =>
@@ -268,5 +269,164 @@ describe('TaxReportsService – mapping to FU rows', () => {
     ]);
     const { xml } = await service.export('user-1', request('vat_return'));
     expect(parser.parse(xml).Pisemnost.DPHDP3.Veta1.obrat23).toBe('1000');
+  });
+
+  describe('received documents (input side)', () => {
+    let rseq = 0;
+    function received(
+      vatRegime: string,
+      lines: Array<{ rate: number; base: string; vat: string }>,
+      extra: Record<string, unknown> = {},
+    ) {
+      rseq += 1;
+      const base = lines.reduce((sum, line) => sum + Number(line.base), 0);
+      const vat = lines.reduce((sum, line) => sum + Number(line.vat), 0);
+      return {
+        id: `rd-${rseq}`,
+        documentNumber: `FV-${rseq}`,
+        supplierName: `Supplier ${rseq}`,
+        supplierVatId: 'CZ27082440',
+        vatRegime,
+        reverseChargeCode: null,
+        taxableSupplyDate: new Date('2026-01-12T00:00:00.000Z'),
+        deductionDate: new Date('2026-01-12T00:00:00.000Z'),
+        totalWithoutVat: base.toFixed(2),
+        totalVat: vat.toFixed(2),
+        lines: lines.map((line, index) => ({
+          position: index + 1,
+          vatRate: line.rate,
+          base: line.base,
+          vat: line.vat,
+        })),
+        ...extra,
+      };
+    }
+
+    const inputs = () => [
+      // B.2 – nad 10 000 Kč
+      received('domestic_standard', [
+        { rate: 21, base: '20000.00', vat: '4200.00' },
+        { rate: 12, base: '1000.00', vat: '120.00' },
+      ]),
+      // B.3 – do 10 000 Kč
+      received('domestic_standard', [
+        { rate: 21, base: '1000.00', vat: '210.00' },
+      ]),
+      // B.1 – přijaté přenesení
+      received(
+        'domestic_reverse_charge',
+        [{ rate: 21, base: '5000.00', vat: '1050.00' }],
+        {
+          reverseChargeCode: '4',
+        },
+      ),
+      // A.2 – služba z EU
+      received('eu_service', [{ rate: 21, base: '3000.00', vat: '630.00' }], {
+        supplierVatId: 'IE6388047V',
+      }),
+      // A.2 – pořízení zboží z EU, snížená sazba
+      received('eu_goods', [{ rate: 12, base: '2000.00', vat: '240.00' }], {
+        supplierVatId: 'DE123456789',
+      }),
+      // bez nároku – do podání nevstupuje
+      received('no_deduction', [{ rate: 21, base: '9999.00', vat: '2099.79' }]),
+    ];
+
+    it('maps received documents to DP3 input rows and computes rows 62–65 (XSD-valid)', async () => {
+      prisma.invoice.findMany.mockResolvedValue([
+        invoice('domestic_standard', [
+          { rate: 21, base: '10000.00', vat: '2100.00' },
+        ]),
+      ]);
+      prisma.receivedDocument.findMany.mockResolvedValue(inputs());
+
+      const { xml } = await service.export('user-1', request('vat_return'));
+      const dp3 = parser.parse(xml).Pisemnost.DPHDP3;
+
+      // výstup z přijatých plnění
+      expect(dp3.Veta1).toMatchObject({
+        p_zb5: '2000',
+        dan_pzb5: '240',
+        p_sl23_e: '3000',
+        dan_psl23_e: '630',
+        rez_pren23: '5000',
+        dan_rpren23: '1050',
+      });
+      // odpočet
+      expect(dp3.Veta4).toMatchObject({
+        pln23: '21000',
+        odp_tuz23_nar: '4410',
+        pln5: '1000',
+        odp_tuz5_nar: '120',
+        nar_zdp23: '8000',
+        od_zdp23: '1680',
+        nar_zdp5: '2000',
+        od_zdp5: '240',
+        odp_sum_nar: '6450',
+      });
+      // 62 = 2100 + 240 + 630 + 1050 = 4020; 63 = 6450; 65 = 2430
+      expect(dp3.Veta6).toMatchObject({
+        dan_zocelk: '4020',
+        odp_zocelk: '6450',
+        dano_da: '0',
+        dano_no: '2430',
+      });
+    });
+
+    it('maps received documents to KH sections A.2, B.1, B.2, B.3 (XSD-valid)', async () => {
+      prisma.invoice.findMany.mockResolvedValue([]);
+      prisma.receivedDocument.findMany.mockResolvedValue(inputs());
+
+      const { xml } = await service.export(
+        'user-1',
+        request('control_statement'),
+      );
+      const kh = new XMLParser({
+        ignoreAttributes: false,
+        attributeNamePrefix: '',
+        parseAttributeValue: false,
+        isArray: (name) => ['VetaA2', 'VetaB1', 'VetaB2'].includes(name),
+      }).parse(xml).Pisemnost.DPHKH1;
+
+      expect(kh.VetaA2).toHaveLength(2);
+      expect(kh.VetaA2[0]).toMatchObject({
+        k_stat: 'IE',
+        vatid_dod: '6388047V',
+        zakl_dane1: '3000.00',
+        dan1: '630.00',
+      });
+      expect(kh.VetaA2[1]).toMatchObject({
+        k_stat: 'DE',
+        vatid_dod: '123456789',
+        zakl_dane2: '2000.00',
+      });
+      expect(kh.VetaB1[0]).toMatchObject({
+        dic_dod: '27082440',
+        kod_pred_pl: '4',
+        zakl_dane1: '5000.00',
+        dan1: '1050.00',
+      });
+      expect(kh.VetaB2).toHaveLength(1);
+      expect(kh.VetaB2[0]).toMatchObject({
+        dic_dod: '27082440',
+        zakl_dane1: '20000.00',
+        dan1: '4200.00',
+        pomer: 'N',
+      });
+      expect(kh.VetaB3).toMatchObject({
+        zakl_dane1: '1000.00',
+        dan1: '210.00',
+      });
+      expect(kh.VetaC).toMatchObject({
+        celk_zd_a2: '5000.00',
+        pln23: '21000.00',
+        pln5: '1000.00',
+        rez_pren23: '5000.00',
+      });
+      const order = ['<VetaA2', '<VetaB1', '<VetaB2', '<VetaB3', '<VetaC'].map(
+        (tag) => xml.indexOf(tag),
+      );
+      expect([...order].sort((a, b) => a - b)).toEqual(order);
+    });
   });
 });

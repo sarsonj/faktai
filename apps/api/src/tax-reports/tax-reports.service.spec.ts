@@ -9,6 +9,9 @@ describe('TaxReportsService', () => {
     invoice: {
       findMany: jest.fn(),
     },
+    receivedDocument: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
   } as any;
 
   const config = {

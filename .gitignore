@@ -20,3 +20,6 @@ apps/api/dist
 
 # Playwright MCP artefakty
 .playwright-mcp/
+
+# Lokální úložiště příloh (CR-0060)
+apps/api/storage/
