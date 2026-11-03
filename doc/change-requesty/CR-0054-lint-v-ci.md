@@ -39,7 +39,7 @@
 
 ## 5. Rizika a poznámky
 - Formátovací změny se dotkly řady souborů. Jde čistě o whitespace a zalamování.
-- Dockerfile dál instaluje s `--frozen-lockfile=false` a běží na Node 20, který je po konci podpory. Řešit samostatným CR.
+- Dockerfile dál instaluje s `--frozen-lockfile=false` a běží na Node 20, který je po konci podpory. Vyřešeno v CR-0056.
 
 ## 6. Implementace a ověření
 - Commit(y): `chore: enforce lint in CI and fix lint errors`

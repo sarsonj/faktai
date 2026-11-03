@@ -1,12 +1,12 @@
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base
 WORKDIR /app
 RUN corepack enable
 
 FROM base AS deps
-COPY package.json pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/shared/package.json ./packages/shared/
-RUN pnpm install --frozen-lockfile=false
+RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 ARG VITE_API_URL
@@ -21,6 +21,6 @@ ENV NODE_ENV=production
 COPY --from=build /app/apps/web/dist ./apps/web/dist
 COPY infra/docker/start-web-with-runtime-config.sh /app/start-web-with-runtime-config.sh
 RUN chmod +x /app/start-web-with-runtime-config.sh
-RUN npm i -g serve
+RUN npm i -g serve@14.2.4
 EXPOSE 3000
 CMD ["/app/start-web-with-runtime-config.sh"]

@@ -57,7 +57,7 @@
     "@types/express": "^5.0.0",
     "@types/helmet": "^4.0.0",
     "@types/jest": "^30.0.0",
-    "@types/node": "^22.10.7",
+    "@types/node": "^24.10.1",
     "@types/nodemailer": "^7.0.3",
     "@types/pdfkit": "^0.17.5",
     "@types/qrcode": "^1.5.6",

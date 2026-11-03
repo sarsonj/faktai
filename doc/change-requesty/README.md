@@ -72,3 +72,4 @@
 | `CR-0053` | DPH režimy faktur a oprava exportů pro FÚ | `Implementováno` | `Must` |
 | `CR-0054` | Lint v CI a vyčištění lint chyb | `Implementováno` | `Should` |
 | `CR-0055` | Oficiální číselník kódů předmětu plnění (KH A.1) | `Implementováno` | `Must` |
+| `CR-0056` | Upgrade Node.js na 24 LTS a reprodukovatelné Docker buildy | `Implementováno` | `Must` |

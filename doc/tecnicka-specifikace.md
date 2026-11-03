@@ -9,7 +9,7 @@
 ## 1. Technologický stack
 
 ### 1.1 Povinné technologie ze zadání
-- Backend: `Node.js`
+- Backend: `Node.js` 24 LTS (verze v `.nvmrc`, `engines` v root `package.json`; CI i Docker image `node:24-alpine`)
 - Frontend: `React`
 - Databáze: `PostgreSQL`
 - Provoz: `Docker` (všechny části aplikace)
@@ -41,7 +41,8 @@
   - extrakci textu pro ověření, že se diakritika nedegraduje už při exportu.
 
 ### 1.4 Kvalita kódu a CI
-- CI (`.github/workflows/ci.yml`): `pnpm install --frozen-lockfile` → `pnpm build` (vč. `prisma generate`) → `pnpm typecheck` → `pnpm lint` → `pnpm test`.
+- Docker buildy instalují závislosti striktně podle `pnpm-lock.yaml` (`--frozen-lockfile`); `serve` ve web image je pinovaný.
+- CI (`.github/workflows/ci.yml`): Node z `.nvmrc`, `pnpm install --frozen-lockfile` → `pnpm build` (vč. `prisma generate`) → `pnpm typecheck` → `pnpm lint` → `pnpm test`.
 - `pnpm lint` pouze kontroluje (bez `--fix`); opravy přes `pnpm --filter @tappyfaktur/api lint:fix`.
 - API: ESLint `recommendedTypeChecked` + Prettier; v testech (`*.spec.ts`, `test/**`) jsou vypnutá pravidla `no-unsafe-*` kvůli mockům.
 - Web: ESLint s `react-hooks` a `react-refresh` (komponentové soubory exportují jen komponenty – např. hook `useAuth` je v `auth/auth-context.ts`).
