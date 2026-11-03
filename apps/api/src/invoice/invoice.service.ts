@@ -21,6 +21,11 @@ import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  addDaysDateOnly,
+  formatDateOnlyCz,
+  todayDateOnly,
+} from '../utils/date-only';
 import { ChangeInvoiceNumberDto } from './dto/change-invoice-number.dto';
 import { ListInvoicesQueryDto } from './dto/list-invoices.query.dto';
 import { InvoiceItemDto } from './dto/invoice-item.dto';
@@ -130,9 +135,7 @@ export class InvoiceService {
   constructor(private readonly prisma: PrismaService) {}
 
   private startOfToday(): Date {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return today;
+    return todayDateOnly();
   }
 
   private toEffectiveStatus(status: InvoiceStatus, dueDate: Date) {
@@ -184,9 +187,7 @@ export class InvoiceService {
   }
 
   private addDays(date: Date, days: number): Date {
-    const next = new Date(date);
-    next.setDate(next.getDate() + days);
-    return next;
+    return addDaysDateOnly(date, days);
   }
 
   private parseInvoiceSequenceForYear(
@@ -696,7 +697,7 @@ export class InvoiceService {
   }
 
   private formatDateCz(value: Date): string {
-    return value.toLocaleDateString('cs-CZ');
+    return formatDateOnlyCz(value);
   }
 
   private formatSupplierBankAccount(supplier: SupplierSnapshot): string {
@@ -1185,7 +1186,7 @@ export class InvoiceService {
       doc.moveTo(left, footerY - 12).lineTo(right, footerY - 12).strokeColor('#d8d8d8').stroke();
       this.drawSingleLine(
         doc,
-        `Vytiskl(a): ${input.supplier.firstName} ${input.supplier.lastName}, ${this.formatDateCz(new Date())}`,
+        `Vytiskl(a): ${input.supplier.firstName} ${input.supplier.lastName}, ${this.formatDateCz(this.startOfToday())}`,
         left,
         footerY,
         200,
@@ -1620,7 +1621,8 @@ export class InvoiceService {
       return this.getInvoiceDetail(userId, invoiceId);
     }
 
-    const paidAtDate = explicitPaidAt ?? current.paidAt ?? new Date();
+    const paidAtDate =
+      explicitPaidAt ?? current.paidAt ?? this.startOfToday();
 
     await this.prisma.invoice.update({
       where: { id: current.id },

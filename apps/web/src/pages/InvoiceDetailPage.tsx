@@ -9,18 +9,8 @@ import {
   markInvoiceUnpaid,
   refreshSupplierSnapshot,
 } from '../invoice-api';
+import { formatDateCz, toLocalDateInputValue } from '../date-utils';
 import type { InvoiceDetail } from '../types';
-
-function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString('cs-CZ');
-}
-
-function toLocalDateInputValue(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
 
 function defaultPaidAtInputValue(paidAt?: string | null): string {
   if (paidAt) {
@@ -464,19 +454,19 @@ export function InvoiceDetailPage() {
             <dl className="invoice-meta-list">
               <div>
                 <dt>Vystaveno</dt>
-                <dd>{formatDate(invoice.issueDate)}</dd>
+                <dd>{formatDateCz(invoice.issueDate)}</dd>
               </div>
               <div>
                 <dt>Splatnost</dt>
-                <dd>{formatDate(invoice.dueDate)}</dd>
+                <dd>{formatDateCz(invoice.dueDate)}</dd>
               </div>
               <div>
                 <dt>Datum zdanitelného plnění (DUZP)</dt>
-                <dd>{formatDate(invoice.taxableSupplyDate)}</dd>
+                <dd>{formatDateCz(invoice.taxableSupplyDate)}</dd>
               </div>
               <div>
                 <dt>Uhrazena dne</dt>
-                <dd>{invoice.paidAt ? formatDate(invoice.paidAt) : '-'}</dd>
+                <dd>{invoice.paidAt ? formatDateCz(invoice.paidAt) : '-'}</dd>
               </div>
             </dl>
           </article>

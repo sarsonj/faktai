@@ -17,6 +17,7 @@ import { createHash } from 'node:crypto';
 import { XMLBuilder, XMLValidator } from 'fast-xml-parser';
 import { PrismaService } from '../prisma/prisma.service';
 import { TaxOfficesService } from '../tax-offices/tax-offices.service';
+import { formatDateOnlyCz, todayDateOnly } from '../utils/date-only';
 import { TaxReportRequestDto } from './dto/tax-report-request.dto';
 
 type InvoiceWithItems = Prisma.InvoiceGetPayload<{
@@ -249,10 +250,7 @@ export class TaxReportsService {
   }
 
   private formatDateForFu(value: Date): string {
-    const day = String(value.getDate()).padStart(2, '0');
-    const month = String(value.getMonth() + 1).padStart(2, '0');
-    const year = value.getFullYear();
-    return `${day}.${month}.${year}`;
+    return formatDateOnlyCz(value);
   }
 
   private formatDecimal(value: Decimal.Value): string {
@@ -295,7 +293,7 @@ export class TaxReportsService {
 
     return this.toFuAttributes({
       k_uladis: 'DPH',
-      d_poddp: this.formatDateForFu(new Date()),
+      d_poddp: this.formatDateForFu(todayDateOnly()),
       rok: String(request.year),
       dokument: document,
       ...periodFields,

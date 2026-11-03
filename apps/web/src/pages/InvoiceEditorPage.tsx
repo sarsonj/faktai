@@ -7,6 +7,7 @@ import {
   reserveInvoiceNumber,
   updateInvoice,
 } from '../invoice-api';
+import { addDaysToDateInputValue, todayDateInputValue } from '../date-utils';
 import { searchRegistryCompanies } from '../registry-api';
 import { getSubject } from '../subject-api';
 import type {
@@ -62,10 +63,6 @@ function toDateInputValue(value: string): string {
   return value.slice(0, 10);
 }
 
-function formatDate(value: Date): string {
-  return value.toISOString().slice(0, 10);
-}
-
 function createEmptyItem(): EditorItemState {
   return {
     description: '',
@@ -81,18 +78,15 @@ function normalizeIco(value: string): string {
 }
 
 function createDefaultState(defaultDueDays = 14): EditorState {
-  const issueDate = new Date();
-  issueDate.setHours(0, 0, 0, 0);
-
-  const dueDate = new Date(issueDate);
-  dueDate.setDate(dueDate.getDate() + defaultDueDays);
+  const issueDate = todayDateInputValue();
+  const dueDate = addDaysToDateInputValue(issueDate, defaultDueDays);
 
   return {
     invoiceNumber: '',
     variableSymbol: '',
-    issueDate: formatDate(issueDate),
-    taxableSupplyDate: formatDate(issueDate),
-    dueDate: formatDate(dueDate),
+    issueDate,
+    taxableSupplyDate: issueDate,
+    dueDate,
     taxClassification: 'domestic_standard',
     customerName: '',
     customerIco: '',
@@ -138,16 +132,13 @@ function createStateFromCopySource(
 ): EditorState {
   const base = createDefaultState(defaultDueDays);
 
-  const dueDate = new Date(base.issueDate);
-  dueDate.setDate(dueDate.getDate() + defaultDueDays);
-
   return {
     ...base,
     invoiceNumber: '',
     variableSymbol: '',
     issueDate: base.issueDate,
     taxableSupplyDate: base.issueDate,
-    dueDate: formatDate(dueDate),
+    dueDate: addDaysToDateInputValue(base.issueDate, defaultDueDays),
     taxClassification: source.taxClassification ?? base.taxClassification,
     customerName: source.customerName,
     customerIco: source.customerIco ?? '',

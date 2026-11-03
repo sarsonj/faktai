@@ -586,6 +586,7 @@ Poznámka:
 ### 8.2 Datum a čas
 - Ukládání timestampů v UTC.
 - Business pravidla (splatnost, overdue) podle `Europe/Prague`.
+- Datumy dokladů (vystavení, DUZP, splatnost, úhrada) jsou kalendářní dny uložené jako UTC půlnoc; „dnes“ se určuje podle kalendáře `Europe/Prague` nezávisle na `TZ` serveru (`apps/api/src/utils/date-only.ts`). Frontend je zobrazuje v UTC a výchozí datum v editoru bere z lokálního kalendáře prohlížeče (`apps/web/src/date-utils.ts`).
 - Formát zobrazení: `DD.MM.YYYY`.
 
 ### 8.3 Měna
@@ -645,6 +646,7 @@ Mapování v1:
   - `secure` (mimo local dev),
   - `sameSite=lax`.
 - Přísnější rate limiting na auth endpointy (`/auth/login`, `/auth/forgot-password`).
+  - Existuje jen jeden globální throttler `default` (150 req/min na route a IP); auth endpointy ho zpřísňují přes `@Throttle({ default: ... })`. Další pojmenované throttlery nepřidávat – `@nestjs/throttler` je aplikuje na všechny routy.
 
 ### 11.2 Auditní logika
 - `created_at`, `updated_at` na hlavních tabulkách.

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { deleteInvoice, downloadInvoicePdf, listInvoices } from '../invoice-api';
+import { formatDateCz } from '../date-utils';
 import type { InvoiceListItem, InvoiceListResponse } from '../types';
 
 const STATUS_OPTIONS = ['all', 'paid', 'unpaid', 'overdue'] as const;
@@ -13,10 +14,6 @@ const STATUS_LABELS: Record<UiStatus, string> = {
   unpaid: 'Neuhrazené',
   overdue: 'Po splatnosti',
 };
-
-function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString('cs-CZ');
-}
 
 function formatMoney(value: string): string {
   const number = Number(value);
@@ -332,8 +329,8 @@ export function InvoicesPage() {
                           {item.description || '-'}
                         </div>
                       </td>
-                      <td className="cell-issued">{formatDate(item.issueDate)}</td>
-                      <td className="cell-due">{formatDate(item.dueDate)}</td>
+                      <td className="cell-issued">{formatDateCz(item.issueDate)}</td>
+                      <td className="cell-due">{formatDateCz(item.dueDate)}</td>
                       <td className="cell-total">{formatMoney(item.totalWithVat)}</td>
                       <td className="cell-base">{formatMoney(item.totalWithoutVat)}</td>
                       <td className="cell-status">
@@ -342,7 +339,7 @@ export function InvoicesPage() {
                         </div>
                         {item.status === 'paid' && item.paidAt && (
                           <div className="invoice-cell-secondary invoice-status-date">
-                            {formatDate(item.paidAt)}
+                            {formatDateCz(item.paidAt)}
                           </div>
                         )}
                       </td>

@@ -11,14 +11,12 @@ import { InvoiceModule } from './invoice/invoice.module';
 import { TaxReportsModule } from './tax-reports/tax-reports.module';
 import { RequestContextMiddleware } from './common/request-context.middleware';
 import { RegistryModule } from './registry/registry.module';
+import { THROTTLER_OPTIONS } from './common/throttling';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ThrottlerModule.forRoot([
-      { name: 'default', ttl: 60_000, limit: 150 },
-      { name: 'auth', ttl: 60_000, limit: 12 },
-    ]),
+    ThrottlerModule.forRoot(THROTTLER_OPTIONS),
     PrismaModule,
     AuthModule,
     SubjectModule,
