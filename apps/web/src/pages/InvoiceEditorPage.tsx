@@ -244,6 +244,9 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   const [customerLookupError, setCustomerLookupError] = useState<string | null>(null);
   const [customerLookupResults, setCustomerLookupResults] = useState<RegistryCompanyResult[]>([]);
   const reserveRequestIdRef = useRef(0);
+  // ID konceptu vytvořeného v tomto editoru (create mode). Když vytvoření projde,
+  // ale vystavení selže, další pokus koncept jen aktualizuje místo založení nového.
+  const createdInvoiceIdRef = useRef<string | null>(null);
   const customInvoiceNumberModeRef = useRef(useCustomInvoiceNumber);
 
   useEffect(() => {
@@ -410,7 +413,8 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
     }
 
     const payload = toPayload(state);
-    if (mode === 'create' && !useCustomInvoiceNumber) {
+    const isNewDraft = mode === 'create' && !createdInvoiceIdRef.current;
+    if (isNewDraft && !useCustomInvoiceNumber) {
       const currentInvoiceNumber = state.invoiceNumber.replace(/\s+/g, '');
       const currentVariableSymbol = state.variableSymbol.replace(/\s+/g, '');
 
@@ -423,18 +427,20 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
       }
     }
 
-    if (mode === 'create') {
+    if (isNewDraft) {
       const created = await createInvoice(payload);
+      createdInvoiceIdRef.current = created.id;
       setInvoice(created);
       setState(fromInvoice(created));
       return created;
     }
 
-    if (!invoiceId) {
+    const targetInvoiceId = mode === 'create' ? createdInvoiceIdRef.current : invoiceId;
+    if (!targetInvoiceId) {
       throw new Error('Chybí identifikátor faktury');
     }
 
-    const updated = await updateInvoice(invoiceId, payload);
+    const updated = await updateInvoice(targetInvoiceId, payload);
     setInvoice(updated);
     setState(fromInvoice(updated));
     return updated;
@@ -471,7 +477,12 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
       await issueInvoice(saved.id);
       navigate(`/invoices/${saved.id}${listQuery ? `?${listQuery}` : ''}`, { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Vystavení faktury selhalo');
+      const message = err instanceof Error ? err.message : 'Vystavení faktury selhalo';
+      setError(
+        mode === 'create' && createdInvoiceIdRef.current
+          ? `${message} Koncept byl uložen, po opravě ho můžete vystavit znovu.`
+          : message,
+      );
     } finally {
       setSaving(false);
     }

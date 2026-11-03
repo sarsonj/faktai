@@ -803,6 +803,7 @@ export class InvoiceService {
     const doc = new PDFDocument({
       size: 'A4',
       margin: 36,
+      bufferPages: true,
     });
 
     const chunks: Buffer[] = [];
@@ -824,7 +825,6 @@ export class InvoiceService {
       const colGap = 20;
       const colWidth = (contentWidth - colGap) / 2;
       const rightColX = left + colWidth + colGap;
-      const maxBodyBottom = doc.page.height - doc.page.margins.bottom - 132;
 
       const supplierName = input.supplier.businessName
         ? input.supplier.businessName
@@ -993,32 +993,53 @@ export class InvoiceService {
       const itemRowHeight = 18;
       const cols = [170, 50, 64, 40, 72, 62, 65];
       const itemHeaders = ['Označení dodávky', 'Počet m.j.', 'Cena za m.j.', 'DPH %', 'Bez DPH', 'DPH', 'Celkem'];
+      // Spodní hranice obsahu stránky (nad patičkou).
+      const pageBodyBottom = doc.page.height - doc.page.margins.bottom - 32;
 
-      doc.rect(left, y, contentWidth, itemHeaderHeight).fill('#f3f3f3');
-      let cx = left + 4;
-      for (let i = 0; i < itemHeaders.length; i += 1) {
+      const drawItemHeader = () => {
+        doc.rect(left, y, contentWidth, itemHeaderHeight).fill('#f3f3f3');
+        let hx = left + 4;
+        for (let i = 0; i < itemHeaders.length; i += 1) {
+          this.drawSingleLine(
+            doc,
+            itemHeaders[i],
+            hx,
+            y + 6,
+            cols[i] - 8,
+            fonts.bold,
+            8,
+            i === 0 ? 'left' : 'right',
+          );
+          hx += cols[i];
+        }
+        y += itemHeaderHeight;
+        doc.moveTo(left, y).lineTo(right, y).strokeColor('#d4d4d4').stroke();
+      };
+
+      const startContinuationPage = () => {
+        doc.addPage();
+        y = doc.page.margins.top;
         this.drawSingleLine(
           doc,
-          itemHeaders[i],
-          cx,
-          y + 6,
-          cols[i] - 8,
+          `Faktura ${invoiceNumber} – pokračování`,
+          left,
+          y,
+          contentWidth,
           fonts.bold,
-          8,
-          i === 0 ? 'left' : 'right',
+          10,
         );
-        cx += cols[i];
-      }
-      y += itemHeaderHeight;
-      doc.moveTo(left, y).lineTo(right, y).strokeColor('#d4d4d4').stroke();
+        y += 22;
+      };
+
+      drawItemHeader();
 
       const sortedItems = [...input.invoice.items].sort((a, b) => a.position - b.position);
-      let renderedItems = 0;
       for (const item of sortedItems) {
-        if (y + itemRowHeight > maxBodyBottom) {
-          break;
+        if (y + itemRowHeight > pageBodyBottom) {
+          startContinuationPage();
+          drawItemHeader();
         }
-        cx = left + 4;
+        let cx = left + 4;
         this.drawSingleLine(doc, item.description, cx, y + 5, cols[0] - 8, fonts.regular, 8.5);
         cx += cols[0];
         this.drawSingleLine(doc, item.quantity.toString(), cx, y + 5, cols[1] - 8, fonts.regular, 8.5, 'right');
@@ -1061,32 +1082,26 @@ export class InvoiceService {
         );
         y += itemRowHeight;
         doc.moveTo(left, y).lineTo(right, y).strokeColor('#e5e5e5').stroke();
-        renderedItems += 1;
       }
 
-      if (renderedItems < sortedItems.length && y + itemRowHeight <= maxBodyBottom) {
-        this.drawSingleLine(
-          doc,
-          `... a dalších ${sortedItems.length - renderedItems} položek`,
-          left + 6,
-          y + 5,
-          contentWidth - 12,
-          fonts.regular,
-          8.5,
-        );
-        y += itemRowHeight;
-        doc.moveTo(left, y).lineTo(right, y).strokeColor('#e5e5e5').stroke();
+      // Souhrn (QR + rekapitulace DPH + poznámka) se nedělí mezi stránky.
+      const vatRows = this.buildVatRows(sortedItems);
+      const vatHeaderH = 16;
+      const vatRowH = 16;
+      const vatBlockHeight = 8 + vatHeaderH + vatRowH * (vatRows.length + 1) + 10 + 26;
+      const summaryHeight =
+        10 + Math.max(115, vatBlockHeight) + (input.invoice.note ? 20 : 0);
+      if (y + summaryHeight > pageBodyBottom) {
+        startContinuationPage();
       }
 
       y += 10;
       doc.image(qrImage, left, y, { width: 95, height: 95 });
-      this.drawSingleLine(doc, 'QR Platba+F', left + 2, y + 100, 100, fonts.bold, 10);
+      this.drawSingleLine(doc, 'QR Platba', left + 2, y + 100, 100, fonts.bold, 10);
 
       const vatTableX = left + 190;
       const vatTableY = y + 8;
       const vatTableW = contentWidth - 190;
-      const vatHeaderH = 16;
-      const vatRowH = 16;
       const vatCols = [62, 88, 88, vatTableW - 238];
       doc.rect(vatTableX, vatTableY, vatTableW, vatHeaderH).fill('#f3f3f3');
       let vx = vatTableX + 4;
@@ -1104,7 +1119,6 @@ export class InvoiceService {
         vx += vatCols[index];
       }
 
-      const vatRows = this.buildVatRows(sortedItems);
       let vy = vatTableY + vatHeaderH;
       for (const row of vatRows) {
         vx = vatTableX + 4;
@@ -1182,31 +1196,47 @@ export class InvoiceService {
         );
       }
 
-      const footerY = doc.page.height - doc.page.margins.bottom - 16;
-      doc.moveTo(left, footerY - 12).lineTo(right, footerY - 12).strokeColor('#d8d8d8').stroke();
-      this.drawSingleLine(
-        doc,
-        `Vytiskl(a): ${input.supplier.firstName} ${input.supplier.lastName}, ${this.formatDateCz(this.startOfToday())}`,
-        left,
-        footerY,
-        200,
-        fonts.regular,
-        7.5,
-        'left',
-        '#555555',
-      );
-      this.drawSingleLine(
-        doc,
-        'Vystaveno v aplikaci FaktAI',
-        left + 200,
-        footerY,
-        220,
-        fonts.regular,
-        7.5,
-        'center',
-        '#555555',
-      );
-      this.drawSingleLine(doc, 'Strana 1/1', right - 70, footerY, 70, fonts.regular, 7.5, 'right', '#555555');
+      // Patička se strankováním na každé stránce.
+      const range = doc.bufferedPageRange();
+      const printedAt = this.formatDateCz(this.startOfToday());
+      for (let pageIndex = 0; pageIndex < range.count; pageIndex += 1) {
+        doc.switchToPage(range.start + pageIndex);
+        const footerY = doc.page.height - doc.page.margins.bottom - 16;
+        doc.moveTo(left, footerY - 12).lineTo(right, footerY - 12).strokeColor('#d8d8d8').stroke();
+        this.drawSingleLine(
+          doc,
+          `Vytiskl(a): ${input.supplier.firstName} ${input.supplier.lastName}, ${printedAt}`,
+          left,
+          footerY,
+          200,
+          fonts.regular,
+          7.5,
+          'left',
+          '#555555',
+        );
+        this.drawSingleLine(
+          doc,
+          'Vystaveno v aplikaci FaktAI',
+          left + 200,
+          footerY,
+          220,
+          fonts.regular,
+          7.5,
+          'center',
+          '#555555',
+        );
+        this.drawSingleLine(
+          doc,
+          `Strana ${pageIndex + 1}/${range.count}`,
+          right - 70,
+          footerY,
+          70,
+          fonts.regular,
+          7.5,
+          'right',
+          '#555555',
+        );
+      }
 
       doc.end();
     });

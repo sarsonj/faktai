@@ -68,3 +68,4 @@
 | `CR-0049` | Název banky v labelu pole `bankCode` | `Implementováno` | `Should` |
 | `CR-0050` | Pořadí vět v kontrolním hlášení | `Implementováno` | `Must` |
 | `CR-0051` | Výchozí datum dokladu a globální rate limit | `Implementováno` | `Must` |
+| `CR-0052` | Vícestránkové PDF, duplicitní koncepty a logování chyb | `Implementováno` | `Must` |

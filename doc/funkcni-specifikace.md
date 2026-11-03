@@ -536,6 +536,7 @@ Umožnit vygenerovat profesionální PDF faktury v českém formátu včetně QR
   - základ DPH dle sazeb,
   - výše DPH dle sazeb,
   - celkem k úhradě.
+- Doklad vždy obsahuje všechny položky. Pokud se nevejdou na jednu stranu, tabulka pokračuje na dalších stranách (s opakovanou hlavičkou tabulky); souhrn DPH s QR kódem se nedělí a je na poslední straně. Každá strana má v patičce `Strana X/Y`.
 
 #### 4.4.4 Platební blok
 - Platební metoda: `Bankovní převod`.

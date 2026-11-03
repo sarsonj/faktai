@@ -585,6 +585,7 @@ Poznámka:
 
 ### 8.2 Datum a čas
 - Ukládání timestampů v UTC.
+- Neočekávané chyby (HTTP 5xx) loguje globální `HttpExceptionFilter` včetně metody, URL, `x-request-id` a stacku; klient dostává jen obecnou zprávu.
 - Business pravidla (splatnost, overdue) podle `Europe/Prague`.
 - Datumy dokladů (vystavení, DUZP, splatnost, úhrada) jsou kalendářní dny uložené jako UTC půlnoc; „dnes“ se určuje podle kalendáře `Europe/Prague` nezávisle na `TZ` serveru (`apps/api/src/utils/date-only.ts`). Frontend je zobrazuje v UTC a výchozí datum v editoru bere z lokálního kalendáře prohlížeče (`apps/web/src/date-utils.ts`).
 - Formát zobrazení: `DD.MM.YYYY`.
@@ -599,6 +600,7 @@ Poznámka:
 - Server-side render do PDF.
 - Embedded font s podporou češtiny.
 - Layout odpovídá funkční specifikaci Scope 4.
+- Vícestránkový výstup: `bufferPages: true`, položky se zalamují na další strany, patička se stránkováním se kreslí po vykreslení obsahu na všechny strany.
 - Vizuální baseline pro v1 odpovídá referenci `doc/examples/Vydaná faktura - 0126.pdf`.
 
 ### 9.2 SPD payload
