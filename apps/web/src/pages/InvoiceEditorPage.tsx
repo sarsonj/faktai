@@ -1,246 +1,44 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import {
-  createInvoice,
-  getInvoice,
-  issueInvoice,
-  reserveInvoiceNumber,
-  updateInvoice,
-} from '../invoice-api';
-import { addDaysToDateInputValue, todayDateInputValue } from '../date-utils';
-import { searchRegistryCompanies } from '../registry-api';
-import { REVERSE_CHARGE_CODES } from '../vat-regime';
+import { Loader2, Save, Send, TriangleAlert } from 'lucide-react';
+import { toast } from 'sonner';
+import { createInvoice, getInvoice, issueInvoice, reserveInvoiceNumber, updateInvoice } from '../invoice-api';
 import { getSubject } from '../subject-api';
-import type {
-  InvoiceDetail,
-  InvoiceItemInput,
-  InvoiceUpsertInput,
-  RegistryCompanyResult,
-  TaxClassification,
-} from '../types';
-
-type InvoiceEditorMode = 'create' | 'edit';
+import { formatMoney } from '../lib/format';
+import { REVERSE_CHARGE_CODES, TAX_CLASSIFICATION_LABELS } from '../vat-regime';
+import type { InvoiceDetail, TaxClassification } from '../types';
+import { CustomerSection } from '../features/invoice-editor/CustomerSection';
+import { Field } from '../features/invoice-editor/Field';
+import { ItemsSection } from '../features/invoice-editor/ItemsSection';
+import {
+  calculateTotals,
+  chargesVat,
+  createDefaultState,
+  createEmptyItem,
+  createStateFromCopySource,
+  fromInvoice,
+  toPayload,
+  type EditorItemState,
+  type EditorState,
+} from '../features/invoice-editor/editor-state';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 type InvoiceEditorPageProps = {
-  mode: InvoiceEditorMode;
+  mode: 'create' | 'edit';
 };
 
-type EditorItemState = {
-  description: string;
-  quantity: string;
-  unit: string;
-  unitPrice: string;
-  vatRate: number;
-};
-
-type EditorState = {
-  invoiceNumber: string;
-  variableSymbol: string;
-  issueDate: string;
-  taxableSupplyDate: string;
-  dueDate: string;
-  taxClassification: TaxClassification;
-  reverseChargeCode: string;
-  customerName: string;
-  customerIco: string;
-  customerDic: string;
-  customerStreet: string;
-  customerCity: string;
-  customerPostalCode: string;
-  customerCountryCode: string;
-  note: string;
-  items: EditorItemState[];
-};
-
-const TAX_CLASSIFICATIONS: Array<{ value: TaxClassification; label: string }> = [
-  { value: 'domestic_standard', label: 'Tuzemské zdanitelné plnění' },
-  { value: 'domestic_reverse_charge', label: 'Tuzemské reverse charge (přenesení daňové povinnosti)' },
-  { value: 'eu_service', label: 'Služba do EU' },
-  { value: 'eu_goods', label: 'Dodání zboží do EU' },
-  { value: 'export_third_country', label: 'Export mimo EU' },
-  { value: 'exempt_without_credit', label: 'Osvobozené bez nároku' },
-];
-
-function toDateInputValue(value: string): string {
-  return value.slice(0, 10);
-}
-
-function createEmptyItem(): EditorItemState {
-  return {
-    description: '',
-    quantity: '1',
-    unit: 'ks',
-    unitPrice: '0.00',
-    vatRate: 21,
-  };
-}
-
-function normalizeIco(value: string): string {
-  return value.replace(/\s+/g, '');
-}
-
-function createDefaultState(defaultDueDays = 14): EditorState {
-  const issueDate = todayDateInputValue();
-  const dueDate = addDaysToDateInputValue(issueDate, defaultDueDays);
-
-  return {
-    invoiceNumber: '',
-    variableSymbol: '',
-    issueDate,
-    taxableSupplyDate: issueDate,
-    dueDate,
-    taxClassification: 'domestic_standard',
-    reverseChargeCode: '',
-    customerName: '',
-    customerIco: '',
-    customerDic: '',
-    customerStreet: '',
-    customerCity: '',
-    customerPostalCode: '',
-    customerCountryCode: 'CZ',
-    note: '',
-    items: [createEmptyItem()],
-  };
-}
-
-function fromInvoice(invoice: InvoiceDetail): EditorState {
-  return {
-    invoiceNumber: invoice.invoiceNumber ?? '',
-    variableSymbol: invoice.variableSymbol,
-    issueDate: toDateInputValue(invoice.issueDate),
-    taxableSupplyDate: toDateInputValue(invoice.taxableSupplyDate),
-    dueDate: toDateInputValue(invoice.dueDate),
-    taxClassification: invoice.taxClassification ?? 'domestic_standard',
-    reverseChargeCode: invoice.reverseChargeCode ?? '',
-    customerName: invoice.customerName,
-    customerIco: invoice.customerIco ?? '',
-    customerDic: invoice.customerDic ?? '',
-    customerStreet: invoice.customerStreet,
-    customerCity: invoice.customerCity,
-    customerPostalCode: invoice.customerPostalCode,
-    customerCountryCode: invoice.customerCountryCode,
-    note: invoice.note ?? '',
-    items: invoice.items.map((item) => ({
-      description: item.description,
-      quantity: item.quantity,
-      unit: item.unit,
-      unitPrice: item.unitPrice,
-      vatRate: item.vatRate,
-    })),
-  };
-}
-
-function createStateFromCopySource(
-  source: InvoiceDetail,
-  defaultDueDays: number,
-): EditorState {
-  const base = createDefaultState(defaultDueDays);
-
-  return {
-    ...base,
-    invoiceNumber: '',
-    variableSymbol: '',
-    issueDate: base.issueDate,
-    taxableSupplyDate: base.issueDate,
-    dueDate: addDaysToDateInputValue(base.issueDate, defaultDueDays),
-    taxClassification: source.taxClassification ?? base.taxClassification,
-    reverseChargeCode: source.reverseChargeCode ?? '',
-    customerName: source.customerName,
-    customerIco: source.customerIco ?? '',
-    customerDic: source.customerDic ?? '',
-    customerStreet: source.customerStreet,
-    customerCity: source.customerCity,
-    customerPostalCode: source.customerPostalCode,
-    customerCountryCode: source.customerCountryCode,
-    note: source.note ?? '',
-    items:
-      source.items.length > 0
-        ? source.items.map((item) => ({
-            description: item.description,
-            quantity: item.quantity,
-            unit: item.unit,
-            unitPrice: item.unitPrice,
-            vatRate: item.vatRate,
-          }))
-        : [createEmptyItem()],
-  };
-}
-
-function toPayload(state: EditorState): InvoiceUpsertInput {
-  return {
-    invoiceNumber: state.invoiceNumber || undefined,
-    variableSymbol: state.variableSymbol || undefined,
-    issueDate: state.issueDate,
-    taxableSupplyDate: state.taxableSupplyDate,
-    dueDate: state.dueDate,
-    taxClassification: state.taxClassification,
-    reverseChargeCode:
-      state.taxClassification === 'domestic_reverse_charge'
-        ? state.reverseChargeCode || undefined
-        : undefined,
-    customerName: state.customerName,
-    customerIco: state.customerIco || undefined,
-    customerDic: state.customerDic || undefined,
-    customerStreet: state.customerStreet,
-    customerCity: state.customerCity,
-    customerPostalCode: state.customerPostalCode,
-    customerCountryCode: state.customerCountryCode,
-    note: state.note || undefined,
-    items: state.items.map<InvoiceItemInput>((item) => ({
-      description: item.description,
-      quantity: item.quantity,
-      unit: item.unit,
-      unitPrice: item.unitPrice,
-      vatRate: Number(item.vatRate),
-    })),
-  };
-}
-
-// DPH se účtuje jen plátcem v režimu tuzemského zdanitelného plnění (stejně jako na API).
-function chargesVat(isVatPayer: boolean, classification: TaxClassification): boolean {
-  return isVatPayer && classification === 'domestic_standard';
-}
-
-function calculateTotals(items: EditorItemState[], vatCharged: boolean) {
-  let withoutVat = 0;
-  let vat = 0;
-
-  for (const item of items) {
-    const quantity = Number(item.quantity || 0);
-    const unitPrice = Number(item.unitPrice || 0);
-    const lineWithout = quantity * unitPrice;
-    const lineVat = vatCharged ? lineWithout * (Number(item.vatRate) / 100) : 0;
-
-    withoutVat += lineWithout;
-    vat += lineVat;
-  }
-
-  return {
-    withoutVat,
-    vat,
-    withVat: withoutVat + vat,
-  };
-}
-
-function calculateItemTotalWithVat(item: EditorItemState, vatCharged: boolean): number {
-  const quantity = Number(item.quantity || 0);
-  const unitPrice = Number(item.unitPrice || 0);
-  const vatRate = vatCharged ? Number(item.vatRate || 0) : 0;
-  const lineWithoutVat = quantity * unitPrice;
-  const lineVat = lineWithoutVat * (vatRate / 100);
-  const total = lineWithoutVat + lineVat;
-  return Number.isFinite(total) ? total : 0;
-}
-
-function formatMoney(value: number): string {
-  return `${value.toLocaleString('cs-CZ', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })} Kč`;
-}
+const TAX_CLASSIFICATIONS = Object.entries(TAX_CLASSIFICATION_LABELS) as Array<[TaxClassification, string]>;
 
 export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const [searchParams] = useSearchParams();
   const copyFromInvoiceId = mode === 'create' ? searchParams.get('copyFrom') : null;
@@ -252,11 +50,6 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   const [loading, setLoading] = useState(mode === 'edit');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [customerLookupQuery, setCustomerLookupQuery] = useState('');
-  const [customerLookupLoading, setCustomerLookupLoading] = useState(false);
-  const [customerLookupError, setCustomerLookupError] = useState<string | null>(null);
-  const [customerLookupResults, setCustomerLookupResults] = useState<RegistryCompanyResult[]>([]);
   const [isVatPayer, setIsVatPayer] = useState(true);
   const reserveRequestIdRef = useRef(0);
   // ID konceptu vytvořeného v tomto editoru (create mode). Když vytvoření projde,
@@ -268,55 +61,39 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
     customInvoiceNumberModeRef.current = useCustomInvoiceNumber;
   }, [useCustomInvoiceNumber]);
 
-  const reserveNumberForDate = useCallback(async (issueDate: string, force = false) => {
-    if (mode !== 'create') {
-      return;
-    }
-    if (customInvoiceNumberModeRef.current && !force) {
-      return;
-    }
+  const reserveNumberForDate = useCallback(
+    async (issueDate: string, force = false) => {
+      if (mode !== 'create') return;
+      if (customInvoiceNumberModeRef.current && !force) return;
 
-    const requestId = reserveRequestIdRef.current + 1;
-    reserveRequestIdRef.current = requestId;
-    setReservingNumber(true);
+      const requestId = reserveRequestIdRef.current + 1;
+      reserveRequestIdRef.current = requestId;
+      setReservingNumber(true);
 
-    try {
-      const { invoiceNumber } = await reserveInvoiceNumber(issueDate);
-      setState((current) => {
-        if (requestId !== reserveRequestIdRef.current) {
-          return current;
+      try {
+        const { invoiceNumber } = await reserveInvoiceNumber(issueDate);
+        setState((current) => {
+          if (requestId !== reserveRequestIdRef.current) return current;
+          if (customInvoiceNumberModeRef.current && !force) return current;
+          const syncVs = current.variableSymbol === '' || current.variableSymbol === current.invoiceNumber;
+          return { ...current, invoiceNumber, variableSymbol: syncVs ? invoiceNumber : current.variableSymbol };
+        });
+      } catch (err) {
+        if (requestId === reserveRequestIdRef.current) {
+          setError(err instanceof Error ? err.message : 'Přidělení čísla faktury selhalo');
         }
-        if (customInvoiceNumberModeRef.current && !force) {
-          return current;
-        }
-
-        const shouldSyncVariableSymbol =
-          current.variableSymbol === '' || current.variableSymbol === current.invoiceNumber;
-
-        return {
-          ...current,
-          invoiceNumber,
-          variableSymbol: shouldSyncVariableSymbol ? invoiceNumber : current.variableSymbol,
-        };
-      });
-    } catch (err) {
-      if (requestId === reserveRequestIdRef.current) {
-        setError(err instanceof Error ? err.message : 'Přidělení čísla faktury selhalo');
+      } finally {
+        if (requestId === reserveRequestIdRef.current) setReservingNumber(false);
       }
-    } finally {
-      if (requestId === reserveRequestIdRef.current) {
-        setReservingNumber(false);
-      }
-    }
-  }, [mode]);
+    },
+    [mode],
+  );
 
   useEffect(() => {
     let ignore = false;
     getSubject()
       .then((subject) => {
-        if (!ignore) {
-          setIsVatPayer(subject.isVatPayer);
-        }
+        if (!ignore) setIsVatPayer(subject.isVatPayer);
       })
       .catch(() => {
         // Bez subjektu necháváme výchozí zobrazení plátce; API pravidla vynutí samo.
@@ -327,116 +104,99 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   }, []);
 
   useEffect(() => {
-    if (mode !== 'create') {
-      return;
-    }
-
+    if (mode !== 'create') return;
     const run = async () => {
       try {
         const subject = await getSubject();
         let nextState = createDefaultState(subject.defaultDueDays);
-
         if (copyFromInvoiceId) {
           const source = await getInvoice(copyFromInvoiceId);
           nextState = createStateFromCopySource(source, subject.defaultDueDays);
         }
-
         setState(nextState);
         await reserveNumberForDate(nextState.issueDate, true);
       } catch {
-        // Defaults stay client-side if subject fetch fails.
         await reserveNumberForDate(createDefaultState().issueDate);
       }
     };
-
     void run();
   }, [copyFromInvoiceId, mode, reserveNumberForDate]);
 
   useEffect(() => {
-    if (mode !== 'edit' || !invoiceId) {
-      return;
-    }
-
+    if (mode !== 'edit' || !invoiceId) return;
+    let ignore = false;
     const run = async () => {
-      setLoading(true);
-      setError(null);
-
       try {
         const payload = await getInvoice(invoiceId);
+        if (ignore) return;
         setInvoice(payload);
         setState(fromInvoice(payload));
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Načtení faktury selhalo');
+        if (!ignore) setError(err instanceof Error ? err.message : 'Načtení faktury selhalo');
       } finally {
-        setLoading(false);
+        if (!ignore) setLoading(false);
       }
     };
-
     void run();
+    return () => {
+      ignore = true;
+    };
   }, [mode, invoiceId]);
 
   const queryForList = new URLSearchParams(searchParams);
   queryForList.delete('advanced');
   queryForList.delete('copyFrom');
   const listQuery = queryForList.toString();
-  const backHref = `/invoices${listQuery ? `?${listQuery}` : ''}`;
+  const withContext = (path: string) => `${path}${listQuery ? `?${listQuery}` : ''}`;
+  const backHref = withContext('/invoices');
   const advancedEdit = searchParams.get('advanced') === '1';
 
   const vatCharged = chargesVat(isVatPayer, state.taxClassification);
   const totals = useMemo(() => calculateTotals(state.items, vatCharged), [state.items, vatCharged]);
-  const readOnly =
-    mode === 'edit' && invoice?.status === 'paid' && !advancedEdit;
+  const readOnly = mode === 'edit' && invoice?.status === 'paid' && !advancedEdit;
+  const busy = saving || reservingNumber;
+
+  const patch = (next: Partial<EditorState>) => setState((current) => ({ ...current, ...next }));
 
   const onToggleCustomInvoiceNumber = (enabled: boolean) => {
     setUseCustomInvoiceNumber(enabled);
-
     if (enabled) {
       reserveRequestIdRef.current += 1;
       setReservingNumber(false);
       return;
     }
-
     void reserveNumberForDate(state.issueDate, true);
   };
 
   const onCustomInvoiceNumberChange = (value: string) => {
-    const nextInvoiceNumber = value;
-
     setState((current) => {
-      const shouldSyncVariableSymbol =
-        current.variableSymbol === '' || current.variableSymbol === current.invoiceNumber;
-      const canUseInvoiceAsVariableSymbol = /^\d{1,10}$/.test(nextInvoiceNumber);
-
+      const syncVs = current.variableSymbol === '' || current.variableSymbol === current.invoiceNumber;
+      const usableAsVs = /^\d{1,10}$/.test(value);
       return {
         ...current,
-        invoiceNumber: nextInvoiceNumber,
-        variableSymbol:
-          shouldSyncVariableSymbol && canUseInvoiceAsVariableSymbol
-            ? nextInvoiceNumber
-            : current.variableSymbol,
+        invoiceNumber: value,
+        variableSymbol: syncVs && usableAsVs ? value : current.variableSymbol,
       };
     });
   };
 
-  const updateItem = (index: number, patch: Partial<EditorItemState>) => {
-    setState((current) => ({
-      ...current,
-      items: current.items.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
-    }));
+  const onIssueDateChange = (nextIssueDate: string) => {
+    const yearChanged = state.issueDate.slice(0, 4) !== nextIssueDate.slice(0, 4);
+    patch({ issueDate: nextIssueDate });
+    if (mode === 'create' && !useCustomInvoiceNumber && yearChanged) {
+      void reserveNumberForDate(nextIssueDate);
+    }
   };
 
-  const addItem = () => {
+  const updateItem = (index: number, itemPatch: Partial<EditorItemState>) =>
     setState((current) => ({
       ...current,
-      items: [...current.items, createEmptyItem()],
+      items: current.items.map((item, i) => (i === index ? { ...item, ...itemPatch } : item)),
     }));
-  };
 
-  const removeItem = (index: number) => {
-    setState((current) => ({
-      ...current,
-      items: current.items.filter((_, itemIndex) => itemIndex !== index),
-    }));
+  const syncCaches = (saved: InvoiceDetail) => {
+    queryClient.setQueryData(['invoice', saved.id], saved);
+    void queryClient.invalidateQueries({ queryKey: ['invoices'] });
   };
 
   const persistDraft = async (): Promise<InvoiceDetail> => {
@@ -449,12 +209,8 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
     if (isNewDraft && !useCustomInvoiceNumber) {
       const currentInvoiceNumber = state.invoiceNumber.replace(/\s+/g, '');
       const currentVariableSymbol = state.variableSymbol.replace(/\s+/g, '');
-
       payload.invoiceNumber = undefined;
-      if (
-        currentVariableSymbol.length === 0 ||
-        currentVariableSymbol === currentInvoiceNumber
-      ) {
+      if (currentVariableSymbol.length === 0 || currentVariableSymbol === currentInvoiceNumber) {
         payload.variableSymbol = undefined;
       }
     }
@@ -464,34 +220,27 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
       createdInvoiceIdRef.current = created.id;
       setInvoice(created);
       setState(fromInvoice(created));
+      syncCaches(created);
       return created;
     }
 
     const targetInvoiceId = mode === 'create' ? createdInvoiceIdRef.current : invoiceId;
-    if (!targetInvoiceId) {
-      throw new Error('Chybí identifikátor faktury');
-    }
+    if (!targetInvoiceId) throw new Error('Chybí identifikátor faktury');
 
     const updated = await updateInvoice(targetInvoiceId, payload);
     setInvoice(updated);
     setState(fromInvoice(updated));
+    syncCaches(updated);
     return updated;
   };
 
   const onSave = async () => {
     setSaving(true);
     setError(null);
-    setSuccess(null);
-
     try {
       const saved = await persistDraft();
-      setSuccess(mode === 'create' ? 'Koncept byl uložen.' : 'Faktura byla uložena.');
-
-      if (mode === 'create') {
-        navigate(`/invoices/${saved.id}/edit${listQuery ? `?${listQuery}` : ''}`, { replace: true });
-      } else {
-        navigate(backHref, { replace: true });
-      }
+      toast.success(mode === 'create' ? 'Koncept byl uložen.' : 'Faktura byla uložena.');
+      navigate(withContext(`/invoices/${saved.id}`), { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Uložení faktury selhalo');
     } finally {
@@ -502,12 +251,12 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
   const onIssue = async () => {
     setSaving(true);
     setError(null);
-    setSuccess(null);
-
     try {
       const saved = await persistDraft();
-      await issueInvoice(saved.id);
-      navigate(`/invoices/${saved.id}${listQuery ? `?${listQuery}` : ''}`, { replace: true });
+      const issued = await issueInvoice(saved.id);
+      syncCaches(issued);
+      toast.success(`Faktura ${issued.invoiceNumber ?? ''} byla vystavena.`);
+      navigate(withContext(`/invoices/${saved.id}`), { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Vystavení faktury selhalo';
       setError(
@@ -520,486 +269,249 @@ export function InvoiceEditorPage({ mode }: InvoiceEditorPageProps) {
     }
   };
 
-  const applyCustomerLookup = (item: RegistryCompanyResult) => {
-    setState((current) => ({
-      ...current,
-      customerName: item.name || current.customerName,
-      customerIco: item.ico || current.customerIco,
-      customerDic: item.dic ?? '',
-      customerStreet: item.street || current.customerStreet,
-      customerCity: item.city || current.customerCity,
-      customerPostalCode: item.postalCode || current.customerPostalCode,
-      customerCountryCode: item.countryCode || current.customerCountryCode,
-    }));
-    setCustomerLookupResults([]);
-    setCustomerLookupError(null);
-  };
-
-  const onCustomerLookup = async () => {
-    const query = customerLookupQuery.trim() || state.customerIco || state.customerName;
-    if (!query) {
-      setCustomerLookupError('Zadejte IČO nebo název odběratele.');
-      return;
-    }
-
-    setCustomerLookupLoading(true);
-    setCustomerLookupError(null);
-    setCustomerLookupResults([]);
-
-    try {
-      const items = await searchRegistryCompanies(query);
-      setCustomerLookupResults(items);
-      if (items.length === 0) {
-        setCustomerLookupError('Žádný záznam nebyl nalezen.');
-      }
-    } catch (err) {
-      setCustomerLookupError(err instanceof Error ? err.message : 'Vyhledání odběratele selhalo.');
-    } finally {
-      setCustomerLookupLoading(false);
-    }
-  };
-
   if (loading) {
-    return <section className="card card-wide">Načítám fakturu...</section>;
+    return <p className="text-muted-foreground">Načítám fakturu…</p>;
   }
 
+  const canIssue = mode === 'create' || invoice?.status === 'draft';
+  const title =
+    mode === 'create'
+      ? `Nová faktura${state.invoiceNumber ? ` ${state.invoiceNumber}` : ''}`
+      : `Úprava faktury ${invoice?.invoiceNumber ?? ''}`;
+
   return (
-    <section className="card card-wide">
-      <nav className="breadcrumb" aria-label="Drobečková navigace">
-        <Link to={backHref}>Vydané faktury</Link>
-        <span className="breadcrumb-sep">/</span>
-        <span>{mode === 'create' ? 'Nová faktura' : 'Editace dokladu'}</span>
+    <div data-ui className="flex flex-col gap-6">
+      <nav aria-label="Drobečková navigace" className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Link to={backHref} className="text-muted-foreground no-underline hover:text-foreground">
+          Vydané faktury
+        </Link>
+        <span aria-hidden="true">/</span>
+        <span className="text-foreground">{mode === 'create' ? 'Nová faktura' : (invoice?.invoiceNumber ?? 'Úprava')}</span>
       </nav>
 
-      <header className="page-head">
-        <div>
-          <p className="page-kicker">Fakturace</p>
-          <h1 className="page-title">
-            {mode === 'create'
-              ? state.invoiceNumber
-                ? `Nová faktura ${state.invoiceNumber}`
-                : 'Nová faktura'
-              : `Editace faktury ${invoice?.invoiceNumber ?? ''}`}
-          </h1>
-          <p className="page-subtitle">Vyplňte parametry dokladu, odběratele a položky faktury.</p>
-          {mode === 'create' && reservingNumber && (
-            <small>Přiděluji číslo dokladu...</small>
-          )}
-          {mode === 'edit' && advancedEdit && invoice?.status === 'paid' && (
-            <small>
-              Pokročilý režim: upravujete uhrazenou fakturu.
-            </small>
-          )}
-        </div>
-        {mode === 'create' && (
-          <div className="page-actions">
-            <Link className="action-link" to={backHref}>
-              Zpět na seznam
-            </Link>
-          </div>
+      <div className="flex flex-col gap-1">
+        <h1 className="m-0 flex items-center gap-3 text-2xl font-bold tracking-tight">
+          {title}
+          {mode === 'create' && reservingNumber && <Loader2 className="size-5 animate-spin text-muted-foreground" aria-label="Přiděluji číslo" />}
+        </h1>
+        {mode === 'edit' && advancedEdit && invoice?.status === 'paid' ? (
+          <p className="m-0 flex items-center gap-2 text-sm text-amber-700">
+            <TriangleAlert className="size-4" aria-hidden="true" />
+            Pokročilý režim: upravujete uhrazenou fakturu.
+          </p>
+        ) : (
+          readOnly && <p className="m-0 text-sm text-muted-foreground">Uhrazenou fakturu nelze běžně upravovat.</p>
         )}
-      </header>
+      </div>
 
-      {error && <p className="error">{error}</p>}
-      {success && <p>{success}</p>}
-      <section className="ui-section">
-        <h2>Parametry dokladu</h2>
-        <div className="form-grid invoice-form-grid">
-          <label>
-            Variabilní symbol
-            <input
-              disabled={readOnly}
-              value={state.variableSymbol}
-              onChange={(event) => {
-                const nextVariableSymbol = event.target.value.replace(/\s+/g, '');
-                setState((current) => ({ ...current, variableSymbol: nextVariableSymbol }));
-              }}
-            />
-          </label>
-          <label>
-            Datum vystavení
-            <input
-              disabled={readOnly}
-              type="date"
-              value={state.issueDate}
-              onChange={(event) => {
-                const nextIssueDate = event.target.value;
-                const currentYear = state.issueDate.slice(0, 4);
-                const nextYear = nextIssueDate.slice(0, 4);
-
-                setState((current) => ({ ...current, issueDate: nextIssueDate }));
-
-                if (mode === 'create' && !useCustomInvoiceNumber && currentYear !== nextYear) {
-                  void reserveNumberForDate(nextIssueDate);
-                }
-              }}
-            />
-          </label>
-          <label>
-            Datum zdanitelného plnění
-            <input
-              disabled={readOnly}
-              type="date"
-              value={state.taxableSupplyDate}
-              onChange={(event) =>
-                setState((current) => ({
-                  ...current,
-                  taxableSupplyDate: event.target.value,
-                }))
-              }
-            />
-          </label>
-          <label>
-            Datum splatnosti
-            <input
-              disabled={readOnly}
-              type="date"
-              value={state.dueDate}
-              onChange={(event) => setState((current) => ({ ...current, dueDate: event.target.value }))}
-            />
-          </label>
-          {isVatPayer ? (
-            <label>
-              Daňový režim
-              <select
-                disabled={readOnly}
-                value={state.taxClassification}
-                onChange={(event) =>
-                  setState((current) => ({
-                    ...current,
-                    taxClassification: event.target.value as TaxClassification,
-                  }))
-                }
-              >
-                {TAX_CLASSIFICATIONS.map((classification) => (
-                  <option key={classification.value} value={classification.value}>
-                    {classification.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : (
-            <p className="helper-text">Nejste plátce DPH – faktura se vystaví bez DPH.</p>
-          )}
-          {isVatPayer && state.taxClassification === 'domestic_reverse_charge' && (
-            <label>
-              Kód předmětu plnění (kontrolní hlášení)
-              <select
-                disabled={readOnly}
-                value={state.reverseChargeCode}
-                onChange={(event) =>
-                  setState((current) => ({ ...current, reverseChargeCode: event.target.value }))
-                }
-              >
-                <option value="">Vyberte…</option>
-                {REVERSE_CHARGE_CODES.map((item) => (
-                  <option key={item.code} value={item.code}>
-                    {item.code} – {item.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-        </div>
-      </section>
-
-      {mode === 'create' && (
-        <section className="ui-section invoice-advanced-section">
-          <details className="advanced-tools">
-            <summary className="advanced-tools-summary">Další možnosti (pokročilé)</summary>
-            <div className="invoice-editor-advanced-grid">
-              <label className="toggle-row">
-                <span>Použít vlastní číslo dokladu</span>
-                <input
-                  type="checkbox"
-                  checked={useCustomInvoiceNumber}
-                  onChange={(event) => onToggleCustomInvoiceNumber(event.target.checked)}
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+        <div className="flex flex-col gap-6 lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Doklad</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field id="issue-date" label="Datum vystavení">
+                <Input
+                  id="issue-date"
+                  type="date"
+                  disabled={readOnly}
+                  value={state.issueDate}
+                  onChange={(event) => onIssueDateChange(event.target.value)}
                 />
-              </label>
+              </Field>
+              <Field id="due-date" label="Datum splatnosti">
+                <Input
+                  id="due-date"
+                  type="date"
+                  disabled={readOnly}
+                  value={state.dueDate}
+                  onChange={(event) => patch({ dueDate: event.target.value })}
+                />
+              </Field>
+              <Field id="supply-date" label="Datum zdanitelného plnění (DUZP)">
+                <Input
+                  id="supply-date"
+                  type="date"
+                  disabled={readOnly}
+                  value={state.taxableSupplyDate}
+                  onChange={(event) => patch({ taxableSupplyDate: event.target.value })}
+                />
+              </Field>
+              <Field id="variable-symbol" label="Variabilní symbol">
+                <Input
+                  id="variable-symbol"
+                  inputMode="numeric"
+                  disabled={readOnly}
+                  value={state.variableSymbol}
+                  onChange={(event) => patch({ variableSymbol: event.target.value.replace(/\s+/g, '') })}
+                />
+              </Field>
 
-              {useCustomInvoiceNumber && (
-                <label>
-                  Vlastní číslo dokladu
-                  <input
-                    value={state.invoiceNumber}
-                    onChange={(event) => onCustomInvoiceNumberChange(event.target.value)}
-                    placeholder="Např. FV/2025-001"
-                  />
-                  <small className="helper-text inline">
-                    Vlastní číslo je bez formátové validace, kontroluje se jen neprázdnost a unikátnost.
-                  </small>
-                </label>
-              )}
-            </div>
-          </details>
-        </section>
-      )}
-
-      <section className="ui-section">
-        <h2>Odběratel</h2>
-        <div className="lookup-box">
-          <h3>Vyhledat odběratele v ARES</h3>
-          <div className="lookup-controls">
-            <input
-              disabled={readOnly}
-              placeholder="IČO nebo název firmy"
-              value={customerLookupQuery}
-              onChange={(event) => setCustomerLookupQuery(event.target.value)}
-            />
-            <button
-              type="button"
-              className="secondary"
-              disabled={readOnly || customerLookupLoading}
-              onClick={onCustomerLookup}
-            >
-              {customerLookupLoading ? 'Načítám...' : 'Vyhledat'}
-            </button>
-          </div>
-          {customerLookupError && <p className="error">{customerLookupError}</p>}
-          {customerLookupResults.length > 0 && (
-            <ul className="lookup-results">
-              {customerLookupResults.map((item) => (
-                <li key={`${item.ico}-${item.name}`}>
-                  <button
-                    type="button"
-                    className="secondary"
+              {isVatPayer ? (
+                <Field id="tax-regime" label="Daňový režim" className="sm:col-span-2">
+                  <Select
                     disabled={readOnly}
-                    onClick={() => applyCustomerLookup(item)}
+                    value={state.taxClassification}
+                    onValueChange={(value) => patch({ taxClassification: value as TaxClassification })}
                   >
-                    Použít
-                  </button>
-                  <span>
-                    {[item.name, `IČO ${item.ico}`, item.city, item.postalCode]
-                      .filter(Boolean)
-                      .join(' | ')}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="form-grid invoice-form-grid">
-          <label>
-            Název / jméno
-            <input
-              disabled={readOnly}
-              required
-              value={state.customerName}
-              onChange={(event) => setState((current) => ({ ...current, customerName: event.target.value }))}
-            />
-          </label>
-          <label>
-            IČO
-            <input
-              disabled={readOnly}
-              value={state.customerIco}
-              onChange={(event) =>
-                setState((current) => ({ ...current, customerIco: normalizeIco(event.target.value) }))
-              }
-            />
-          </label>
-          <label>
-            DIČ
-            <input
-              disabled={readOnly}
-              value={state.customerDic}
-              onChange={(event) => setState((current) => ({ ...current, customerDic: event.target.value }))}
-            />
-          </label>
-          <label>
-            Ulice
-            <input
-              disabled={readOnly}
-              required
-              value={state.customerStreet}
-              onChange={(event) => setState((current) => ({ ...current, customerStreet: event.target.value }))}
-            />
-          </label>
-          <label>
-            Město
-            <input
-              disabled={readOnly}
-              required
-              value={state.customerCity}
-              onChange={(event) => setState((current) => ({ ...current, customerCity: event.target.value }))}
-            />
-          </label>
-          <label>
-            PSČ
-            <input
-              disabled={readOnly}
-              required
-              value={state.customerPostalCode}
-              onChange={(event) =>
-                setState((current) => ({
-                  ...current,
-                  customerPostalCode: event.target.value.replace(/\s+/g, ''),
-                }))
-              }
-            />
-          </label>
-          <label>
-            Země
-            <input
-              disabled={readOnly}
-              required
-              value={state.customerCountryCode}
-              onChange={(event) =>
-                setState((current) => ({
-                  ...current,
-                  customerCountryCode: event.target.value.replace(/\s+/g, '').toUpperCase(),
-                }))
-              }
-            />
-          </label>
-        </div>
-      </section>
-
-      <section className="ui-section">
-        <div className="ui-section-head">
-          <h2>Položky</h2>
-          {!readOnly && (
-            <button type="button" className="secondary" onClick={addItem}>
-              Přidat položku
-            </button>
-          )}
-        </div>
-        <p className="helper-text">Počet položek: {state.items.length}</p>
-        <div className="invoice-items-list">
-          {state.items.map((item, index) => (
-            <div className="invoice-item-row" key={index}>
-              <input
-                aria-label={`Popis položky ${index + 1}`}
-                disabled={readOnly}
-                placeholder="Popis"
-                value={item.description}
-                onChange={(event) => updateItem(index, { description: event.target.value })}
-              />
-              <input
-                aria-label={`Množství položky ${index + 1}`}
-                disabled={readOnly}
-                placeholder="Množství"
-                value={item.quantity}
-                onChange={(event) => updateItem(index, { quantity: event.target.value })}
-              />
-              <input
-                aria-label={`Jednotka položky ${index + 1}`}
-                disabled={readOnly}
-                placeholder="Jednotka"
-                value={item.unit}
-                onChange={(event) => updateItem(index, { unit: event.target.value })}
-              />
-              <input
-                aria-label={`Cena položky ${index + 1}`}
-                disabled={readOnly}
-                placeholder="Cena"
-                value={item.unitPrice}
-                onChange={(event) => updateItem(index, { unitPrice: event.target.value })}
-              />
-              {vatCharged ? (
-              <select
-                aria-label={`DPH položky ${index + 1}`}
-                disabled={readOnly}
-                value={String(item.vatRate)}
-                onChange={(event) => updateItem(index, { vatRate: Number(event.target.value) })}
-              >
-                <option value="0">0 %</option>
-                <option value="12">12 %</option>
-                <option value="21">21 %</option>
-              </select>
+                    <SelectTrigger id="tax-regime" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent data-ui>
+                      {TAX_CLASSIFICATIONS.map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
               ) : (
-                <span className="helper-text">bez DPH</span>
+                <p className="m-0 text-sm text-muted-foreground sm:col-span-2">
+                  Nejste plátce DPH – faktura se vystaví bez DPH.
+                </p>
               )}
-              <div className="invoice-item-total">Celkem: {formatMoney(calculateItemTotalWithVat(item, vatCharged))}</div>
-              {!readOnly && state.items.length > 1 && (
-                <button type="button" className="danger" onClick={() => removeItem(index)}>
-                  Odebrat
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
 
-      <section className="ui-section">
-        <label>
-          Poznámka
-          <textarea
-            disabled={readOnly}
-            value={state.note}
-            onChange={(event) => setState((current) => ({ ...current, note: event.target.value }))}
-            rows={4}
+              {isVatPayer && state.taxClassification === 'domestic_reverse_charge' && (
+                <Field
+                  id="reverse-charge-code"
+                  label="Kód předmětu plnění"
+                  hint="Uvádí se v kontrolním hlášení (oddíl A.1)."
+                  className="sm:col-span-2"
+                >
+                  <Select
+                    disabled={readOnly}
+                    value={state.reverseChargeCode || undefined}
+                    onValueChange={(value) => patch({ reverseChargeCode: value })}
+                  >
+                    <SelectTrigger id="reverse-charge-code" className="w-full">
+                      <SelectValue placeholder="Vyberte kód…" />
+                    </SelectTrigger>
+                    <SelectContent data-ui>
+                      {REVERSE_CHARGE_CODES.map((item) => (
+                        <SelectItem key={item.code} value={item.code}>
+                          {item.code} – {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+
+              {mode === 'create' && (
+                <div className="flex flex-col gap-3 border-t pt-4 sm:col-span-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="custom-number"
+                      checked={useCustomInvoiceNumber}
+                      onCheckedChange={(checked) => onToggleCustomInvoiceNumber(checked === true)}
+                    />
+                    <Label htmlFor="custom-number" className="font-normal">
+                      Použít vlastní číslo dokladu
+                    </Label>
+                  </div>
+                  {useCustomInvoiceNumber && (
+                    <Field
+                      id="custom-number-value"
+                      label="Vlastní číslo dokladu"
+                      hint="Kontroluje se jen neprázdnost a jedinečnost v řadě."
+                    >
+                      <Input
+                        id="custom-number-value"
+                        placeholder="Např. FV/2026-001"
+                        value={state.invoiceNumber}
+                        onChange={(event) => onCustomInvoiceNumberChange(event.target.value)}
+                      />
+                    </Field>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <CustomerSection value={state} readOnly={readOnly} onChange={patch} />
+
+          <ItemsSection
+            items={state.items}
+            readOnly={readOnly}
+            vatCharged={vatCharged}
+            onChange={updateItem}
+            onAdd={() => setState((current) => ({ ...current, items: [...current.items, createEmptyItem()] }))}
+            onRemove={(index) =>
+              setState((current) => ({ ...current, items: current.items.filter((_, i) => i !== index) }))
+            }
           />
-        </label>
 
-        <div className="totals-box">
-          <div className="totals-row">
-            <span>Bez DPH</span>
-            <strong>{formatMoney(totals.withoutVat)}</strong>
-          </div>
-          {vatCharged && (
-            <div className="totals-row">
-              <span>DPH</span>
-              <strong>{formatMoney(totals.vat)}</strong>
-            </div>
-          )}
-          <div className="totals-row totals-row-final">
-            <span>Celkem</span>
-            <strong>{formatMoney(totals.withVat)}</strong>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                <Label htmlFor="note" className="text-base">
+                  Poznámka
+                </Label>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                id="note"
+                rows={3}
+                disabled={readOnly}
+                placeholder="Zobrazí se na faktuře"
+                value={state.note}
+                onChange={(event) => patch({ note: event.target.value })}
+              />
+            </CardContent>
+          </Card>
         </div>
-      </section>
 
-      <section className="editor-action-bar">
-        <div className="button-row wrap">
-          {mode === 'create' && (
-            <>
-              <button disabled={saving || reservingNumber} type="button" onClick={onIssue}>
-                {saving ? 'Vystavuji...' : 'Vystavit fakturu'}
-              </button>
-              <button
-                disabled={saving || reservingNumber}
-                type="button"
-                className="secondary"
-                onClick={onSave}
-              >
-                {saving ? 'Ukládám...' : 'Uložit koncept'}
-              </button>
-            </>
-          )}
-          {mode === 'edit' && (
-            <>
-              {invoice?.status === 'draft' && (
-                <button disabled={saving || readOnly} type="button" onClick={onIssue}>
-                  {saving ? 'Vystavuji...' : 'Vystavit fakturu'}
-                </button>
+        <Card className="lg:sticky lg:top-6">
+          <CardHeader>
+            <CardTitle>Souhrn</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <dl className="m-0 flex flex-col gap-2 text-sm">
+              {vatCharged && (
+                <>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Základ daně</dt>
+                    <dd className="m-0 tabular-nums">{formatMoney(totals.withoutVat)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">DPH</dt>
+                    <dd className="m-0 tabular-nums">{formatMoney(totals.vat)}</dd>
+                  </div>
+                </>
               )}
-              <button disabled={saving || readOnly} type="button" onClick={onSave}>
-                {saving ? 'Ukládám...' : 'Uložit'}
-              </button>
-              <button
-                disabled={saving || reservingNumber}
-                type="button"
-                className="secondary"
-                onClick={() => navigate(backHref)}
-              >
+              <div className="flex items-baseline justify-between gap-4 border-t pt-3">
+                <dt className="font-semibold">Celkem k úhradě</dt>
+                <dd className="m-0 text-lg font-bold whitespace-nowrap tabular-nums">{formatMoney(totals.withVat)}</dd>
+              </div>
+            </dl>
+
+            {error && (
+              <p role="alert" className="m-0 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </p>
+            )}
+
+            <div className="flex flex-col gap-2">
+              {canIssue && (
+                <Button disabled={busy || readOnly} onClick={() => void onIssue()}>
+                  {saving ? <Loader2 className="animate-spin" /> : <Send />}
+                  Vystavit fakturu
+                </Button>
+              )}
+              <Button variant={canIssue ? 'outline' : 'default'} disabled={busy || readOnly} onClick={() => void onSave()}>
+                <Save />
+                {mode === 'create' || invoice?.status === 'draft' ? 'Uložit koncept' : 'Uložit změny'}
+              </Button>
+              <Button variant="ghost" disabled={saving} onClick={() => navigate(backHref)}>
                 Zrušit
-              </button>
-            </>
-          )}
-          {mode === 'create' && (
-            <button
-              disabled={saving || reservingNumber}
-              type="button"
-              className="secondary"
-              onClick={() => navigate(backHref)}
-            >
-              Zrušit
-            </button>
-          )}
-        </div>
-      </section>
-    </section>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

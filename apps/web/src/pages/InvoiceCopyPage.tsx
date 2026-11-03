@@ -17,8 +17,8 @@ export function InvoiceCopyPage() {
   }, [invoiceId, navigate, searchParams]);
 
   return (
-    <section className="card">
-      <p>Připravuji kopii faktury...</p>
-    </section>
+    <p data-ui className="text-muted-foreground">
+      Připravuji kopii faktury…
+    </p>
   );
 }
