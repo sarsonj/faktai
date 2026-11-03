@@ -1,5 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
 import { Invoice, InvoiceItem, Subject } from '@prisma/client';
+
+/** Údaje faktury, které kontrola čte (umožňuje ověřit i ještě neuložený doklad). */
+export type IssuableInvoice = Pick<
+  Invoice,
+  'taxClassification' | 'customerDic' | 'reverseChargeCode'
+> & { items: Array<Pick<InvoiceItem, 'vatRate'>> };
 import {
   STANDARD_VAT_RATES,
   chargesVat,
@@ -8,8 +14,8 @@ import {
 
 /** Kontroly před vystavením faktury (DPH režim, plátcovství, povinné údaje). */
 export function validateReadyToIssue(
-  invoice: Invoice & { items: InvoiceItem[] },
-  subject: Subject,
+  invoice: IssuableInvoice,
+  subject: Pick<Subject, 'isVatPayer'>,
 ): void {
   if (invoice.items.length === 0) {
     throw new BadRequestException(

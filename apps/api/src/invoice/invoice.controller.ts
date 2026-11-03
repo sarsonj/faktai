@@ -11,9 +11,11 @@ import {
   Req,
   Res,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { IdempotencyInterceptor } from '../common/idempotency/idempotency.interceptor';
 import type { RequestWithUser } from '../auth/session-auth.guard';
 import { ChangeInvoiceNumberDto } from './dto/change-invoice-number.dto';
 import { ListInvoicesQueryDto } from './dto/list-invoices.query.dto';
@@ -35,12 +37,32 @@ export class InvoiceController {
     return this.invoiceService.listInvoices(request.user!.id, query);
   }
 
+  /**
+   * Vytvoří koncept faktury. S `?issue=true` ji rovnou vystaví.
+   * Podporuje hlavičku `Idempotency-Key`.
+   */
   @Post()
+  @UseInterceptors(IdempotencyInterceptor)
   async createInvoice(
     @Req() request: RequestWithUser,
     @Body() dto: UpsertInvoiceDto,
+    @Query('issue') issue?: string,
   ) {
+    if (issue === 'true' || issue === '1') {
+      return this.invoiceService.createAndIssue(request.user!.id, dto);
+    }
     return this.invoiceService.createDraft(request.user!.id, dto);
+  }
+
+  @Get('by-number/:invoiceNumber')
+  async getInvoiceByNumber(
+    @Req() request: RequestWithUser,
+    @Param('invoiceNumber') invoiceNumber: string,
+  ) {
+    return this.invoiceService.getInvoiceDetailByNumber(
+      request.user!.id,
+      invoiceNumber,
+    );
   }
 
   @Post('reserve-number')
@@ -55,6 +77,7 @@ export class InvoiceController {
   }
 
   @Post(':id/copy')
+  @UseInterceptors(IdempotencyInterceptor)
   async copyInvoice(@Req() request: RequestWithUser, @Param('id') id: string) {
     return this.invoiceService.copyInvoice(request.user!.id, id);
   }

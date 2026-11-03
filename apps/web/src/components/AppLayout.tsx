@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: '/invoices', label: 'Vydané faktury' },
   { to: '/tax-reports', label: 'DPH podklady' },
   { to: '/settings/subject', label: 'Nastavení subjektu' },
+  { to: '/settings/api', label: 'API klíč' },
 ];
 
 export function AppLayout() {

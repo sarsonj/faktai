@@ -1061,6 +1061,15 @@ Pravidla:
 2. Ve v1 je povolena samoregistrace bez pozvánky.
 3. Odhlášení ukončí pouze aktuální session.
 
+## 7a. API klíč (CR-0058)
+1. V menu je položka `API klíč` (`/settings/api`).
+2. Uživatel může vygenerovat jeden API klíč; celý klíč se zobrazí jen jednou s tlačítkem `Kopírovat`.
+3. Stránka ukazuje začátek klíče, datum vytvoření a posledního použití.
+4. `Vygenerovat nový klíč` (po potvrzení) nahradí stávající klíč – starý okamžitě přestane fungovat.
+5. `Zrušit klíč` (po potvrzení) klíč smaže.
+6. Stránka obsahuje ukázku použití (`curl`) a odkaz na dokumentaci API (OpenAPI).
+7. Klíč má stejná oprávnění jako přihlášený uživatel; slouží ke skriptovanému zadávání dokladů a stahování PDF.
+
 ## 8. Řízení změn (Change Request)
 
 ### 8.1 Cíl

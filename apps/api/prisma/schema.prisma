@@ -56,6 +56,8 @@ model User {
   subject             Subject?
   pdfExports          PdfExportMetadata[]
   taxReportRuns       TaxReportRun[]
+  apiKey              ApiKey?
+  idempotencyRecords  IdempotencyRecord[]
 }
 
 model UserSession {
@@ -220,4 +222,34 @@ model TaxReportRunEntry {
   invoice                Invoice     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([runId, invoiceId])
+}
+
+/// API klíč uživatele (CR-0058) – jeden na uživatele, v DB jen hash.
+model ApiKey {
+  id         String    @id @default(uuid())
+  userId     String    @unique
+  keyHash    String    @unique
+  /// Začátek klíče pro zobrazení v UI (např. "fai_Ab12cD").
+  prefix     String    @db.VarChar(16)
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Uložené odpovědi pro hlavičku Idempotency-Key (CR-0058).
+model IdempotencyRecord {
+  id             String   @id @default(uuid())
+  userId         String
+  key            String   @db.VarChar(255)
+  /// Metoda + cesta požadavku.
+  scope          String   @db.VarChar(255)
+  requestHash    String   @db.VarChar(64)
+  /// null = požadavek se právě zpracovává.
+  responseStatus Int?
+  responseBody   Json?
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@index([createdAt])
 }

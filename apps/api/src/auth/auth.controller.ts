@@ -112,8 +112,6 @@ export class AuthController {
   @Get('me')
   @UseGuards(SessionAuthGuard)
   async me(@Req() request: RequestWithUser) {
-    // SessionAuthGuard zaručuje přítomnost tokenu.
-    const token = getSessionToken(request) ?? '';
-    return this.authService.getMeFromSession(token);
+    return this.authService.getMe(request.user!);
   }
 }

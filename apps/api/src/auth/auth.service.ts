@@ -189,12 +189,8 @@ export class AuthService {
     return session.user;
   }
 
-  async getMeFromSession(rawToken: string): Promise<MeResponse> {
-    const user = await this.getSessionUser(rawToken);
-    if (!user) {
-      throw new UnauthorizedException('Uživatel není přihlášen.');
-    }
-
+  /** Profil přihlášeného uživatele (session i API klíč – ověřeno guardem). */
+  async getMe(user: { id: string; email: string }): Promise<MeResponse> {
     const hasSubject = Boolean(
       await this.prisma.subject.findUnique({ where: { userId: user.id } }),
     );

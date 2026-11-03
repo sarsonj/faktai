@@ -614,6 +614,56 @@ export class InvoiceService {
     throw new ConflictException('Failed to assign unique invoice number.');
   }
 
+  /**
+   * Vytvoření a okamžité vystavení faktury jedním voláním (API, CR-0058).
+   * Připravenost k vystavení se ověří PŘED uložením, aby neplatný požadavek
+   * nespotřeboval číslo z řady.
+   */
+  async createAndIssue(
+    userId: string,
+    dto: UpsertInvoiceDto,
+  ): Promise<InvoiceDetail> {
+    const subject = await this.getSubjectByUserOrThrow(userId);
+    const computed = computeInvoiceTotals(dto.items, {
+      isVatPayer: subject.isVatPayer,
+      classification: dto.taxClassification,
+    });
+    validateReadyToIssue(
+      {
+        taxClassification: dto.taxClassification ?? null,
+        customerDic: this.normalizeOptionalText(dto.customerDic),
+        reverseChargeCode:
+          dto.taxClassification === 'domestic_reverse_charge'
+            ? this.normalizeOptionalText(dto.reverseChargeCode)
+            : null,
+        items: computed.items,
+      },
+      subject,
+    );
+
+    const draft = await this.createDraft(userId, dto);
+    return this.issueInvoice(userId, draft.id);
+  }
+
+  /** Detail faktury podle čísla dokladu (pro skripty přes API). */
+  async getInvoiceDetailByNumber(
+    userId: string,
+    invoiceNumber: string,
+  ): Promise<InvoiceDetail> {
+    const subject = await this.getSubjectByUserOrThrow(userId);
+    const invoice = await this.prisma.invoice.findFirst({
+      where: {
+        subjectId: subject.id,
+        invoiceNumber: this.normalizeInvoiceNumber(invoiceNumber),
+      },
+      select: { id: true },
+    });
+    if (!invoice) {
+      throw new NotFoundException('Invoice not found');
+    }
+    return this.getInvoiceDetail(userId, invoice.id);
+  }
+
   async issueInvoice(
     userId: string,
     invoiceId: string,

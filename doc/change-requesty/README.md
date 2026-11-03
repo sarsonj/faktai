@@ -74,3 +74,4 @@
 | `CR-0055` | Oficiální číselník kódů předmětu plnění (KH A.1) | `Implementováno` | `Must` |
 | `CR-0056` | Upgrade Node.js na 24 LTS a reprodukovatelné Docker buildy | `Implementováno` | `Must` |
 | `CR-0057` | Refaktor domény a vrstva DPH záznamů | `Implementováno` | `Must` |
+| `CR-0058` | API klíče, OpenAPI dokumentace a idempotence | `Implementováno` | `Must` |

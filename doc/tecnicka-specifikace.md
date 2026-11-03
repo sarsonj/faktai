@@ -311,6 +311,25 @@ Pravidla:
   - revokuje všechny aktivní session uživatele.
 - session je přenášena přes `httpOnly` cookie.
 - validační zprávy jsou v češtině.
+- `GET /auth/me` funguje se session i s API klíčem.
+
+### 5.1.1 API klíč a veřejné použití API (CR-0058)
+1. `GET /api-key` – stav klíče (`exists`, `prefix`, `createdAt`, `lastUsedAt`)
+2. `POST /api-key` – vygeneruje nový klíč (starý přestane platit); celý klíč vrací jen v této odpovědi (`key`)
+3. `DELETE /api-key` – zruší klíč
+
+Pravidla:
+- Jeden klíč na uživatele, plný přístup jako přihlášený uživatel (bez oprávnění/scopes).
+- Formát `fai_` + 43 znaků base64url; v DB (`ApiKey`) jen SHA-256 hash a prefix pro zobrazení.
+- Autentizace: `Authorization: Bearer fai_…` na všech endpointech chráněných `SessionAuthGuard`. Pokud je hlavička přítomná, cookie se neověřuje (neplatný klíč = 401).
+- Správa klíče (`/api-key`) je povolená jen ze session (ne klíčem samotným) → 403.
+- `lastUsedAt` se aktualizuje nejvýš jednou za minutu.
+- Idempotence: `POST /invoices` a `POST /invoices/:id/copy` přijímají hlavičku `Idempotency-Key` (max. 255 znaků; `IdempotencyInterceptor`, tabulka `IdempotencyRecord`):
+  - stejný klíč + stejná metoda, cesta a tělo do 24 h → uložená odpověď, hlavička `Idempotency-Replayed: true`,
+  - stejný klíč s jiným požadavkem → `422`,
+  - souběžný požadavek se stejným klíčem → `409`,
+  - chybové odpovědi se neukládají.
+- OpenAPI: UI `/api/docs`, JSON `/api/docs-json` (`@nestjs/swagger`, schémata požadavků z DTO přes CLI plugin; vypnutí `API_DOCS_ENABLED=0`). Pro stránku dokumentace je vypnuté CSP v `helmet`.
 
 ### 5.2 Subject (Scope 1)
 1. `GET /subject`
@@ -334,10 +353,11 @@ Backend validace:
 
 ### 5.3 Invoices (Scope 2 + 3)
 1. `GET /invoices`
-2. `POST /invoices` (create draft)
+2. `POST /invoices` (create draft; s `?issue=true` vytvoří a rovnou vystaví – připravenost se ověří před uložením, neplatný požadavek nespotřebuje číslo)
 3. `POST /invoices/reserve-number`
 4. `POST /invoices/:id/copy`
 5. `GET /invoices/:id`
+5a. `GET /invoices/by-number/:invoiceNumber` (detail podle čísla dokladu)
 6. `PATCH /invoices/:id`
 7. `PATCH /invoices/:id/number` (pokročilá změna čísla dokladu)
 8. `POST /invoices/:id/refresh-supplier-snapshot`
