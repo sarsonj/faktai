@@ -113,7 +113,12 @@ export type InvoiceListResponse = {
   pageSize: number;
   year: number;
   availableYears: number[];
+  statusCounts: InvoiceStatusCounts;
 };
+
+export type InvoiceListFilter = 'all' | 'draft' | 'unpaid' | 'overdue' | 'paid';
+
+export type InvoiceStatusCounts = Record<InvoiceListFilter, number>;
 
 export type InvoiceItem = {
   id: string;

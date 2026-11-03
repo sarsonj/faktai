@@ -1,5 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  ArrowLeft,
+  BadgeCheck,
+  Copy,
+  Download,
+  Hash,
+  MoreHorizontal,
+  Pencil,
+  RefreshCw,
+  Send,
+  Undo2,
+  Unlock,
+  CalendarCheck,
+} from 'lucide-react';
+import { toast } from 'sonner';
 import {
   changeInvoiceNumber,
   downloadInvoicePdf,
@@ -10,21 +26,36 @@ import {
   refreshSupplierSnapshot,
 } from '../invoice-api';
 import { formatDateCz, toLocalDateInputValue } from '../date-utils';
+import { formatMoney } from '../lib/format';
+import { REVERSE_CHARGE_CODES, TAX_CLASSIFICATION_LABELS } from '../vat-regime';
+import { useConfirm } from '../components/app/confirm-context';
+import { StatusBadge } from '../components/app/StatusBadge';
 import type { InvoiceDetail } from '../types';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-function defaultPaidAtInputValue(paidAt?: string | null): string {
-  if (paidAt) {
-    return paidAt.slice(0, 10);
-  }
-  return toLocalDateInputValue(new Date());
-}
-
-function formatMoney(value: string): string {
-  const number = Number(value);
-  return `${number.toLocaleString('cs-CZ', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })} Kč`;
+function errorMessage(err: unknown, fallback: string): string {
+  return err instanceof Error ? err.message : fallback;
 }
 
 function formatSupplierBankAccount(invoice: InvoiceDetail): string {
@@ -33,588 +64,430 @@ function formatSupplierBankAccount(invoice: InvoiceDetail): string {
     : `${invoice.supplierBankAccountNumber}/${invoice.supplierBankCode}`;
 }
 
-function statusLabel(status: InvoiceDetail['status']): string {
-  switch (status) {
-    case 'draft':
-      return 'Koncept';
-    case 'issued':
-      return 'Vystavená';
-    case 'paid':
-      return 'Uhrazená';
-    case 'overdue':
-      return 'Po splatnosti';
-    case 'cancelled':
-      return 'Storno';
-    default:
-      return status;
-  }
-}
-
-function statusClassName(status: InvoiceDetail['status']): string {
-  switch (status) {
-    case 'draft':
-      return 'status-badge status-draft';
-    case 'issued':
-      return 'status-badge status-issued';
-    case 'overdue':
-      return 'status-badge status-overdue';
-    case 'paid':
-      return 'status-badge status-paid';
-    case 'cancelled':
-      return 'status-badge status-cancelled';
-    default:
-      return 'status-badge';
-  }
-}
-
-function EditIcon() {
+function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M4 20h4l10-10-4-4L4 16v4Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="m12.5 7.5 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function CopyIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="9" y="9" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M7 15H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function PdfIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 4v10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="m8 10 4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M5 20h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
+    <div className="flex items-baseline justify-between gap-4 py-1.5 text-sm">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="m-0 text-right font-medium">{children}</dd>
+    </div>
   );
 }
 
 export function InvoiceDetailPage() {
   const navigate = useNavigate();
+  const confirm = useConfirm();
+  const queryClient = useQueryClient();
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const [searchParams] = useSearchParams();
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
-  const [advancedInvoiceNumber, setAdvancedInvoiceNumber] = useState('');
+  const [paidDialogOpen, setPaidDialogOpen] = useState(false);
+  const [paidAtInput, setPaidAtInput] = useState('');
+  const [numberDialogOpen, setNumberDialogOpen] = useState(false);
+  const [numberInput, setNumberInput] = useState('');
   const [syncVariableSymbol, setSyncVariableSymbol] = useState(true);
-  const [advancedBusy, setAdvancedBusy] = useState(false);
-  const [markPaidBusy, setMarkPaidBusy] = useState(false);
-  const [showMarkPaidEditor, setShowMarkPaidEditor] = useState(false);
-  const [paidAtInput, setPaidAtInput] = useState(defaultPaidAtInputValue());
 
-  useEffect(() => {
-    if (!invoiceId) {
-      return;
-    }
-
-    const run = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const payload = await getInvoice(invoiceId);
-        setInvoice(payload);
-        setAdvancedInvoiceNumber(payload.invoiceNumber ?? '');
-        setPaidAtInput(defaultPaidAtInputValue(payload.paidAt));
-        setShowMarkPaidEditor(false);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Načtení faktury selhalo');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void run();
-  }, [invoiceId]);
+  const invoiceQuery = useQuery({
+    queryKey: ['invoice', invoiceId],
+    queryFn: () => getInvoice(invoiceId!),
+    enabled: Boolean(invoiceId),
+  });
+  const invoice = invoiceQuery.data;
 
   const listQuery = searchParams.toString();
-  const backHref = `/invoices${listQuery ? `?${listQuery}` : ''}`;
-  const advancedEditHref = invoice
-    ? `/invoices/${invoice.id}/edit${listQuery ? `?${listQuery}&advanced=1` : '?advanced=1'}`
-    : '#';
-
-  const onOpenMarkPaidEditor = () => {
-    if (!invoice) {
-      return;
-    }
-    setPaidAtInput(defaultPaidAtInputValue(invoice.paidAt));
-    setShowMarkPaidEditor(true);
-    setError(null);
-    setSuccess(null);
+  const withContext = (path: string, extra?: string) => {
+    const query = [listQuery, extra].filter(Boolean).join('&');
+    return `${path}${query ? `?${query}` : ''}`;
   };
+  const backHref = withContext('/invoices');
 
-  const onSubmitMarkPaid = async () => {
-    if (!invoice) {
-      return;
-    }
-    if (!paidAtInput) {
-      setError('Vyberte datum úhrady.');
-      return;
-    }
+  /** Akce nad dokladem: uloží výsledek do cache, obnoví seznam, ukáže toast. */
+  const action = useMutation({
+    mutationFn: async (run: () => Promise<InvoiceDetail>) => run(),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['invoice', invoiceId], updated);
+      void queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    },
+  });
+  const busy = action.isPending;
 
-    try {
-      setMarkPaidBusy(true);
-      setError(null);
-      setSuccess(null);
-      const paid = await markInvoicePaid(invoice.id, paidAtInput);
-      setInvoice(paid);
-      setPaidAtInput(defaultPaidAtInputValue(paid.paidAt));
-      setShowMarkPaidEditor(false);
-      setSuccess(
-        invoice.status === 'paid'
-          ? 'Datum úhrady bylo upraveno.'
-          : 'Faktura byla označena jako uhrazená.',
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Označení úhrady selhalo');
-    } finally {
-      setMarkPaidBusy(false);
-    }
-  };
+  const runAction = (run: () => Promise<InvoiceDetail>, success: string, failure: string) =>
+    action.mutateAsync(run).then(
+      () => {
+        toast.success(success);
+        return true;
+      },
+      (err: unknown) => {
+        toast.error(errorMessage(err, failure));
+        return false;
+      },
+    );
 
-  const onMarkUnpaid = async () => {
-    if (!invoice) {
-      return;
-    }
-
-    try {
-      setAdvancedBusy(true);
-      setError(null);
-      setSuccess(null);
-      const unpaid = await markInvoiceUnpaid(invoice.id);
-      setInvoice(unpaid);
-      setPaidAtInput(defaultPaidAtInputValue(unpaid.paidAt));
-      setSuccess('Faktura byla označena jako neuhrazená.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Změna stavu faktury selhala');
-    } finally {
-      setAdvancedBusy(false);
-    }
-  };
-
-  const onIssue = async () => {
-    if (!invoice) {
-      return;
-    }
-
-    try {
-      setError(null);
-      setSuccess(null);
-      const issued = await issueInvoice(invoice.id);
-      setInvoice(issued);
-      setSuccess('Faktura byla vystavena.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Vystavení faktury selhalo');
-    }
-  };
-
-  const onChangeInvoiceNumber = async () => {
-    if (!invoice) {
-      return;
-    }
-
-    const nextInvoiceNumber = advancedInvoiceNumber.replace(/\s+/g, '');
-    if (!nextInvoiceNumber) {
-      setError('Zadejte číslo faktury.');
-      return;
-    }
-
-    try {
-      setAdvancedBusy(true);
-      setError(null);
-      setSuccess(null);
-      const changed = await changeInvoiceNumber(
-        invoice.id,
-        nextInvoiceNumber,
-        syncVariableSymbol,
-      );
-      setInvoice(changed);
-      setAdvancedInvoiceNumber(changed.invoiceNumber ?? '');
-      setSuccess('Číslo faktury bylo změněno.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Změna čísla faktury selhala');
-    } finally {
-      setAdvancedBusy(false);
-    }
-  };
-
-  const onRefreshSupplierSnapshot = async () => {
-    if (!invoice) {
-      return;
-    }
-
-    try {
-      setAdvancedBusy(true);
-      setError(null);
-      setSuccess(null);
-      const refreshed = await refreshSupplierSnapshot(invoice.id);
-      setInvoice(refreshed);
-      setSuccess('Dodavatelské údaje byly aktualizovány z nastavení subjektu.');
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Aktualizace dodavatelských údajů selhala',
-      );
-    } finally {
-      setAdvancedBusy(false);
-    }
-  };
-
-  if (loading) {
-    return <section className="card card-wide">Načítám detail faktury...</section>;
+  if (invoiceQuery.isPending) {
+    return <p className="text-muted-foreground">Načítám detail faktury…</p>;
   }
 
-  if (error || !invoice) {
+  if (!invoice) {
     return (
-      <section className="card card-wide">
-        <p className="error">{error ?? 'Faktura nebyla nalezena.'}</p>
-        <button type="button" onClick={() => navigate(backHref)}>
+      <div data-ui className="flex flex-col items-start gap-4">
+        <p className="m-0 text-destructive">
+          {errorMessage(invoiceQuery.error, 'Faktura nebyla nalezena.')}
+        </p>
+        <Button variant="outline" onClick={() => navigate(backHref)}>
+          <ArrowLeft />
           Zpět na seznam
-        </button>
-      </section>
+        </Button>
+      </div>
     );
   }
 
+  const isDraft = invoice.status === 'draft';
+  const isOpen = invoice.status === 'issued' || invoice.status === 'overdue';
+  const isPaid = invoice.status === 'paid';
+  const canPdf = !isDraft && invoice.status !== 'cancelled';
+  const showVat = invoice.supplierIsVatPayer;
+  const reverseChargeLabel = invoice.reverseChargeCode
+    ? REVERSE_CHARGE_CODES.find((item) => item.code === invoice.reverseChargeCode)?.label
+    : null;
+
+  const openPaidDialog = () => {
+    setPaidAtInput(invoice.paidAt ? invoice.paidAt.slice(0, 10) : toLocalDateInputValue(new Date()));
+    setPaidDialogOpen(true);
+  };
+
+  const openNumberDialog = () => {
+    setNumberInput(invoice.invoiceNumber ?? '');
+    setSyncVariableSymbol(true);
+    setNumberDialogOpen(true);
+  };
+
+  const onIssue = async () => {
+    if (
+      !(await confirm({
+        title: 'Vystavit fakturu?',
+        description: 'Faktura dostane konečnou podobu a půjde stáhnout jako PDF.',
+        confirmLabel: 'Vystavit',
+      }))
+    ) {
+      return;
+    }
+    await runAction(() => issueInvoice(invoice.id), 'Faktura byla vystavena.', 'Vystavení faktury selhalo');
+  };
+
+  const onSubmitPaid = async () => {
+    if (!paidAtInput) {
+      toast.error('Vyberte datum úhrady.');
+      return;
+    }
+    const ok = await runAction(
+      () => markInvoicePaid(invoice.id, paidAtInput),
+      isPaid ? 'Datum úhrady bylo upraveno.' : 'Faktura byla označena jako uhrazená.',
+      'Označení úhrady selhalo',
+    );
+    if (ok) setPaidDialogOpen(false);
+  };
+
+  const onSubmitNumber = async () => {
+    const next = numberInput.replace(/\s+/g, '');
+    if (!next) {
+      toast.error('Zadejte číslo faktury.');
+      return;
+    }
+    const ok = await runAction(
+      () => changeInvoiceNumber(invoice.id, next, syncVariableSymbol),
+      'Číslo faktury bylo změněno.',
+      'Změna čísla faktury selhala',
+    );
+    if (ok) setNumberDialogOpen(false);
+  };
+
+  const onMarkUnpaid = async () => {
+    if (
+      !(await confirm({
+        title: 'Označit jako neuhrazenou?',
+        description: 'Datum úhrady se odstraní.',
+        confirmLabel: 'Označit jako neuhrazenou',
+      }))
+    ) {
+      return;
+    }
+    await runAction(() => markInvoiceUnpaid(invoice.id), 'Faktura byla označena jako neuhrazená.', 'Změna stavu selhala');
+  };
+
+  const onRefreshSupplier = async () => {
+    if (
+      !(await confirm({
+        title: 'Aktualizovat údaje dodavatele?',
+        description: 'Na faktuře se přepíší údaje dodavatele aktuálními údaji z nastavení subjektu.',
+        confirmLabel: 'Aktualizovat',
+      }))
+    ) {
+      return;
+    }
+    await runAction(
+      () => refreshSupplierSnapshot(invoice.id),
+      'Údaje dodavatele byly aktualizovány.',
+      'Aktualizace údajů dodavatele selhala',
+    );
+  };
+
+  const onDownload = () => {
+    downloadInvoicePdf(invoice.id).catch((err: unknown) => toast.error(errorMessage(err, 'Export PDF selhal')));
+  };
+
   return (
-    <section className="card card-wide">
-      <nav className="breadcrumb" aria-label="Drobečková navigace">
-        <Link to={backHref}>Vydané faktury</Link>
-        <span className="breadcrumb-sep">/</span>
-        <span>Detail dokladu</span>
+    <div data-ui className="flex flex-col gap-6">
+      <nav aria-label="Drobečková navigace" className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Link to={backHref} className="text-muted-foreground no-underline hover:text-foreground">
+          Vydané faktury
+        </Link>
+        <span aria-hidden="true">/</span>
+        <span className="text-foreground">{invoice.invoiceNumber ?? 'Koncept'}</span>
       </nav>
 
-      <header className="page-head">
-        <div>
-          <p className="page-kicker">Fakturace</p>
-          <h1 className="page-title">Detail faktury {invoice.invoiceNumber ?? '(koncept)'}</h1>
-          <p className="page-subtitle">Přehled dokladu, platebních údajů a položek faktury.</p>
-        </div>
-        <div className="page-actions">
-          <Link className="action-link secondary-link" to={backHref}>
-            Zpět na seznam
-          </Link>
-        </div>
-      </header>
-
-      {error && <p className="error">{error}</p>}
-      {success && <p>{success}</p>}
-
-      <section className="ui-section invoice-detail-hero">
-        <div className="invoice-detail-hero-top">
-          <div className="invoice-detail-hero-badges">
-            <span className={statusClassName(invoice.status)}>{statusLabel(invoice.status)}</span>
-            <span className="summary-pill">Doklad #{invoice.invoiceNumber ?? '-'}</span>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="m-0 text-2xl font-bold tracking-tight">
+              Faktura {invoice.invoiceNumber ?? '(koncept)'}
+            </h1>
+            <StatusBadge status={invoice.status} />
           </div>
-          <div className="invoice-detail-hero-actions">
-            <div className="invoice-quick-actions">
-              <Link
-                className="icon-link"
-                to={`/invoices/${invoice.id}/edit${listQuery ? `?${listQuery}` : ''}`}
-                aria-label="Upravit fakturu"
-                title="Upravit"
-                data-tooltip="Upravit"
-              >
-                <EditIcon />
-              </Link>
-              <Link
-                className="icon-link"
-                to={`/invoices/${invoice.id}/copy${listQuery ? `?${listQuery}` : ''}`}
-                aria-label="Vytvořit kopii faktury"
-                title="Kopie"
-                data-tooltip="Kopie"
-              >
-                <CopyIcon />
-              </Link>
-              <button
-                type="button"
-                className={`icon-button secondary${invoice.status === 'draft' || invoice.status === 'cancelled' ? ' muted' : ''}`}
-                aria-label="Stáhnout PDF"
-                title="PDF"
-                data-tooltip={
-                  invoice.status === 'draft' || invoice.status === 'cancelled'
-                    ? 'PDF jen pro vystavené/uhrazené'
-                    : 'Export PDF'
-                }
-                onClick={() => {
-                  if (invoice.status === 'draft' || invoice.status === 'cancelled') {
-                    setError('PDF lze exportovat jen u vystavené nebo uhrazené faktury.');
-                    return;
-                  }
-                  void downloadInvoicePdf(invoice.id).catch((err: unknown) => {
-                    setError(err instanceof Error ? err.message : 'Export PDF selhal');
-                  });
-                }}
-              >
-                <PdfIcon />
-              </button>
-            </div>
-
-            {invoice.status === 'draft' && (
-              <button type="button" className="invoice-primary-action" onClick={onIssue}>
-                Vystavit fakturu
-              </button>
-            )}
-            {(invoice.status === 'issued' || invoice.status === 'overdue') && (
-              <button
-                type="button"
-                className="invoice-primary-action secondary"
-                onClick={onOpenMarkPaidEditor}
-              >
-                Označit jako uhrazené
-              </button>
-            )}
-          </div>
+          <p className="m-0 text-muted-foreground">
+            {invoice.customerName} · splatnost {formatDateCz(invoice.dueDate)}
+            {isPaid && invoice.paidAt && ` · uhrazeno ${formatDateCz(invoice.paidAt)}`}
+          </p>
         </div>
 
-        {(invoice.status === 'issued' || invoice.status === 'overdue') &&
-          showMarkPaidEditor && (
-            <div className="paid-at-editor">
-              <label>
-                Datum úhrady
-                <input
-                  type="date"
-                  value={paidAtInput}
-                  onChange={(event) => setPaidAtInput(event.target.value)}
-                  disabled={markPaidBusy}
-                />
-              </label>
-              <div className="button-row wrap">
-                <button type="button" onClick={onSubmitMarkPaid} disabled={markPaidBusy}>
-                  {markPaidBusy ? 'Ukládám...' : 'Potvrdit úhradu'}
-                </button>
-                <button
-                  type="button"
-                  className="secondary"
-                  disabled={markPaidBusy}
-                  onClick={() => {
-                    setShowMarkPaidEditor(false);
-                    setPaidAtInput(defaultPaidAtInputValue(invoice.paidAt));
-                  }}
-                >
-                  Zrušit
-                </button>
+        <div className="flex flex-wrap gap-2">
+          {isDraft && (
+            <Button onClick={() => void onIssue()} disabled={busy}>
+              <Send />
+              Vystavit fakturu
+            </Button>
+          )}
+          {isOpen && (
+            <Button onClick={openPaidDialog} disabled={busy}>
+              <BadgeCheck />
+              Označit jako uhrazenou
+            </Button>
+          )}
+          {canPdf && (
+            <Button variant="outline" onClick={onDownload}>
+              <Download />
+              PDF
+            </Button>
+          )}
+          <Button variant="outline" asChild>
+            <Link to={withContext(`/invoices/${invoice.id}/edit`)} className="no-underline">
+              <Pencil />
+              Upravit
+            </Link>
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" aria-label="Další akce" disabled={busy}>
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent data-ui align="end" className="w-64">
+              <DropdownMenuItem onSelect={() => navigate(withContext(`/invoices/${invoice.id}/copy`))}>
+                <Copy />
+                Vytvořit kopii
+              </DropdownMenuItem>
+              {isPaid && (
+                <>
+                  <DropdownMenuItem onSelect={openPaidDialog}>
+                    <CalendarCheck />
+                    Změnit datum úhrady
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => void onMarkUnpaid()}>
+                    <Undo2 />
+                    Označit jako neuhrazenou
+                  </DropdownMenuItem>
+                </>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Pokročilé</DropdownMenuLabel>
+              <DropdownMenuItem onSelect={openNumberDialog}>
+                <Hash />
+                Změnit číslo dokladu
+              </DropdownMenuItem>
+              {canPdf && (
+                <DropdownMenuItem onSelect={() => void onRefreshSupplier()}>
+                  <RefreshCw />
+                  Aktualizovat údaje dodavatele
+                </DropdownMenuItem>
+              )}
+              {isPaid && (
+                <DropdownMenuItem onSelect={() => navigate(withContext(`/invoices/${invoice.id}/edit`, 'advanced=1'))}>
+                  <Unlock />
+                  Odemknout editaci uhrazené
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="gap-0 self-start overflow-hidden py-0 lg:col-span-2">
+          <CardHeader className="border-b py-4">
+            <CardTitle>Položky</CardTitle>
+          </CardHeader>
+          <div className="overflow-x-auto">
+            <Table className="min-w-[560px]">
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="pl-6">Popis</TableHead>
+                  <TableHead className="text-right">Množství</TableHead>
+                  <TableHead className="text-right">Cena/j.</TableHead>
+                  {showVat && <TableHead className="text-right">DPH</TableHead>}
+                  <TableHead className="pr-6 text-right">{showVat ? 'Bez DPH' : 'Celkem'}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {invoice.items.map((item) => (
+                  <TableRow key={item.id} className="hover:bg-transparent">
+                    <TableCell className="pl-6 whitespace-normal">{item.description}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {Number(item.quantity).toLocaleString('cs-CZ')} {item.unit}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{formatMoney(item.unitPrice)}</TableCell>
+                    {showVat && <TableCell className="text-right tabular-nums">{item.vatRate} %</TableCell>}
+                    <TableCell className="pr-6 text-right tabular-nums">{formatMoney(item.lineTotalWithoutVat)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex justify-end border-t bg-muted/30 px-6 py-4">
+            <dl className="m-0 w-full max-w-xs">
+              {showVat && (
+                <>
+                  <DetailRow label="Základ daně">{formatMoney(invoice.totalWithoutVat)}</DetailRow>
+                  <DetailRow label="DPH">{formatMoney(invoice.totalVat)}</DetailRow>
+                </>
+              )}
+              <div className="mt-1 flex items-baseline justify-between gap-4 border-t pt-2.5">
+                <dt className="font-semibold">Celkem k úhradě</dt>
+                <dd className="m-0 text-lg font-bold tabular-nums">{formatMoney(invoice.totalWithVat)}</dd>
               </div>
+            </dl>
+          </div>
+          {invoice.note && (
+            <div className="border-t px-6 py-4 text-sm">
+              <span className="text-muted-foreground">Poznámka: </span>
+              {invoice.note}
             </div>
           )}
+        </Card>
 
-        <div className="kpi-grid">
-          <article className="kpi-card">
-            <p>Celkem k úhradě</p>
-            <strong>{formatMoney(invoice.totalWithVat)}</strong>
-          </article>
-          <article className="kpi-card">
-            <p>Základ daně</p>
-            <strong>{formatMoney(invoice.totalWithoutVat)}</strong>
-          </article>
-          <article className="kpi-card">
-            <p>DPH</p>
-            <strong>{formatMoney(invoice.totalVat)}</strong>
-          </article>
+        <div className="flex flex-col gap-6">
+          <Card className="gap-3">
+            <CardHeader>
+              <CardTitle>Odběratel</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <address className="flex flex-col gap-0.5 text-sm not-italic">
+                <span className="font-semibold">{invoice.customerName}</span>
+                <span>{invoice.customerStreet}</span>
+                <span>
+                  {invoice.customerPostalCode} {invoice.customerCity}
+                </span>
+                {invoice.customerCountryCode !== 'CZ' && <span>{invoice.customerCountryCode}</span>}
+                {(invoice.customerIco || invoice.customerDic) && (
+                  <span className="mt-2 text-muted-foreground">
+                    {invoice.customerIco && `IČO ${invoice.customerIco}`}
+                    {invoice.customerIco && invoice.customerDic && ' · '}
+                    {invoice.customerDic && `DIČ ${invoice.customerDic}`}
+                  </span>
+                )}
+              </address>
+            </CardContent>
+          </Card>
+
+          <Card className="gap-3">
+            <CardHeader>
+              <CardTitle>Doklad</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="m-0 divide-y">
+                <DetailRow label="Vystaveno">{formatDateCz(invoice.issueDate)}</DetailRow>
+                <DetailRow label="DUZP">{formatDateCz(invoice.taxableSupplyDate)}</DetailRow>
+                <DetailRow label="Splatnost">{formatDateCz(invoice.dueDate)}</DetailRow>
+                {invoice.paidAt && <DetailRow label="Uhrazeno">{formatDateCz(invoice.paidAt)}</DetailRow>}
+                <DetailRow label="Variabilní symbol">{invoice.variableSymbol}</DetailRow>
+                <DetailRow label="Účet">{formatSupplierBankAccount(invoice)}</DetailRow>
+                {showVat && invoice.taxClassification && (
+                  <DetailRow label="Daňový režim">
+                    {TAX_CLASSIFICATION_LABELS[invoice.taxClassification]}
+                    {reverseChargeLabel && (
+                      <span className="block text-xs font-normal text-muted-foreground">
+                        kód {invoice.reverseChargeCode} – {reverseChargeLabel}
+                      </span>
+                    )}
+                  </DetailRow>
+                )}
+                {!showVat && <DetailRow label="DPH">neplátce</DetailRow>}
+              </dl>
+            </CardContent>
+          </Card>
         </div>
-      </section>
+      </div>
 
-      <section className="ui-section">
-        <h2>Informace o dokladu</h2>
-        <div className="invoice-meta-grid">
-          <article className="invoice-meta-card">
-            <h3>Doklad a platba</h3>
-            <dl className="invoice-meta-list">
-              <div>
-                <dt>Číslo dokladu</dt>
-                <dd>{invoice.invoiceNumber ?? '-'}</dd>
-              </div>
-              <div>
-                <dt>Stav</dt>
-                <dd>
-                  <span className={statusClassName(invoice.status)}>{statusLabel(invoice.status)}</span>
-                </dd>
-              </div>
-              <div>
-                <dt>Variabilní symbol</dt>
-                <dd>{invoice.variableSymbol}</dd>
-              </div>
-              <div>
-                <dt>Účet dodavatele</dt>
-                <dd>{formatSupplierBankAccount(invoice)}</dd>
-              </div>
-            </dl>
-          </article>
-          <article className="invoice-meta-card">
-            <h3>Termíny</h3>
-            <dl className="invoice-meta-list">
-              <div>
-                <dt>Vystaveno</dt>
-                <dd>{formatDateCz(invoice.issueDate)}</dd>
-              </div>
-              <div>
-                <dt>Splatnost</dt>
-                <dd>{formatDateCz(invoice.dueDate)}</dd>
-              </div>
-              <div>
-                <dt>Datum zdanitelného plnění (DUZP)</dt>
-                <dd>{formatDateCz(invoice.taxableSupplyDate)}</dd>
-              </div>
-              <div>
-                <dt>Uhrazena dne</dt>
-                <dd>{invoice.paidAt ? formatDateCz(invoice.paidAt) : '-'}</dd>
-              </div>
-            </dl>
-          </article>
-        </div>
-      </section>
-
-      <section className="ui-section">
-        <h2>Odběratel</h2>
-        <address className="invoice-address">
-          <strong className="invoice-address-name">{invoice.customerName}</strong>
-          <span>{invoice.customerStreet}</span>
-          <span>{invoice.customerPostalCode} {invoice.customerCity}</span>
-          <span>{invoice.customerCountryCode}</span>
-        </address>
-      </section>
-
-      <section className="ui-section">
-        <h2>Položky faktury</h2>
-        <div className="data-table-wrap">
-          <table className="invoice-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Popis</th>
-                <th className="align-right">Množství</th>
-                <th>Jednotka</th>
-                <th className="align-right">Jedn. cena</th>
-                <th className="align-right">DPH</th>
-                <th className="align-right">Bez DPH</th>
-                <th className="align-right">S DPH</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoice.items.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.position}</td>
-                  <td>{item.description}</td>
-                  <td className="align-right">{item.quantity}</td>
-                  <td>{item.unit}</td>
-                  <td className="align-right">{formatMoney(item.unitPrice)}</td>
-                  <td className="align-right">{item.vatRate} %</td>
-                  <td className="align-right">{formatMoney(item.lineTotalWithoutVat)}</td>
-                  <td className="align-right">{formatMoney(item.lineTotalWithVat)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="totals-box">
-          <div className="totals-row">
-            <span>Bez DPH</span>
-            <strong>{formatMoney(invoice.totalWithoutVat)}</strong>
+      <Dialog open={paidDialogOpen} onOpenChange={setPaidDialogOpen}>
+        <DialogContent data-ui className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{isPaid ? 'Změnit datum úhrady' : 'Označit jako uhrazenou'}</DialogTitle>
+            <DialogDescription>Faktura {invoice.invoiceNumber} · {formatMoney(invoice.totalWithVat)}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="paid-at">Datum úhrady</Label>
+            <Input id="paid-at" type="date" value={paidAtInput} onChange={(event) => setPaidAtInput(event.target.value)} />
           </div>
-          <div className="totals-row">
-            <span>DPH</span>
-            <strong>{formatMoney(invoice.totalVat)}</strong>
-          </div>
-          <div className="totals-row totals-row-final">
-            <span>Celkem</span>
-            <strong>{formatMoney(invoice.totalWithVat)}</strong>
-          </div>
-        </div>
-      </section>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPaidDialogOpen(false)} disabled={busy}>
+              Zrušit
+            </Button>
+            <Button onClick={() => void onSubmitPaid()} disabled={busy}>
+              {busy ? 'Ukládám…' : 'Uložit'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      <section className="ui-section invoice-advanced-section">
-        <details className="advanced-tools">
-          <summary className="advanced-tools-summary">Další možnosti (pokročilé)</summary>
-          <p className="helper-text">
-            Tyto akce použijte jen ve výjimečných situacích.
-          </p>
-
-          <div className="form-grid form-grid-two">
-            <label>
-              Změnit číslo dokladu
-              <input
-                value={advancedInvoiceNumber}
-                onChange={(event) => setAdvancedInvoiceNumber(event.target.value)}
-                disabled={advancedBusy}
-              />
-            </label>
-            <label className="checkbox-row">
-              <span>Synchronizovat i variabilní symbol</span>
-              <input
-                type="checkbox"
+      <Dialog open={numberDialogOpen} onOpenChange={setNumberDialogOpen}>
+        <DialogContent data-ui className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Změnit číslo dokladu</DialogTitle>
+            <DialogDescription>Použijte jen ve výjimečných situacích – číslo musí být v řadě jedinečné.</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="invoice-number">Číslo dokladu</Label>
+              <Input id="invoice-number" value={numberInput} onChange={(event) => setNumberInput(event.target.value)} />
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="sync-vs"
                 checked={syncVariableSymbol}
-                onChange={(event) => setSyncVariableSymbol(event.target.checked)}
-                disabled={advancedBusy}
+                onCheckedChange={(checked) => setSyncVariableSymbol(checked === true)}
               />
-            </label>
+              <Label htmlFor="sync-vs" className="font-normal">
+                Změnit i variabilní symbol
+              </Label>
+            </div>
           </div>
-
-          <div className="button-row wrap">
-            <button
-              type="button"
-              className="secondary"
-              onClick={onChangeInvoiceNumber}
-              disabled={advancedBusy}
-            >
-              Uložit číslo dokladu
-            </button>
-
-            {invoice.status !== 'draft' && invoice.status !== 'cancelled' && (
-              <button
-                type="button"
-                className="secondary"
-                onClick={onRefreshSupplierSnapshot}
-                disabled={advancedBusy || markPaidBusy}
-              >
-                Aktualizovat údaje dodavatele z nastavení
-              </button>
-            )}
-
-            {invoice.status === 'paid' && (
-              <>
-                <label>
-                  Datum uhrazení
-                  <input
-                    type="date"
-                    value={paidAtInput}
-                    onChange={(event) => setPaidAtInput(event.target.value)}
-                    disabled={advancedBusy || markPaidBusy}
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={onSubmitMarkPaid}
-                  disabled={advancedBusy || markPaidBusy}
-                >
-                  {markPaidBusy ? 'Ukládám...' : 'Uložit datum úhrady'}
-                </button>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={onMarkUnpaid}
-                  disabled={advancedBusy || markPaidBusy}
-                >
-                  Označit jako neuhrazené
-                </button>
-                <Link className="action-link secondary-link" to={advancedEditHref}>
-                  Odemknout editaci uhrazené
-                </Link>
-              </>
-            )}
-          </div>
-        </details>
-      </section>
-    </section>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNumberDialogOpen(false)} disabled={busy}>
+              Zrušit
+            </Button>
+            <Button onClick={() => void onSubmitNumber()} disabled={busy}>
+              {busy ? 'Ukládám…' : 'Uložit'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

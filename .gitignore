@@ -17,3 +17,6 @@ apps/api/node_modules
 packages/shared/node_modules
 apps/web/dist
 apps/api/dist
+
+# Playwright MCP artefakty
+.playwright-mcp/

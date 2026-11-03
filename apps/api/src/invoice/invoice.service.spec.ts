@@ -8,6 +8,7 @@ describe('InvoiceService', () => {
     },
     invoice: {
       count: jest.fn(),
+      groupBy: jest.fn().mockResolvedValue([]),
       findMany: jest.fn(),
       findFirst: jest.fn(),
       update: jest.fn(),
@@ -66,6 +67,37 @@ describe('InvoiceService', () => {
     expect(result.items[0].status).toBe('overdue');
     expect(result.items[0].description).toBe('Servisní balíček');
     expect(result.availableYears).toEqual([2026, 2025]);
+  });
+
+  it('returns status counts for the whole year independent of the status filter', async () => {
+    prisma.subject.findUnique.mockResolvedValue({ id: 'subject-1' });
+    prisma.$queryRaw.mockResolvedValue([{ year: 2026 }]);
+    prisma.invoice.groupBy.mockResolvedValue([
+      { status: 'draft', _count: { _all: 1 } },
+      { status: 'issued', _count: { _all: 5 } },
+      { status: 'paid', _count: { _all: 2 } },
+    ]);
+    // první count = po splatnosti, druhý = total v transakci
+    prisma.invoice.count.mockResolvedValueOnce(4).mockResolvedValueOnce(2);
+    prisma.invoice.findMany.mockResolvedValue([]);
+
+    const result = await service.listInvoices('user-1', {
+      status: 'paid',
+      page: 1,
+      pageSize: 10,
+      year: 2026,
+    });
+
+    expect(result.statusCounts).toEqual({
+      all: 8,
+      draft: 1,
+      unpaid: 5,
+      overdue: 4,
+      paid: 2,
+    });
+    expect(
+      prisma.invoice.groupBy.mock.calls[0][0].where.status,
+    ).toBeUndefined();
   });
 
   it('filters list by selected year', async () => {

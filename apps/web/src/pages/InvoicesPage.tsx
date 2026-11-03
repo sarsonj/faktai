@@ -1,452 +1,356 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Copy, Download, Eye, FilePlus2, MoreHorizontal, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { deleteInvoice, downloadInvoicePdf, listInvoices } from '../invoice-api';
 import { formatDateCz } from '../date-utils';
-import type { InvoiceListItem, InvoiceListResponse } from '../types';
+import { formatMoney } from '../lib/format';
+import { useConfirm } from '../components/app/confirm-context';
+import { PageHeader } from '../components/app/PageHeader';
+import { StatusBadge } from '../components/app/StatusBadge';
+import type { InvoiceListFilter, InvoiceListItem } from '../types';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-const STATUS_OPTIONS = ['all', 'paid', 'unpaid', 'overdue'] as const;
+const FILTERS: Array<{ value: InvoiceListFilter; label: string }> = [
+  { value: 'all', label: 'Všechny' },
+  { value: 'draft', label: 'Koncepty' },
+  { value: 'unpaid', label: 'Neuhrazené' },
+  { value: 'overdue', label: 'Po splatnosti' },
+  { value: 'paid', label: 'Uhrazené' },
+];
+const PAGE_SIZES = [10, 20, 50] as const;
+type PageSize = (typeof PAGE_SIZES)[number];
 
-type UiStatus = (typeof STATUS_OPTIONS)[number];
-
-const STATUS_LABELS: Record<UiStatus, string> = {
-  all: 'Všechny',
-  paid: 'Uhrazené',
-  unpaid: 'Neuhrazené',
-  overdue: 'Po splatnosti',
-};
-
-function formatMoney(value: string): string {
-  const number = Number(value);
-  return `${number.toLocaleString('cs-CZ', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })} Kč`;
-}
-
-function statusLabel(status: InvoiceListItem['status']) {
-  switch (status) {
-    case 'paid':
-      return 'Uhrazená';
-    case 'overdue':
-      return 'Po splatnosti';
-    case 'issued':
-      return 'Neuhrazená';
-    case 'draft':
-      return 'Koncept';
-    case 'cancelled':
-      return 'Storno';
-    default:
-      return status;
-  }
-}
-
-function statusClassName(status: InvoiceListItem['status']): string {
-  switch (status) {
-    case 'draft':
-      return 'status-badge status-draft';
-    case 'issued':
-      return 'status-badge status-issued';
-    case 'overdue':
-      return 'status-badge status-overdue';
-    case 'paid':
-      return 'status-badge status-paid';
-    case 'cancelled':
-      return 'status-badge status-cancelled';
-    default:
-      return 'status-badge';
-  }
-}
-
-function EditIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M4 20h4l10-10-4-4L4 16v4Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="m12.5 7.5 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function CopyIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="9" y="9" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M7 15H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function PdfIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 4v10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="m8 10 4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M5 20h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function DeleteIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M4 7h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M7 7v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V7" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M10 11v5M14 11v5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
+function canExportPdf(item: InvoiceListItem): boolean {
+  return item.status !== 'draft' && item.status !== 'cancelled';
 }
 
 export function InvoicesPage() {
+  const navigate = useNavigate();
+  const confirm = useConfirm();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentYear = new Date().getFullYear();
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<InvoiceListResponse | null>(null);
-  const [refreshToken, setRefreshToken] = useState(0);
+  const queryClient = useQueryClient();
 
-  const status = (STATUS_OPTIONS.includes(searchParams.get('status') as UiStatus)
-    ? searchParams.get('status')
-    : 'all') as UiStatus;
-  const q = '';
+  const rawStatus = searchParams.get('status');
+  const status = (FILTERS.some((f) => f.value === rawStatus) ? rawStatus : 'all') as InvoiceListFilter;
+  const q = searchParams.get('q') ?? '';
   const page = Number(searchParams.get('page') ?? '1') || 1;
-  const pageSize = (Number(searchParams.get('pageSize') ?? '10') || 10) as 10 | 20 | 50;
-  const selectedYearRaw = Number(searchParams.get('year') ?? String(currentYear));
-  const year =
-    Number.isInteger(selectedYearRaw) && selectedYearRaw >= 2000 && selectedYearRaw <= 2100
-      ? selectedYearRaw
-      : currentYear;
+  const rawPageSize = Number(searchParams.get('pageSize') ?? '10');
+  const pageSize: PageSize = (PAGE_SIZES as readonly number[]).includes(rawPageSize) ? (rawPageSize as PageSize) : 10;
+  const rawYear = Number(searchParams.get('year') ?? String(currentYear));
+  const year = Number.isInteger(rawYear) && rawYear >= 2000 && rawYear <= 2100 ? rawYear : currentYear;
 
-  useEffect(() => {
-    const run = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const payload = await listInvoices({
-          status,
-          q,
-          page,
-          pageSize,
-          year,
-        });
-        setData(payload);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Načtení faktur selhalo');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void run();
-  }, [status, page, pageSize, refreshToken, year]);
-
-  const totalPages = useMemo(() => {
-    if (!data || data.total === 0) {
-      return 1;
-    }
-    return Math.ceil(data.total / data.pageSize);
-  }, [data]);
-
-  const visibleStatusCounts = useMemo(() => {
-    const counts = {
-      draft: 0,
-      issued: 0,
-      overdue: 0,
-      paid: 0,
-      cancelled: 0,
-    };
-
-    for (const row of data?.items ?? []) {
-      counts[row.status] += 1;
-    }
-
-    return counts;
-  }, [data]);
-
-  const yearOptions = useMemo(() => {
-    const merged = new Set<number>([year, ...(data?.availableYears ?? [])]);
-    return Array.from(merged).sort((a, b) => b - a);
-  }, [data?.availableYears, year]);
+  // Vyhledávání: lokální text, do URL se propíše se zpožděním.
+  const [searchText, setSearchText] = useState(q);
 
   const setQuery = (
-    patch: Partial<{ status: UiStatus; page: number; pageSize: 10 | 20 | 50; year: number }>,
+    patch: Partial<{ status: InvoiceListFilter; page: number; pageSize: PageSize; year: number; q: string }>,
   ) => {
     const next = new URLSearchParams(searchParams);
-
-    if (patch.status !== undefined) {
-      next.set('status', patch.status);
+    if (patch.status !== undefined) next.set('status', patch.status);
+    if (patch.page !== undefined) next.set('page', String(patch.page));
+    if (patch.pageSize !== undefined) next.set('pageSize', String(patch.pageSize));
+    if (patch.year !== undefined) next.set('year', String(patch.year));
+    if (patch.q !== undefined) {
+      if (patch.q) next.set('q', patch.q);
+      else next.delete('q');
     }
-    if (patch.page !== undefined) {
-      next.set('page', String(patch.page));
-    }
-    if (patch.pageSize !== undefined) {
-      next.set('pageSize', String(patch.pageSize));
-    }
-    if (patch.year !== undefined) {
-      next.set('year', String(patch.year));
-    }
-
-    next.delete('q');
-    if (!next.get('status')) {
-      next.set('status', 'all');
-    }
-    if (!next.get('page')) {
-      next.set('page', '1');
-    }
-    if (!next.get('pageSize')) {
-      next.set('pageSize', '10');
-    }
-    if (!next.get('year')) {
-      next.set('year', String(currentYear));
-    }
-
     setSearchParams(next);
   };
 
-  const onDelete = async (invoiceId: string) => {
-    if (!window.confirm('Smazat fakturu? Tato akce je nevratná.')) {
-      return;
-    }
+  useEffect(() => {
+    const trimmed = searchText.trim();
+    if (trimmed === q) return;
+    const timer = window.setTimeout(() => {
+      const next = new URLSearchParams(searchParams);
+      if (trimmed) next.set('q', trimmed);
+      else next.delete('q');
+      next.set('page', '1');
+      setSearchParams(next, { replace: true });
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [searchText, q, searchParams, setSearchParams]);
 
+  const listQuery = useQuery({
+    queryKey: ['invoices', { status, q, page, pageSize, year }],
+    queryFn: () => listInvoices({ status, q, page, pageSize, year }),
+    placeholderData: keepPreviousData,
+  });
+  const data = listQuery.data;
+  const loading = listQuery.isFetching;
+  const error = listQuery.error instanceof Error ? listQuery.error.message : null;
+
+  const totalPages = data && data.total > 0 ? Math.ceil(data.total / data.pageSize) : 1;
+  const yearOptions = useMemo(
+    () => Array.from(new Set<number>([year, currentYear, ...(data?.availableYears ?? [])])).sort((a, b) => b - a),
+    [data?.availableYears, year, currentYear],
+  );
+
+  const listContext = searchParams.toString();
+  const withContext = (path: string) => `${path}${listContext ? `?${listContext}` : ''}`;
+
+  const onDelete = async (item: InvoiceListItem) => {
+    const ok = await confirm({
+      title: `Smazat fakturu ${item.invoiceNumber ?? ''}?`.replace(' ?', '?'),
+      description: 'Tato akce je nevratná.',
+      confirmLabel: 'Smazat',
+      destructive: true,
+    });
+    if (!ok) return;
     try {
-      await deleteInvoice(invoiceId);
-
+      await deleteInvoice(item.id);
+      toast.success('Faktura byla smazána.');
       if (data && data.items.length === 1 && page > 1) {
         setQuery({ page: page - 1 });
       } else {
-        setRefreshToken((current) => current + 1);
+        void queryClient.invalidateQueries({ queryKey: ['invoices'] });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Smazání faktury selhalo');
+      toast.error(err instanceof Error ? err.message : 'Smazání faktury selhalo');
     }
   };
 
-  const listContext = searchParams.toString();
+  const onDownload = (item: InvoiceListItem) => {
+    downloadInvoicePdf(item.id).catch((err: unknown) => {
+      toast.error(err instanceof Error ? err.message : 'Export PDF selhal');
+    });
+  };
+
+  const from = data && data.total > 0 ? (data.page - 1) * data.pageSize + 1 : 0;
+  const to = data ? Math.min(data.page * data.pageSize, data.total) : 0;
 
   return (
-    <section className="card card-wide">
-      <header className="page-head">
-        <div>
-          <p className="page-kicker">Fakturace</p>
-          <h1 className="page-title">Vydané faktury</h1>
-          <p className="page-subtitle">Přehled vystavených dokladů, jejich stavů a navazujících akcí.</p>
-        </div>
-        <div className="page-actions">
-          <Link className="action-link" to={`/invoices/new${listContext ? `?${listContext}` : ''}`}>
-            Nová faktura
-          </Link>
-        </div>
-      </header>
-      {error && <p className="error">{error}</p>}
+    <div data-ui className="flex flex-col gap-5">
+      <PageHeader
+        title="Vydané faktury"
+        description="Přehled vystavených dokladů a jejich úhrad."
+        actions={
+          <Button asChild>
+            <Link to={withContext('/invoices/new')} className="no-underline">
+              <Plus />
+              Nová faktura
+            </Link>
+          </Button>
+        }
+      />
 
-      <section className="ui-section">
-        <div className="ui-section-head">
-          <h2>Seznam dokladů</h2>
-          <div className="section-inline-fields">
-            <label className="filter-inline">
-              Stav
-              <select
-                aria-label="Stav faktur"
-                value={status}
-                onChange={(event) => setQuery({ status: event.target.value as UiStatus, page: 1 })}
-              >
-                {STATUS_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {STATUS_LABELS[option]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="filter-inline">
-              Rok
-              <select
-                aria-label="Rok faktur"
-                value={String(year)}
-                onChange={(event) => setQuery({ year: Number(event.target.value), page: 1 })}
-              >
-                {yearOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Tabs value={status} onValueChange={(value) => setQuery({ status: value as InvoiceListFilter, page: 1 })}>
+          <TabsList className="h-auto flex-wrap">
+            {FILTERS.map((filter) => (
+              <TabsTrigger key={filter.value} value={filter.value} className="gap-1.5">
+                {filter.label}
+                <span className="text-muted-foreground tabular-nums">{data?.statusCounts?.[filter.value] ?? '–'}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+        <div className="flex flex-wrap gap-2">
+          <div className="relative">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input
+              type="search"
+              aria-label="Hledat"
+              placeholder="Hledat odběratele nebo číslo…"
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              className="w-64 max-w-full bg-card pl-9"
+            />
           </div>
+          <Select value={String(year)} onValueChange={(value) => setQuery({ year: Number(value), page: 1 })}>
+            <SelectTrigger aria-label="Rok" className="w-24 bg-card">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent data-ui>
+              {yearOptions.map((option) => (
+                <SelectItem key={option} value={String(option)}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+      </div>
 
-        {loading && <p>Načítám faktury...</p>}
+      {error && <p className="m-0 text-sm text-destructive">{error}</p>}
 
-        {!loading && !error && data && (
-          <div className="invoice-stats">
-            <span className="summary-pill">Celkem: {data.total}</span>
-            <span className="summary-pill summary-pill-draft">Koncepty: {visibleStatusCounts.draft}</span>
-            <span className="summary-pill summary-pill-issued">Neuhrazené: {visibleStatusCounts.issued}</span>
-            <span className="summary-pill summary-pill-overdue">Po splatnosti: {visibleStatusCounts.overdue}</span>
-            <span className="summary-pill summary-pill-paid">Uhrazené: {visibleStatusCounts.paid}</span>
-          </div>
-        )}
-
-        {!loading && !error && data && data.items.length === 0 && (
-          <div className="empty-state">
-            <p>Pro zadaný filtr nebyly nalezeny výsledky.</p>
-            <Link to={`/invoices/new${listContext ? `?${listContext}` : ''}`}>Vystavit první fakturu</Link>
-          </div>
-        )}
-
-        {!loading && !error && data && data.items.length > 0 && (
-          <>
-            <div className="data-table-wrap">
-              <table className="invoice-table invoice-list-table">
-                <thead>
-                  <tr>
-                    <th className="col-doc">Doklad</th>
-                    <th className="col-customer">Odběratel a popis</th>
-                    <th className="col-issued">Vystaveno</th>
-                    <th className="col-due">Splatnost</th>
-                    <th className="col-total">Částka</th>
-                    <th className="col-base">Bez DPH</th>
-                    <th className="col-status">Stav</th>
-                    <th className="col-actions">Akce</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.items.map((item) => (
-                    <tr key={item.id}>
-                      <td className="cell-doc">
-                        <Link
-                          className="invoice-number-link"
-                          to={`/invoices/${item.id}${listContext ? `?${listContext}` : ''}`}
-                        >
-                          {item.invoiceNumber ?? 'Koncept'}
-                        </Link>
-                      </td>
-                      <td className="cell-customer">
-                        <div className="invoice-cell-primary" title={item.customerName}>
-                          {item.customerName}
-                        </div>
-                        <div className="invoice-cell-secondary" title={item.description || '-'}>
-                          {item.description || '-'}
-                        </div>
-                      </td>
-                      <td className="cell-issued">{formatDateCz(item.issueDate)}</td>
-                      <td className="cell-due">{formatDateCz(item.dueDate)}</td>
-                      <td className="cell-total">{formatMoney(item.totalWithVat)}</td>
-                      <td className="cell-base">{formatMoney(item.totalWithoutVat)}</td>
-                      <td className="cell-status">
-                        <div className="invoice-cell-primary">
-                          <span className={statusClassName(item.status)}>{statusLabel(item.status)}</span>
-                        </div>
-                        {item.status === 'paid' && item.paidAt && (
-                          <div className="invoice-cell-secondary invoice-status-date">
-                            {formatDateCz(item.paidAt)}
-                          </div>
-                        )}
-                      </td>
-                      <td className="cell-actions">
-                        <div className="table-actions">
-                          <Link
-                            className="icon-link"
-                            to={`/invoices/${item.id}/edit${listContext ? `?${listContext}` : ''}`}
-                            aria-label="Upravit fakturu"
-                            title="Upravit"
-                            data-tooltip="Upravit"
-                          >
-                            <EditIcon />
-                          </Link>
-                          <Link
-                            className="icon-link"
-                            to={`/invoices/${item.id}/copy${listContext ? `?${listContext}` : ''}`}
-                            aria-label="Vytvořit kopii faktury"
-                            title="Kopie"
-                            data-tooltip="Kopie"
-                          >
-                            <CopyIcon />
-                          </Link>
-                          <button
-                            onClick={() => {
-                              if (item.status === 'draft' || item.status === 'cancelled') {
-                                setError('PDF lze exportovat jen u vystavené nebo uhrazené faktury.');
-                                return;
-                              }
-                              void downloadInvoicePdf(item.id).catch((err: unknown) => {
-                                setError(err instanceof Error ? err.message : 'Export PDF selhal');
-                              });
-                            }}
-                            type="button"
-                            className={`icon-button secondary${item.status === 'draft' || item.status === 'cancelled' ? ' muted' : ''}`}
+      <div className="overflow-hidden rounded-xl border bg-card">
+        <Table className="min-w-[720px]">
+          <TableHeader>
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableHead className="pl-4">Doklad</TableHead>
+              <TableHead>Odběratel</TableHead>
+              <TableHead>Vystaveno</TableHead>
+              <TableHead>Splatnost</TableHead>
+              <TableHead className="text-right">Částka</TableHead>
+              <TableHead>Stav</TableHead>
+              <TableHead className="w-24 pr-4">
+                <span className="sr-only">Akce</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {listQuery.isPending && (
+              <TableRow>
+                <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
+                  Načítám faktury…
+                </TableCell>
+              </TableRow>
+            )}
+            {data && data.items.length === 0 && (
+              <TableRow className="hover:bg-transparent">
+                <TableCell colSpan={7} className="py-12">
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <FilePlus2 className="size-8 text-muted-foreground" aria-hidden="true" />
+                    <p className="m-0 text-muted-foreground">
+                      {q || status !== 'all' ? 'Pro zadaný filtr nebyly nalezeny žádné doklady.' : 'Zatím nemáte žádné faktury.'}
+                    </p>
+                    <Button asChild variant="outline" size="sm">
+                      <Link to={withContext('/invoices/new')} className="no-underline">
+                        Vystavit fakturu
+                      </Link>
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+            {data?.items.map((item) => (
+              <TableRow key={item.id} className={loading ? 'opacity-60' : undefined}>
+                <TableCell className="pl-4 align-top">
+                  <Link
+                    to={withContext(`/invoices/${item.id}`)}
+                    className="font-semibold text-primary tabular-nums no-underline hover:underline"
+                  >
+                    {item.invoiceNumber ?? 'Koncept'}
+                  </Link>
+                </TableCell>
+                <TableCell className="w-full max-w-0 align-top">
+                  <div className="truncate font-medium" title={item.customerName}>{item.customerName}</div>
+                  {item.description && (
+                    <div className="mt-0.5 truncate text-[13px] text-muted-foreground" title={item.description}>
+                      {item.description}
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell className="align-top text-muted-foreground">{formatDateCz(item.issueDate)}</TableCell>
+                <TableCell className="align-top text-muted-foreground">{formatDateCz(item.dueDate)}</TableCell>
+                <TableCell className="text-right align-top tabular-nums">
+                  <div className="font-semibold">{formatMoney(item.totalWithVat)}</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">bez DPH {formatMoney(item.totalWithoutVat)}</div>
+                </TableCell>
+                <TableCell className="align-top">
+                  <StatusBadge status={item.status} />
+                  {item.status === 'paid' && item.paidAt && (
+                    <div className="mt-1 text-xs text-muted-foreground">uhrazeno {formatDateCz(item.paidAt)}</div>
+                  )}
+                </TableCell>
+                <TableCell className="pr-3 text-right align-top">
+                  <div className="flex justify-end gap-0.5">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span tabIndex={canExportPdf(item) ? -1 : 0}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             aria-label="Stáhnout PDF"
-                            title="PDF"
-                            data-tooltip={
-                              item.status === 'draft' || item.status === 'cancelled'
-                                ? 'PDF jen pro vystavené/uhrazené'
-                                : 'Export PDF'
-                            }
+                            disabled={!canExportPdf(item)}
+                            onClick={() => onDownload(item)}
                           >
-                            <PdfIcon />
-                          </button>
-                          <button
-                            onClick={() => {
-                              void onDelete(item.id);
-                            }}
-                            type="button"
-                            className="icon-button danger destructive"
-                            aria-label="Smazat doklad"
-                            title="Smazat"
-                            data-tooltip="Smazat doklad"
-                          >
-                            <DeleteIcon />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                            <Download />
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent data-ui>
+                        {canExportPdf(item) ? 'Stáhnout PDF' : 'PDF jen pro vystavené faktury'}
+                      </TooltipContent>
+                    </Tooltip>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" aria-label="Další akce">
+                          <MoreHorizontal />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent data-ui align="end" className="w-48">
+                        <DropdownMenuItem onSelect={() => navigate(withContext(`/invoices/${item.id}`))}>
+                          <Eye />
+                          Otevřít
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => navigate(withContext(`/invoices/${item.id}/edit`))}>
+                          <Pencil />
+                          Upravit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => navigate(withContext(`/invoices/${item.id}/copy`))}>
+                          <Copy />
+                          Kopírovat
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem variant="destructive" onSelect={() => void onDelete(item)}>
+                          <Trash2 />
+                          Smazat
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
 
-            <div className="pagination-row">
-              <span className="pagination-meta">
-                Strana {data.page} / {totalPages} | {data.total} položek
-              </span>
-              <div className="pagination-controls">
-                <label className="pagination-size">
-                  Na stránku
-                  <select
-                    aria-label="Počet položek na stránku"
-                    value={String(pageSize)}
-                    onChange={(event) =>
-                      setQuery({ pageSize: Number(event.target.value) as 10 | 20 | 50, page: 1 })
-                    }
-                  >
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                  </select>
-                </label>
-                <div className="pagination-nav">
-                  <button
-                    className="secondary"
-                    disabled={data.page <= 1}
-                    onClick={() => setQuery({ page: data.page - 1 })}
-                    type="button"
-                  >
-                    ←
-                  </button>
-                  <button
-                    className="secondary"
-                    disabled={data.page >= totalPages}
-                    onClick={() => setQuery({ page: data.page + 1 })}
-                    type="button"
-                  >
-                    →
-                  </button>
-                </div>
-              </div>
+        {data && data.total > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm text-muted-foreground">
+            <span>
+              Zobrazeno {from}–{to} z {data.total} dokladů
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span>Na stránku</span>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(value) => setQuery({ pageSize: Number(value) as PageSize, page: 1 })}
+              >
+                <SelectTrigger aria-label="Počet položek na stránku" size="sm" className="w-18">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent data-ui>
+                  {PAGE_SIZES.map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="sm" disabled={data.page <= 1} onClick={() => setQuery({ page: data.page - 1 })}>
+                <ChevronLeft />
+                Předchozí
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={data.page >= totalPages}
+                onClick={() => setQuery({ page: data.page + 1 })}
+              >
+                Další
+                <ChevronRight />
+              </Button>
             </div>
-          </>
+          </div>
         )}
-      </section>
-    </section>
+      </div>
+    </div>
   );
 }

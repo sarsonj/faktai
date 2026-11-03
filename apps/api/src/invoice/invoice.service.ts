@@ -294,6 +294,7 @@ export class InvoiceService {
         pageSize,
         year,
         availableYears: [] as number[],
+        statusCounts: { all: 0, draft: 0, unpaid: 0, overdue: 0, paid: 0 },
       };
     }
 
@@ -301,29 +302,32 @@ export class InvoiceService {
     const yearStart = new Date(Date.UTC(year, 0, 1));
     const yearEnd = new Date(Date.UTC(year + 1, 0, 1));
 
-    const where: Prisma.InvoiceWhereInput = {
+    // Rok + hledání, bez filtru stavu – základ pro počty v záložkách.
+    const baseWhere: Prisma.InvoiceWhereInput = {
       subjectId: subject.id,
       issueDate: {
         gte: yearStart,
         lt: yearEnd,
       },
     };
+    if (q) {
+      baseWhere.OR = [
+        { invoiceNumber: { contains: q, mode: 'insensitive' } },
+        { customerName: { contains: q, mode: 'insensitive' } },
+        { note: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+    const where: Prisma.InvoiceWhereInput = { ...baseWhere };
 
-    if (status === 'paid') {
+    if (status === 'draft') {
+      where.status = 'draft';
+    } else if (status === 'paid') {
       where.status = 'paid';
     } else if (status === 'unpaid') {
       where.status = 'issued';
     } else if (status === 'overdue') {
       where.status = 'issued';
       where.dueDate = { lt: today };
-    }
-
-    if (q) {
-      where.OR = [
-        { invoiceNumber: { contains: q, mode: 'insensitive' } },
-        { customerName: { contains: q, mode: 'insensitive' } },
-        { note: { contains: q, mode: 'insensitive' } },
-      ];
     }
 
     const availableYearsRaw = await this.prisma.$queryRaw<
@@ -337,6 +341,27 @@ export class InvoiceService {
     const availableYears = availableYearsRaw
       .map((row) => Number(row.year))
       .filter((candidate) => Number.isInteger(candidate));
+
+    const [grouped, overdueCount] = await Promise.all([
+      this.prisma.invoice.groupBy({
+        by: ['status'],
+        where: baseWhere,
+        _count: { _all: true },
+      }),
+      this.prisma.invoice.count({
+        where: { ...baseWhere, status: 'issued', dueDate: { lt: today } },
+      }),
+    ]);
+    const countOf = (value: string) =>
+      grouped.find((row) => row.status === value)?._count._all ?? 0;
+    const statusCounts = {
+      all: grouped.reduce((sum, row) => sum + row._count._all, 0),
+      draft: countOf('draft'),
+      // „Neuhrazené“ = vystavené včetně těch po splatnosti (stejně jako filtr).
+      unpaid: countOf('issued'),
+      overdue: overdueCount,
+      paid: countOf('paid'),
+    };
 
     const [total, rows] = await this.prisma.$transaction([
       this.prisma.invoice.count({ where }),
@@ -362,6 +387,7 @@ export class InvoiceService {
       pageSize,
       year,
       availableYears,
+      statusCounts,
     };
   }
 

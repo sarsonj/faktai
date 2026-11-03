@@ -9,7 +9,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { buttonVariants } from '@/components/ui/button';
 import { ConfirmContext, type ConfirmOptions } from './confirm-context';
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
@@ -40,10 +39,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => close(false)}>{options?.cancelLabel ?? 'Zrušit'}</AlertDialogCancel>
-            <AlertDialogAction
-              className={options?.destructive ? buttonVariants({ variant: 'destructive' }) : undefined}
-              onClick={() => close(true)}
-            >
+            <AlertDialogAction variant={options?.destructive ? 'destructive' : 'default'} onClick={() => close(true)}>
               {options?.confirmLabel ?? 'Potvrdit'}
             </AlertDialogAction>
           </AlertDialogFooter>

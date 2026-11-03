@@ -1,8 +1,8 @@
 import { API_BASE_URL, ApiError, apiRequest } from './lib-api';
-import type { InvoiceDetail, InvoiceListResponse, InvoiceUpsertInput } from './types';
+import type { InvoiceDetail, InvoiceListFilter, InvoiceListResponse, InvoiceUpsertInput } from './types';
 
 export type ListInvoicesQuery = {
-  status: 'all' | 'paid' | 'unpaid' | 'overdue';
+  status: InvoiceListFilter;
   q: string;
   page: number;
   pageSize: 10 | 20 | 50;

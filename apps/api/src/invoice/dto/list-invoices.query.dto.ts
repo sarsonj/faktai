@@ -3,10 +3,10 @@ import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class ListInvoicesQueryDto {
   @IsOptional()
-  @IsIn(['all', 'paid', 'unpaid', 'overdue'], {
+  @IsIn(['all', 'draft', 'paid', 'unpaid', 'overdue'], {
     message: 'Filtr stavu má neplatnou hodnotu.',
   })
-  status?: 'all' | 'paid' | 'unpaid' | 'overdue';
+  status?: 'all' | 'draft' | 'paid' | 'unpaid' | 'overdue';
 
   @IsOptional()
   @IsString({ message: 'Vyhledávací dotaz musí být text.' })
