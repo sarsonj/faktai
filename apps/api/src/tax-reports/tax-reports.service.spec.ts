@@ -38,7 +38,10 @@ describe('TaxReportsService', () => {
   });
 
   it('rejects preview for non-vat payer subject', async () => {
-    prisma.subject.findUnique.mockResolvedValue({ id: 'subject-1', isVatPayer: false });
+    prisma.subject.findUnique.mockResolvedValue({
+      id: 'subject-1',
+      isVatPayer: false,
+    });
 
     await expect(
       service.preview('user-1', {
@@ -212,7 +215,9 @@ describe('TaxReportsService', () => {
     expect(result.xml).toContain('<DPHKH1');
     expect(result.xml).toContain('<VetaA4');
     expect(result.xml).toContain('<VetaC');
-    expect(result.xml.indexOf('<VetaA4')).toBeLessThan(result.xml.indexOf('<VetaC'));
+    expect(result.xml.indexOf('<VetaA4')).toBeLessThan(
+      result.xml.indexOf('<VetaC'),
+    );
     expect(result.xml).toContain('c_pracufo="2705"');
     expect(result.xml).toContain('c_ufo="458"');
     expect(result.fileName).toContain('77052030_DPHKH_20254Q.xml');
@@ -257,7 +262,9 @@ describe('TaxReportsService', () => {
         year: 2025,
         value: 4,
       }),
-    ).rejects.toThrow('Subjekt nemá vyplněnou místní příslušnost finančního úřadu.');
+    ).rejects.toThrow(
+      'Subjekt nemá vyplněnou místní příslušnost finančního úřadu.',
+    );
   });
 
   it('rejects export when parent tax office cannot be resolved', async () => {

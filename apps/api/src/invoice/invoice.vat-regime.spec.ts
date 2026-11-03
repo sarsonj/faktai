@@ -4,8 +4,20 @@ import { InvoiceService } from './invoice.service';
 describe('InvoiceService – VAT regimes', () => {
   const service = new InvoiceService({} as any) as any;
   const items = [
-    { description: 'A', quantity: '2', unit: 'ks', unitPrice: '100', vatRate: 21 },
-    { description: 'B', quantity: '1', unit: 'ks', unitPrice: '50', vatRate: 12 },
+    {
+      description: 'A',
+      quantity: '2',
+      unit: 'ks',
+      unitPrice: '100',
+      vatRate: 21,
+    },
+    {
+      description: 'B',
+      quantity: '1',
+      unit: 'ks',
+      unitPrice: '50',
+      vatRate: 12,
+    },
   ];
 
   it('charges VAT for a VAT payer with domestic standard regime', () => {
@@ -29,7 +41,9 @@ describe('InvoiceService – VAT regimes', () => {
       classification,
     });
     expect(result.totalVat).toBe('0.00');
-    expect(result.items.map((item: { vatRate: number }) => item.vatRate)).toEqual([0, 0]);
+    expect(
+      result.items.map((item: { vatRate: number }) => item.vatRate),
+    ).toEqual([0, 0]);
   });
 
   it('never charges VAT for a non-payer', () => {
@@ -57,7 +71,10 @@ describe('InvoiceService – VAT regimes', () => {
 
   it('rejects VAT on a non-payer invoice, but does not require classification', () => {
     expect(() =>
-      service.validateReadyToIssue(issuable({ taxClassification: null }), nonPayer),
+      service.validateReadyToIssue(
+        issuable({ taxClassification: null }),
+        nonPayer,
+      ),
     ).toThrow(BadRequestException);
     expect(() =>
       service.validateReadyToIssue(
@@ -68,16 +85,26 @@ describe('InvoiceService – VAT regimes', () => {
   });
 
   it('requires Czech DIČ and subject code for reverse charge', () => {
-    const base = { taxClassification: 'domestic_reverse_charge', items: [{ vatRate: 0 }] };
+    const base = {
+      taxClassification: 'domestic_reverse_charge',
+      items: [{ vatRate: 0 }],
+    };
     expect(() =>
-      service.validateReadyToIssue(issuable({ ...base, reverseChargeCode: '4' }), payer),
+      service.validateReadyToIssue(
+        issuable({ ...base, reverseChargeCode: '4' }),
+        payer,
+      ),
     ).not.toThrow();
     expect(() => service.validateReadyToIssue(issuable(base), payer)).toThrow(
       'kód předmětu plnění',
     );
     expect(() =>
       service.validateReadyToIssue(
-        issuable({ ...base, reverseChargeCode: '4', customerDic: 'SK2020123456' }),
+        issuable({
+          ...base,
+          reverseChargeCode: '4',
+          customerDic: 'SK2020123456',
+        }),
         payer,
       ),
     ).toThrow('české DIČ');
@@ -85,7 +112,10 @@ describe('InvoiceService – VAT regimes', () => {
 
   it('rejects 0 % items in domestic standard regime', () => {
     expect(() =>
-      service.validateReadyToIssue(issuable({ items: [{ vatRate: 0 }] }), payer),
+      service.validateReadyToIssue(
+        issuable({ items: [{ vatRate: 0 }] }),
+        payer,
+      ),
     ).toThrow('21 % nebo 12 %');
   });
 

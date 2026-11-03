@@ -29,20 +29,21 @@ describe('RegistryService', () => {
   it('normalizes ICO and maps ARES response', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
-      json: async () => ({
-        ico: '27074358',
-        obchodniJmeno: 'Asseco Central Europe, a.s.',
-        dic: 'CZ27074358',
-        sidlo: {
-          kodStatu: 'CZ',
-          nazevObce: 'Praha',
-          nazevUlice: 'Budějovická',
-          cisloDomovni: 778,
-          cisloOrientacni: 3,
-          cisloOrientacniPismeno: 'a',
-          psc: 14000,
-        },
-      }),
+      json: () =>
+        Promise.resolve({
+          ico: '27074358',
+          obchodniJmeno: 'Asseco Central Europe, a.s.',
+          dic: 'CZ27074358',
+          sidlo: {
+            kodStatu: 'CZ',
+            nazevObce: 'Praha',
+            nazevUlice: 'Budějovická',
+            cisloDomovni: 778,
+            cisloOrientacni: 3,
+            cisloOrientacniPismeno: 'a',
+            psc: 14000,
+          },
+        }),
     });
 
     const result = await service.findCompanyByIco('2707 4358');
@@ -62,19 +63,20 @@ describe('RegistryService', () => {
   it('maps address records from nominatim', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
-      json: async () => [
-        {
-          place_id: 1,
-          display_name: 'Budějovická 778/3a, Praha, Česko',
-          address: {
-            road: 'Budějovická',
-            house_number: '778/3a',
-            city: 'Praha',
-            postcode: '140 00',
-            country_code: 'cz',
+      json: () =>
+        Promise.resolve([
+          {
+            place_id: 1,
+            display_name: 'Budějovická 778/3a, Praha, Česko',
+            address: {
+              road: 'Budějovická',
+              house_number: '778/3a',
+              city: 'Praha',
+              postcode: '140 00',
+              country_code: 'cz',
+            },
           },
-        },
-      ],
+        ]),
     });
 
     const result = await service.searchAddresses('Budějovická 778');

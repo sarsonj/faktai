@@ -2,7 +2,7 @@ import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class ChangeInvoiceNumberDto {
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim() : value,
   )
   @IsString({ message: 'Číslo faktury musí být text.' })

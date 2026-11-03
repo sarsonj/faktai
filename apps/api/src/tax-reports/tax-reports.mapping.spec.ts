@@ -93,11 +93,19 @@ describe('TaxReportsService – mapping to FU rows', () => {
       ]),
       invoice('eu_service', [{ rate: 0, base: '2000.00', vat: '0.00' }]),
       invoice('eu_goods', [{ rate: 0, base: '3000.00', vat: '0.00' }]),
-      invoice('export_third_country', [{ rate: 0, base: '4000.00', vat: '0.00' }]),
-      invoice('domestic_reverse_charge', [{ rate: 0, base: '5000.00', vat: '0.00' }], {
-        reverseChargeCode: '4',
-      }),
-      invoice('exempt_without_credit', [{ rate: 0, base: '600.00', vat: '0.00' }]),
+      invoice('export_third_country', [
+        { rate: 0, base: '4000.00', vat: '0.00' },
+      ]),
+      invoice(
+        'domestic_reverse_charge',
+        [{ rate: 0, base: '5000.00', vat: '0.00' }],
+        {
+          reverseChargeCode: '4',
+        },
+      ),
+      invoice('exempt_without_credit', [
+        { rate: 0, base: '600.00', vat: '0.00' },
+      ]),
     ]);
 
     const { xml } = await service.export('user-1', request('vat_return'));
@@ -152,23 +160,36 @@ describe('TaxReportsService – mapping to FU rows', () => {
         { rate: 12, base: '1000.00', vat: '120.00' },
       ]),
       // A.5 – plátce, do 10 000 Kč
-      invoice('domestic_standard', [{ rate: 21, base: '1000.00', vat: '210.00' }]),
+      invoice('domestic_standard', [
+        { rate: 21, base: '1000.00', vat: '210.00' },
+      ]),
       // A.5 – odběratel bez DIČ, i nad 10 000 Kč
-      invoice('domestic_standard', [{ rate: 21, base: '50000.00', vat: '10500.00' }], {
-        customerDic: null,
-        customerIco: '12345678',
-      }),
+      invoice(
+        'domestic_standard',
+        [{ rate: 21, base: '50000.00', vat: '10500.00' }],
+        {
+          customerDic: null,
+          customerIco: '12345678',
+        },
+      ),
       // A.1 – režim přenesení
-      invoice('domestic_reverse_charge', [{ rate: 0, base: '8000.00', vat: '0.00' }], {
-        reverseChargeCode: '4',
-      }),
+      invoice(
+        'domestic_reverse_charge',
+        [{ rate: 0, base: '8000.00', vat: '0.00' }],
+        {
+          reverseChargeCode: '4',
+        },
+      ),
       // EU – v KH se neuvádí
       invoice('eu_service', [{ rate: 0, base: '7000.00', vat: '0.00' }], {
         customerDic: 'DE123456789',
       }),
     ]);
 
-    const { xml } = await service.export('user-1', request('control_statement'));
+    const { xml } = await service.export(
+      'user-1',
+      request('control_statement'),
+    );
     const kh = parser.parse(xml).Pisemnost.DPHKH1;
 
     expect(kh.VetaA1).toHaveLength(1);
@@ -213,14 +234,16 @@ describe('TaxReportsService – mapping to FU rows', () => {
     prisma.invoice.findMany.mockResolvedValue([
       invoice('domestic_standard', [{ rate: 0, base: '100.00', vat: '0.00' }]),
     ]);
-    await expect(service.export('user-1', request('vat_return'))).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      service.export('user-1', request('vat_return')),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('rejects reverse charge invoice without subject code in KH', async () => {
     prisma.invoice.findMany.mockResolvedValue([
-      invoice('domestic_reverse_charge', [{ rate: 0, base: '100.00', vat: '0.00' }]),
+      invoice('domestic_reverse_charge', [
+        { rate: 0, base: '100.00', vat: '0.00' },
+      ]),
     ]);
     await expect(
       service.export('user-1', request('control_statement')),
@@ -229,7 +252,9 @@ describe('TaxReportsService – mapping to FU rows', () => {
 
   it('ignores invoices issued while supplier was not a VAT payer', async () => {
     prisma.invoice.findMany.mockResolvedValue([
-      invoice('domestic_standard', [{ rate: 21, base: '1000.00', vat: '210.00' }]),
+      invoice('domestic_standard', [
+        { rate: 21, base: '1000.00', vat: '210.00' },
+      ]),
       invoice('domestic_standard', [{ rate: 0, base: '999.00', vat: '0.00' }], {
         supplierSnapshot: { isVatPayer: false },
       }),

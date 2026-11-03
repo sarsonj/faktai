@@ -15,7 +15,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { SessionAuthGuard } from './session-auth.guard';
+import { SessionAuthGuard, getSessionToken } from './session-auth.guard';
 import type { RequestWithUser } from './session-auth.guard';
 
 @Controller('auth')
@@ -81,7 +81,7 @@ export class AuthController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const token = request.cookies?.tf_session;
+    const token = getSessionToken(request);
     if (token) {
       await this.authService.revokeCurrentSession(token);
     }
@@ -112,7 +112,8 @@ export class AuthController {
   @Get('me')
   @UseGuards(SessionAuthGuard)
   async me(@Req() request: RequestWithUser) {
-    const token = request.cookies?.tf_session;
+    // SessionAuthGuard zaručuje přítomnost tokenu.
+    const token = getSessionToken(request) ?? '';
     return this.authService.getMeFromSession(token);
   }
 }

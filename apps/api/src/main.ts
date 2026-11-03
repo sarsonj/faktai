@@ -1,5 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
@@ -8,9 +9,12 @@ import { createValidationException } from './common/validation';
 import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  if (process.env.TRUST_PROXY === '1' || process.env.NODE_ENV === 'production') {
-    app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  if (
+    process.env.TRUST_PROXY === '1' ||
+    process.env.NODE_ENV === 'production'
+  ) {
+    app.set('trust proxy', 1);
   }
   app.use(helmet());
   app.use(cookieParser());
@@ -32,7 +36,7 @@ async function bootstrap() {
 
   const port = Number(process.env.API_PORT ?? 4000);
   const prismaService = app.get(PrismaService);
-  await prismaService.enableShutdownHooks(app);
+  prismaService.enableShutdownHooks(app);
   await app.listen(port);
 }
-bootstrap();
+void bootstrap();

@@ -35,7 +35,7 @@ export class InvoiceItemDto {
   })
   unitPrice!: string;
 
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }: { value: unknown }) => Number(value))
   @IsIn([0, 12, 21], { message: 'Sazba DPH musí být 0, 12 nebo 21.' })
   vatRate!: number;
 }

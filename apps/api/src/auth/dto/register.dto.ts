@@ -2,7 +2,9 @@ import { Transform } from 'class-transformer';
 import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class RegisterDto {
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsEmail({}, { message: 'E-mail musí být ve správném formátu.' })
   email!: string;
 

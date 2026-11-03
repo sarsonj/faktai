@@ -48,7 +48,10 @@ export class InvoiceController {
     @Req() request: RequestWithUser,
     @Body() dto: ReserveInvoiceNumberDto,
   ) {
-    return this.invoiceService.reserveInvoiceNumber(request.user!.id, dto.issueDate);
+    return this.invoiceService.reserveInvoiceNumber(
+      request.user!.id,
+      dto.issueDate,
+    );
   }
 
   @Post(':id/copy')
@@ -121,7 +124,7 @@ export class InvoiceController {
     response.setHeader('Content-Type', 'application/pdf');
     response.setHeader(
       'Content-Disposition',
-      `attachment; filename=\"${pdf.fileName}\"`,
+      `attachment; filename="${pdf.fileName}"`,
     );
     response.send(pdf.content);
   }

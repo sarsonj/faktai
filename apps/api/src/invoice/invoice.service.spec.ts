@@ -127,7 +127,8 @@ describe('InvoiceService', () => {
         }),
       }),
     );
-    const paidAtDate = prisma.invoice.update.mock.calls[0][0].data.paidAt as Date;
+    const paidAtDate = prisma.invoice.update.mock.calls[0][0].data
+      .paidAt as Date;
     expect(paidAtDate.toISOString().startsWith('2026-02-10')).toBe(true);
     detailSpy.mockRestore();
   });
@@ -175,7 +176,8 @@ describe('InvoiceService', () => {
         }),
       }),
     );
-    const paidAtDate = prisma.invoice.update.mock.calls[0][0].data.paidAt as Date;
+    const paidAtDate = prisma.invoice.update.mock.calls[0][0].data
+      .paidAt as Date;
     expect(paidAtDate.toISOString().startsWith('2026-02-12')).toBe(true);
     detailSpy.mockRestore();
   });

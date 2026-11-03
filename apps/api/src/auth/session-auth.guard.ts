@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
 
@@ -9,13 +14,21 @@ export type RequestWithUser = Request & {
   };
 };
 
+export const SESSION_COOKIE_NAME = 'tf_session';
+
+export function getSessionToken(request: Request): string | undefined {
+  const cookies = request.cookies as Record<string, unknown> | undefined;
+  const token = cookies?.[SESSION_COOKIE_NAME];
+  return typeof token === 'string' && token.length > 0 ? token : undefined;
+}
+
 @Injectable()
 export class SessionAuthGuard implements CanActivate {
   constructor(private readonly authService: AuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<RequestWithUser>();
-    const token = request.cookies?.tf_session;
+    const token = getSessionToken(request);
 
     if (!token) {
       throw new UnauthorizedException('Not authenticated');

@@ -11,7 +11,10 @@ export class TaxReportsController {
   constructor(private readonly taxReportsService: TaxReportsService) {}
 
   @Post('preview')
-  async preview(@Req() request: RequestWithUser, @Body() dto: TaxReportRequestDto) {
+  async preview(
+    @Req() request: RequestWithUser,
+    @Body() dto: TaxReportRequestDto,
+  ) {
     return this.taxReportsService.preview(request.user!.id, dto);
   }
 
@@ -23,7 +26,10 @@ export class TaxReportsController {
   ) {
     const result = await this.taxReportsService.export(request.user!.id, dto);
     response.setHeader('Content-Type', 'application/xml; charset=utf-8');
-    response.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
+    response.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${result.fileName}"`,
+    );
     response.send(result.xml);
   }
 }

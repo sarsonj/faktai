@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/auth-context';
 import { APP_SHORT_NAME } from '../brand';
 import { OnboardingSubjectWizard } from '../components/OnboardingSubjectWizard';
 import { SiteHeader } from '../components/SiteHeader';

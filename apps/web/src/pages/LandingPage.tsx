@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/auth-context';
 import { APP_NAME } from '../brand';
 import { SiteHeader } from '../components/SiteHeader';
 import { LANDING_HIGHLIGHTS } from '../landing-copy';

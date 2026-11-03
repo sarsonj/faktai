@@ -1,7 +1,11 @@
 import { Prisma } from '@prisma/client';
 import { InvoiceService } from './invoice.service';
 
-function buildInvoice(itemCount: number, overrides: Record<string, unknown> = {}, isVatPayer = true) {
+function buildInvoice(
+  itemCount: number,
+  overrides: Record<string, unknown> = {},
+  isVatPayer = true,
+) {
   const items = Array.from({ length: itemCount }, (_, index) => ({
     id: `item-${index + 1}`,
     invoiceId: 'inv-1',
@@ -76,7 +80,9 @@ describe('InvoiceService PDF export', () => {
     const invoice = buildInvoice(itemCount, overrides, isVatPayer);
     const tx = {
       invoice: {
-        findUnique: jest.fn().mockResolvedValue({ pdfVersion: 0, pdfPayloadHash: null }),
+        findUnique: jest
+          .fn()
+          .mockResolvedValue({ pdfVersion: 0, pdfPayloadHash: null }),
         update: jest.fn(),
       },
       pdfExportMetadata: { create: jest.fn() },
@@ -84,7 +90,9 @@ describe('InvoiceService PDF export', () => {
     const prisma = {
       subject: { findUnique: jest.fn().mockResolvedValue(invoice.subject) },
       invoice: { findFirst: jest.fn().mockResolvedValue(invoice) },
-      $transaction: jest.fn(async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx)),
+      $transaction: jest.fn(
+        async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx),
+      ),
     } as any;
     const service = new InvoiceService(prisma);
     const result = await service.exportInvoicePdf('user-1', 'inv-1');

@@ -9,13 +9,13 @@ export class TaxReportRequestDto {
   @IsEnum(TaxPeriodType)
   periodType!: TaxPeriodType;
 
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }: { value: unknown }) => Number(value))
   @IsInt()
   @Min(2000)
   @Max(2100)
   year!: number;
 
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }: { value: unknown }) => Number(value))
   @IsInt()
   @Min(1)
   @Max(12)

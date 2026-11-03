@@ -13,6 +13,9 @@ jobs:
         with:
           node-version: 20
       - run: corepack enable
-      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm install --frozen-lockfile
+      # build zahrnuje `prisma generate`, které potřebuje typecheck i lint API
       - run: pnpm build
+      - run: pnpm typecheck
+      - run: pnpm lint
       - run: pnpm test

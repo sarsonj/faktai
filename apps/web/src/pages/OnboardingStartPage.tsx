@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { APP_SHORT_NAME } from '../brand';
-import { useAuth } from '../auth/AuthContext';
+import { useAuth } from '../auth/auth-context';
 import { SiteHeader } from '../components/SiteHeader';
 
 export function OnboardingStartPage() {

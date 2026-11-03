@@ -73,7 +73,11 @@ describe('AuthService', () => {
     prisma.user.findUnique.mockResolvedValue(null);
 
     await expect(
-      service.login({ email: 'none@example.com', password: 'Password!123' }, 'ua', 'ip'),
+      service.login(
+        { email: 'none@example.com', password: 'Password!123' },
+        'ua',
+        'ip',
+      ),
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 

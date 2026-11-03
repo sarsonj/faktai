@@ -33,7 +33,10 @@ export function effectiveVatRate(
  * Kódy předmětu plnění pro kontrolní hlášení (oddíl A.1, atribut `kod_pred_pl`).
  * Výběr nejčastějších kódů z číselníku Finanční správy „Kód předmětu plnění“.
  */
-export const REVERSE_CHARGE_CODES: ReadonlyArray<{ code: string; label: string }> = [
+export const REVERSE_CHARGE_CODES: ReadonlyArray<{
+  code: string;
+  label: string;
+}> = [
   { code: '4', label: 'Stavební a montážní práce (§ 92e)' },
   { code: '5', label: 'Zboží uvedené v příloze č. 5 – odpad, šrot (§ 92c)' },
   { code: '1', label: 'Zlato (§ 92b)' },
@@ -43,7 +46,10 @@ export const REVERSE_CHARGE_CODES: ReadonlyArray<{ code: string; label: string }
   { code: '11', label: 'Kovy (příloha č. 6)' },
   { code: '12', label: 'Mobilní telefony (příloha č. 6)' },
   { code: '13', label: 'Integrované obvody (příloha č. 6)' },
-  { code: '14', label: 'Přenosná zařízení pro automatizované zpracování dat (příloha č. 6)' },
+  {
+    code: '14',
+    label: 'Přenosná zařízení pro automatizované zpracování dat (příloha č. 6)',
+  },
   { code: '15', label: 'Videoherní konzole (příloha č. 6)' },
 ];
 
@@ -52,7 +58,9 @@ export const REVERSE_CHARGE_CODE_VALUES = REVERSE_CHARGE_CODES.map(
 );
 
 /** Povinný text na dokladu podle § 29 ZDPH pro režimy bez DPH. */
-export const VAT_REGIME_INVOICE_NOTES: Partial<Record<TaxClassification, string>> = {
+export const VAT_REGIME_INVOICE_NOTES: Partial<
+  Record<TaxClassification, string>
+> = {
   domestic_reverse_charge:
     'Daň odvede zákazník – režim přenesení daňové povinnosti podle § 92a zákona o DPH.',
   eu_service:

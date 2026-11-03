@@ -15,7 +15,9 @@ type TaxOfficeRawRow = TaxOfficeCodebookItem & {
 
 type ParsedCodebook = {
   Ciselnik?: {
-    Veta?: Array<Record<string, unknown>> | Record<string, unknown>;
+    Veta?:
+      | Array<Record<string, string | number | undefined>>
+      | Record<string, string | number | undefined>;
   };
 };
 
@@ -100,9 +102,13 @@ export class TaxOfficesService {
       }
     }
 
-    const values = [...uniqueByPracufo.values()].map(({ endedAt: _endedAt, ...item }) => item).sort((a, b) =>
-      a.name.localeCompare(b.name, 'cs'),
-    );
+    const values = [...uniqueByPracufo.values()]
+      .map((item) => ({
+        pracufo: item.pracufo,
+        ufo: item.ufo,
+        name: item.name,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'cs'));
 
     if (values.length === 0) {
       throw new InternalServerErrorException(
@@ -119,9 +125,7 @@ export class TaxOfficesService {
   }
 
   findByPracufo(pracufo: string): TaxOfficeCodebookItem | null {
-    return (
-      this.loadCodebook().find((item) => item.pracufo === pracufo) ?? null
-    );
+    return this.loadCodebook().find((item) => item.pracufo === pracufo) ?? null;
   }
 
   resolveParentUfoByPracufo(pracufo: string): string | null {

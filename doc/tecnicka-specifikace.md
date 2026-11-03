@@ -40,6 +40,12 @@
   - render PDF do PNG pro vizuální porovnání s referenčním vzorem,
   - extrakci textu pro ověření, že se diakritika nedegraduje už při exportu.
 
+### 1.4 Kvalita kódu a CI
+- CI (`.github/workflows/ci.yml`): `pnpm install --frozen-lockfile` → `pnpm build` (vč. `prisma generate`) → `pnpm typecheck` → `pnpm lint` → `pnpm test`.
+- `pnpm lint` pouze kontroluje (bez `--fix`); opravy přes `pnpm --filter @tappyfaktur/api lint:fix`.
+- API: ESLint `recommendedTypeChecked` + Prettier; v testech (`*.spec.ts`, `test/**`) jsou vypnutá pravidla `no-unsafe-*` kvůli mockům.
+- Web: ESLint s `react-hooks` a `react-refresh` (komponentové soubory exportují jen komponenty – např. hook `useAuth` je v `auth/auth-context.ts`).
+
 ## 2. Architektura systému
 
 ### 2.1 Logická architektura

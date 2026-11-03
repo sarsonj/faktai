@@ -200,9 +200,7 @@ export class SubjectService {
             ? null
             : undefined,
         taxOfficePracufo:
-          dto.isVatPayer === false
-            ? null
-            : (dto.taxOfficePracufo ?? undefined),
+          dto.isVatPayer === false ? null : (dto.taxOfficePracufo ?? undefined),
         contactPhone:
           dto.contactPhone !== undefined
             ? this.normalizeOptionalText(dto.contactPhone)

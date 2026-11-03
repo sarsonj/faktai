@@ -6,7 +6,10 @@ import type { NextFunction, Request, Response } from 'express';
 export class RequestContextMiddleware implements NestMiddleware {
   use(request: Request, response: Response, next: NextFunction): void {
     const existingRequestId = request.header('x-request-id');
-    const requestId = existingRequestId && existingRequestId.length > 0 ? existingRequestId : randomUUID();
+    const requestId =
+      existingRequestId && existingRequestId.length > 0
+        ? existingRequestId
+        : randomUUID();
 
     response.setHeader('x-request-id', requestId);
 

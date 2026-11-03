@@ -17,7 +17,7 @@ import {
 import { InvoiceItemDto } from './invoice-item.dto';
 
 export class UpsertInvoiceDto {
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim() : value,
   )
   @IsOptional()
@@ -25,7 +25,7 @@ export class UpsertInvoiceDto {
   @MinLength(1, { message: 'Číslo faktury nesmí být prázdné.' })
   invoiceNumber?: string;
 
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.replace(/\s+/g, '') : value,
   )
   @IsOptional()
@@ -58,7 +58,7 @@ export class UpsertInvoiceDto {
   @IsEnum(TaxClassification, { message: 'Daňová klasifikace není platná.' })
   taxClassification?: TaxClassification;
 
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' && value.trim() === '' ? undefined : value,
   )
   @IsOptional()
@@ -67,13 +67,15 @@ export class UpsertInvoiceDto {
   })
   reverseChargeCode?: string;
 
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString({ message: 'Název odběratele musí být text.' })
   @MinLength(1, { message: 'Název odběratele je povinný.' })
   @MaxLength(150, { message: 'Název odběratele může mít maximálně 150 znaků.' })
   customerName!: string;
 
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.replace(/\s+/g, '') : value,
   )
   @IsOptional()
@@ -83,32 +85,38 @@ export class UpsertInvoiceDto {
   })
   customerIco?: string;
 
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsOptional()
   @IsString({ message: 'DIČ odběratele musí být text.' })
   @MaxLength(20, { message: 'DIČ odběratele může mít maximálně 20 znaků.' })
   customerDic?: string;
 
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString({ message: 'Ulice odběratele musí být text.' })
   @MinLength(1, { message: 'Ulice odběratele je povinná.' })
   @MaxLength(150, { message: 'Ulice odběratele může mít maximálně 150 znaků.' })
   customerStreet!: string;
 
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString({ message: 'Město odběratele musí být text.' })
   @MinLength(1, { message: 'Město odběratele je povinné.' })
   @MaxLength(100, { message: 'Město odběratele může mít maximálně 100 znaků.' })
   customerCity!: string;
 
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.replace(/\s+/g, '') : value,
   )
   @IsString({ message: 'PSČ odběratele musí být text.' })
   @Matches(/^\d{3}\d{2}$/, { message: 'PSČ odběratele musí mít formát 12345.' })
   customerPostalCode!: string;
 
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.replace(/\s+/g, '').toUpperCase() : value,
   )
   @IsString({ message: 'Kód země odběratele musí být text.' })
@@ -117,7 +125,9 @@ export class UpsertInvoiceDto {
   })
   customerCountryCode!: string;
 
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsOptional()
   @IsString({ message: 'Poznámka musí být text.' })
   @MaxLength(2000, { message: 'Poznámka může mít maximálně 2000 znaků.' })

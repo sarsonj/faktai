@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import type { RequestWithUser } from '../auth/session-auth.guard';
 import { CreateSubjectDto } from './dto/create-subject.dto';
@@ -11,7 +19,7 @@ export class SubjectController {
   constructor(private readonly subjectService: SubjectService) {}
 
   @Get('tax-offices')
-  async listTaxOffices() {
+  listTaxOffices() {
     return this.subjectService.listTaxOffices();
   }
 
@@ -21,12 +29,18 @@ export class SubjectController {
   }
 
   @Post()
-  async createSubject(@Req() request: RequestWithUser, @Body() dto: CreateSubjectDto) {
+  async createSubject(
+    @Req() request: RequestWithUser,
+    @Body() dto: CreateSubjectDto,
+  ) {
     return this.subjectService.createSubject(request.user!.id, dto);
   }
 
   @Patch()
-  async updateSubject(@Req() request: RequestWithUser, @Body() dto: UpdateSubjectDto) {
+  async updateSubject(
+    @Req() request: RequestWithUser,
+    @Body() dto: UpdateSubjectDto,
+  ) {
     return this.subjectService.updateSubject(request.user!.id, dto);
   }
 }

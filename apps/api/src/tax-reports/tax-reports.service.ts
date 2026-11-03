@@ -6,12 +6,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  Prisma,
-  Subject,
-  TaxPeriodType,
-  TaxReportType,
-} from '@prisma/client';
+import { Prisma, Subject, TaxPeriodType, TaxReportType } from '@prisma/client';
 import Decimal from 'decimal.js';
 import { createHash } from 'node:crypto';
 import { XMLBuilder, XMLValidator } from 'fast-xml-parser';
@@ -77,11 +72,15 @@ export class TaxReportsService {
 
   private normalizePeriod(dto: TaxReportRequestDto): TaxReportRequestDto {
     if (dto.periodType === 'month' && (dto.value < 1 || dto.value > 12)) {
-      throw new BadRequestException('Pro měsíční období musí být hodnota 1-12.');
+      throw new BadRequestException(
+        'Pro měsíční období musí být hodnota 1-12.',
+      );
     }
 
     if (dto.periodType === 'quarter' && (dto.value < 1 || dto.value > 4)) {
-      throw new BadRequestException('Pro čtvrtletní období musí být hodnota 1-4.');
+      throw new BadRequestException(
+        'Pro čtvrtletní období musí být hodnota 1-4.',
+      );
     }
 
     return dto;
@@ -89,7 +88,9 @@ export class TaxReportsService {
 
   private ensureSupportedReportType(reportType: TaxReportType): void {
     if (reportType === 'summary_statement') {
-      throw new BadRequestException('Souhrnné hlášení není ve verzi v1 podporováno.');
+      throw new BadRequestException(
+        'Souhrnné hlášení není ve verzi v1 podporováno.',
+      );
     }
   }
 
@@ -176,7 +177,9 @@ export class TaxReportsService {
   private ensureClassifications(invoices: InvoiceWithItems[]): void {
     const missing = invoices.find((invoice) => !invoice.taxClassification);
     if (missing) {
-      throw new BadRequestException('Některé faktury nemají vyplněnou daňovou klasifikaci');
+      throw new BadRequestException(
+        'Některé faktury nemají vyplněnou daňovou klasifikaci',
+      );
     }
   }
 
@@ -226,7 +229,8 @@ export class TaxReportsService {
 
   private getSchemaVersion(reportType: TaxReportType): string {
     const byType: Record<'vat_return' | 'control_statement', string> = {
-      vat_return: this.config.get<string>('XML_SCHEMA_DPH_VERSION') ?? 'current',
+      vat_return:
+        this.config.get<string>('XML_SCHEMA_DPH_VERSION') ?? 'current',
       control_statement:
         this.config.get<string>('XML_SCHEMA_KH_VERSION') ?? 'current',
     };
@@ -238,7 +242,9 @@ export class TaxReportsService {
         : byType.control_statement;
 
     if (!whitelist.has(selectedVersion)) {
-      throw new BadRequestException(`Unsupported XML schema version: ${selectedVersion}`);
+      throw new BadRequestException(
+        `Unsupported XML schema version: ${selectedVersion}`,
+      );
     }
 
     return selectedVersion;
@@ -249,18 +255,24 @@ export class TaxReportsService {
   }
 
   private formatDecimal(value: Decimal.Value): string {
-    return new Decimal(value).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toFixed(2);
+    return new Decimal(value)
+      .toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+      .toFixed(2);
   }
 
   private formatWhole(value: Decimal.Value): string {
-    return new Decimal(value).toDecimalPlaces(0, Decimal.ROUND_HALF_UP).toFixed(0);
+    return new Decimal(value)
+      .toDecimalPlaces(0, Decimal.ROUND_HALF_UP)
+      .toFixed(0);
   }
 
   private normalizeVatId(value?: string | null): string {
     return czVatIdNumber(value);
   }
 
-  private toFuAttributes(values: Record<string, string>): Record<string, string> {
+  private toFuAttributes(
+    values: Record<string, string>,
+  ): Record<string, string> {
     const attrs: Record<string, string> = {};
     for (const [key, value] of Object.entries(values)) {
       // Prázdné hodnoty se vynechávají – XSD je u typovaných atributů (např. c_okec, c_pop) odmítá.
@@ -312,7 +324,8 @@ export class TaxReportsService {
       prijmeni: subject.lastName,
       naz_obce: subject.city,
       psc: subject.postalCode,
-      stat: subject.countryCode === 'CZ' ? 'Česká republika' : subject.countryCode,
+      stat:
+        subject.countryCode === 'CZ' ? 'Česká republika' : subject.countryCode,
       ulice: streetName,
       sest_jmeno: subject.firstName,
       sest_prijmeni: subject.lastName,
@@ -394,10 +407,16 @@ export class TaxReportsService {
    * Faktury vystavené v době, kdy dodavatel nebyl plátcem DPH (snapshot),
    * do podání DPH nepatří.
    */
-  private filterVatPayerInvoices(invoices: InvoiceWithItems[]): InvoiceWithItems[] {
+  private filterVatPayerInvoices(
+    invoices: InvoiceWithItems[],
+  ): InvoiceWithItems[] {
     return invoices.filter((invoice) => {
       const snapshot = invoice.supplierSnapshot;
-      if (snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot)) {
+      if (
+        snapshot &&
+        typeof snapshot === 'object' &&
+        !Array.isArray(snapshot)
+      ) {
         return (snapshot as Record<string, unknown>).isVatPayer !== false;
       }
       return true;
@@ -517,7 +536,10 @@ export class TaxReportsService {
         a1.push(invoice);
       } else if (invoice.taxClassification === 'domestic_standard') {
         const totalWithVat = new Decimal(invoice.totalWithVat.toString());
-        if (isCzVatId(invoice.customerDic) && totalWithVat.gt(KH_A4_THRESHOLD)) {
+        if (
+          isCzVatId(invoice.customerDic) &&
+          totalWithVat.gt(KH_A4_THRESHOLD)
+        ) {
           a4.push(invoice);
         } else {
           a5.push(invoice);
@@ -798,9 +820,13 @@ export class TaxReportsService {
     };
   }
 
-  private getExportFileName(subject: Subject, request: TaxReportRequestDto): string {
+  private getExportFileName(
+    subject: Subject,
+    request: TaxReportRequestDto,
+  ): string {
     const normalizedIco = subject.ico.replace(/\s+/g, '');
-    const reportTypePart = request.reportType === 'vat_return' ? 'DPH' : 'DPHKH';
+    const reportTypePart =
+      request.reportType === 'vat_return' ? 'DPH' : 'DPHKH';
     const periodValue =
       request.periodType === 'month'
         ? String(request.value).padStart(2, '0')
