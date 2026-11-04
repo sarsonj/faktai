@@ -34,6 +34,8 @@ import {
   createInvoicePdfHash,
   sanitizeFileToken,
 } from './pdf/invoice-pdf.renderer';
+import { sqliteYearOf } from '../prisma/sqlite-sql';
+import { matchesSearch } from '../utils/search';
 
 type DbClient = PrismaService | Prisma.TransactionClient;
 
@@ -311,11 +313,23 @@ export class InvoiceService {
       },
     };
     if (q) {
-      baseWhere.OR = [
-        { invoiceNumber: { contains: q, mode: 'insensitive' } },
-        { customerName: { contains: q, mode: 'insensitive' } },
-        { note: { contains: q, mode: 'insensitive' } },
-      ];
+      // Hledání bez ohledu na velikost písmen a diakritiku řešíme v aplikaci (CR-0061).
+      const candidates = await this.prisma.invoice.findMany({
+        where: { ...baseWhere },
+        select: {
+          id: true,
+          invoiceNumber: true,
+          customerName: true,
+          note: true,
+        },
+      });
+      baseWhere.id = {
+        in: candidates
+          .filter((row) =>
+            matchesSearch([row.invoiceNumber, row.customerName, row.note], q),
+          )
+          .map((row) => row.id),
+      };
     }
     const where: Prisma.InvoiceWhereInput = { ...baseWhere };
 
@@ -333,7 +347,7 @@ export class InvoiceService {
     const availableYearsRaw = await this.prisma.$queryRaw<
       Array<{ year: number }>
     >`
-      SELECT DISTINCT EXTRACT(YEAR FROM "issueDate")::int AS year
+      SELECT DISTINCT ${sqliteYearOf('issueDate')} AS year
       FROM "Invoice"
       WHERE "subjectId" = ${subject.id}
       ORDER BY year DESC

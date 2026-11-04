@@ -12,8 +12,9 @@ function formatDateTime(value: string | null): string {
   return value ? new Date(value).toLocaleString('cs-CZ') : '—';
 }
 
-/** Kořen API bez `/v1` – tam běží dokumentace (`/api/docs`). */
-const DOCS_URL = `${API_BASE_URL.replace(/\/v1\/?$/, '')}/docs`;
+/** Absolutní adresa API (pro ukázku curl) a kořen bez `/v1` – tam běží dokumentace (`/api/docs`). */
+const API_URL = new URL(API_BASE_URL, window.location.origin).href.replace(/\/$/, '');
+const DOCS_URL = `${API_URL.replace(/\/v1$/, '')}/docs`;
 
 export function SettingsApiKeyPage() {
   const confirm = useConfirm();
@@ -177,7 +178,7 @@ export function SettingsApiKeyPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <pre className="m-0 overflow-x-auto rounded-md bg-muted px-4 py-3 font-mono text-sm">
-            {`curl -H "Authorization: Bearer $FAKTAI_API_KEY" \\\n  ${API_BASE_URL}/invoices`}
+            {`curl -H "Authorization: Bearer $FAKTAI_API_KEY" \\\n  ${API_URL}/invoices`}
           </pre>
           <a href={DOCS_URL} target="_blank" rel="noreferrer" className="text-sm font-medium text-primary">
             Dokumentace API (OpenAPI)

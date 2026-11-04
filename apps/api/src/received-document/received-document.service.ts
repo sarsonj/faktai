@@ -28,6 +28,8 @@ import {
   mapReceivedDocument,
   type ReceivedDocumentView,
 } from './received-document.mapper';
+import { sqliteYearOf } from '../prisma/sqlite-sql';
+import { matchesSearch } from '../utils/search';
 
 const WITH_RELATIONS = { lines: true, attachments: true } as const;
 
@@ -149,11 +151,26 @@ export class ReceivedDocumentService {
     };
     const q = query.q?.trim();
     if (q) {
-      where.OR = [
-        { documentNumber: { contains: q, mode: 'insensitive' } },
-        { supplierName: { contains: q, mode: 'insensitive' } },
-        { description: { contains: q, mode: 'insensitive' } },
-      ];
+      // Hledání bez ohledu na velikost písmen a diakritiku řešíme v aplikaci (CR-0061).
+      const candidates = await this.prisma.receivedDocument.findMany({
+        where: { ...where },
+        select: {
+          id: true,
+          documentNumber: true,
+          supplierName: true,
+          description: true,
+        },
+      });
+      where.id = {
+        in: candidates
+          .filter((row) =>
+            matchesSearch(
+              [row.documentNumber, row.supplierName, row.description],
+              q,
+            ),
+          )
+          .map((row) => row.id),
+      };
     }
     const [total, rows, years] = await Promise.all([
       this.prisma.receivedDocument.count({ where }),
@@ -165,7 +182,7 @@ export class ReceivedDocumentService {
         take: pageSize,
       }),
       this.prisma.$queryRaw<Array<{ year: number }>>`
-        SELECT DISTINCT EXTRACT(YEAR FROM "taxableSupplyDate")::int AS year
+        SELECT DISTINCT ${sqliteYearOf('taxableSupplyDate')} AS year
         FROM "ReceivedDocument" WHERE "subjectId" = ${subject.id} ORDER BY year DESC`,
     ]);
     return {

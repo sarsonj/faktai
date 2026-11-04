@@ -11,8 +11,8 @@
 ### 1.1 Povinné technologie ze zadání
 - Backend: `Node.js` 24 LTS (verze v `.nvmrc`, `engines` v root `package.json`; CI i Docker image `node:24-alpine`)
 - Frontend: `React`
-- Databáze: `PostgreSQL`
-- Provoz: `Docker` (všechny části aplikace)
+- Databáze: `SQLite` přes Prisma (od CR-0061; dříve PostgreSQL – historické migrace v `apps/api/prisma/postgres-legacy`)
+- Provoz: `Docker` – jeden kontejner (API servíruje i web), data v `/data`
 
 ### 1.2 Navržený stack v1
 - Jazyk: `TypeScript` (backend + frontend)
@@ -41,7 +41,7 @@
   - extrakci textu pro ověření, že se diakritika nedegraduje už při exportu.
 
 ### 1.4 Kvalita kódu a CI
-- Docker buildy instalují závislosti striktně podle `pnpm-lock.yaml` (`--frozen-lockfile`); `serve` ve web image je pinovaný.
+- Docker build (`infra/docker/app.Dockerfile`) instaluje závislosti striktně podle `pnpm-lock.yaml` (`--frozen-lockfile`).
 - CI (`.github/workflows/ci.yml`): Node z `.nvmrc`, `pnpm install --frozen-lockfile` → `pnpm build` (vč. `prisma generate`) → `pnpm typecheck` → `pnpm lint` → `pnpm test`.
 - `pnpm lint` pouze kontroluje (bez `--fix`); opravy přes `pnpm --filter @tappyfaktur/api lint:fix`.
 - API: ESLint `recommendedTypeChecked` + Prettier; v testech (`*.spec.ts`, `test/**`) jsou vypnutá pravidla `no-unsafe-*` kvůli mockům.
@@ -50,10 +50,12 @@
 ## 2. Architektura systému
 
 ### 2.1 Logická architektura
-1. `web` (React SPA)
-2. `api` (Node.js REST API)
-3. `db` (PostgreSQL)
+1. `web` (React SPA) – v produkci ho jako statické soubory servíruje `api` (CR-0061)
+2. `api` (Node.js REST API, `/api/v1`)
+3. `db` – soubor SQLite v perzistentním adresáři (`/data/faktai.db`)
 4. `smtp` (odeslání e-mailu pro reset hesla)
+
+Web a API běží na stejném originu: bez CORS (zapíná se jen při nastaveném `WEB_ORIGIN` pro vývoj), session cookie jen pro jednu doménu. Klientské routy (GET mimo `/api`) dostanou `index.html` (`common/web-app.ts`).
 
 V1 běží synchronně přes REST API; samostatný worker/queue není povinný.
 
@@ -86,27 +88,40 @@ V1 běží synchronně přes REST API; samostatný worker/queue není povinný.
 
 ## 3. Docker a runtime
 
-### 3.1 Služby v docker-compose
-1. `web` - port `3000`
-2. `api` - port `4000`
-3. `db` - port `5432`
+### 3.1 Kontejner (CR-0061)
+- Jeden image `infra/docker/app.Dockerfile`, port `3000`, `captain-definition` v kořeni repozitáře.
+- `docker-compose.yml`: služba `app` + volume `faktai_data` → `/data`.
+- Při vývoji běží API (`pnpm --filter @tappyfaktur/api dev`, port 4000) a Vite (proxy `/api` → API) zvlášť.
 
 ### 3.2 Inicializace databáze
-- Při startu `api` proběhne:
-1. kontrola připojení na DB,
-2. aplikace migrací,
-3. seed minimálních referenčních dat (sazby DPH, enum mapování).
+Při startu kontejneru (`apps/api/scripts/start-with-migrations.sh`):
+1. `prisma migrate deploy` (SQLite, `apps/api/prisma/migrations`),
+2. je-li nastaveno `IMPORT_FROM_POSTGRES_URL`, jednorázový převod ze staré PostgreSQL databáze (`src/tools/import-from-postgres.ts`):
+   - jen do prázdné databáze,
+   - zdroj se nejdřív dorovná migracemi z `prisma/postgres-legacy`,
+   - kopie v jedné transakci s kontrolou počtů řádků a součtů částek,
+3. start aplikace.
 
-### 3.3 Persistované svazky
-- `postgres_data` pro data DB.
-- Volitelně `tmp_exports` pro dočasné generované soubory během requestu (pokud generátor nepoužívá stream v paměti).
+SQLite specifika:
+- `PRAGMA journal_mode = WAL` při startu.
+- Částky (`Decimal`) ukládá Prisma jako REAL. Rozsah `15,2` se vejde do přesnosti double, proto se částky **nesčítají v SQL** (`_sum`), ale v aplikaci přes `decimal.js`.
+- `DateTime` jsou milisekundy od epochy. Rok pro filtry počítá `prisma/sqlite-sql.ts`.
+- Hledání v seznamech bez ohledu na velikost písmen a diakritiku řeší aplikace (`utils/search.ts`), protože SQLite `LIKE` umí jen ASCII.
+
+### 3.3 Persistovaná data (`/data`)
+- `faktai.db` – databáze (`DATABASE_URL=file:/data/faktai.db`),
+- `attachments/` – přílohy přijatých dokladů (`ATTACHMENTS_DIR`),
+- `backups/` – denní zálohy `faktai-YYYY-MM-DD.db` přes `VACUUM INTO` (`BACKUP_DIR`, `BACKUP_KEEP` = 14; `storage/database-backup.service.ts`).
 
 ### 3.4 Základní env proměnné
 - `DATABASE_URL`
 - `TZ=Europe/Prague`
-- `API_PORT`
-- `WEB_PORT`
+- `API_PORT` (v kontejneru 3000)
 - `APP_BASE_URL`
+- `WEB_DIST_DIR` (adresář sestaveného webu; v image nastaveno)
+- `ATTACHMENTS_DIR`, `BACKUP_DIR`, `BACKUP_KEEP`
+- `WEB_ORIGIN` (jen vývoj – povolí CORS)
+- `IMPORT_FROM_POSTGRES_URL` (jen jednorázový převod)
 - `INVOICE_NUMBER_FORMAT`
 - `XML_SCHEMA_DPH_VERSION`
 - `XML_SCHEMA_KH_VERSION`
@@ -121,7 +136,7 @@ V1 běží synchronně přes REST API; samostatný worker/queue není povinný.
 - `REGISTRY_TIMEOUT_MS`
 - `REGISTRY_USER_AGENT`
 
-## 4. Datový model (PostgreSQL)
+## 4. Datový model (Prisma, SQLite)
 
 ### 4.1 Přehled tabulek
 1. `users`
@@ -718,7 +733,7 @@ Mapování v1:
 
 ### 13.2 Dostupnost a provoz
 - Lokální provoz přes Docker Compose.
-- Produkční deploy mimo rozsah této verze specifikace.
+- Produkce: CapRover, jedna appka s perzistentním adresářem `/data` (viz `doc/nasazeni-caprover.md`).
 
 ### 13.3 Logging a observabilita
 - Strukturované logy JSON.

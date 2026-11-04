@@ -13,6 +13,7 @@ import { RequestContextMiddleware } from './common/request-context.middleware';
 import { RegistryModule } from './registry/registry.module';
 import { ReceivedDocumentModule } from './received-document/received-document.module';
 import { THROTTLER_OPTIONS } from './common/throttling';
+import { DatabaseBackupService } from './storage/database-backup.service';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { THROTTLER_OPTIONS } from './common/throttling';
   controllers: [AppController],
   providers: [
     AppService,
+    DatabaseBackupService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

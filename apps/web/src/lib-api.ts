@@ -1,9 +1,9 @@
-const runtimeApiBaseUrl = window.__FAKTURAI_CONFIG__?.API_BASE_URL;
-
-export const API_BASE_URL =
-  runtimeApiBaseUrl ??
-  import.meta.env.VITE_API_URL ??
-  `${window.location.protocol}//${window.location.hostname}:4000/api/v1`;
+/**
+ * Web a API běží na stejné adrese (CR-0061) – v produkci je servíruje API,
+ * při vývoji Vite přesměruje `/api` na lokální API. `VITE_API_URL` jen pro
+ * výjimečné nasazení s API jinde.
+ */
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1';
 
 export class ApiError extends Error {
   status: number;

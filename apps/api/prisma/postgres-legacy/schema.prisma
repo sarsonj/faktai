@@ -1,0 +1,341 @@
+// Historické schéma pro PostgreSQL (do CR-0061). Slouží jen importu dat do SQLite:
+// `import-from-postgres` nejdřív dorovná starou databázi těmito migracemi a pak ji přečte.
+// Neupravujte – nové změny schématu patří do ../schema.prisma.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("LEGACY_POSTGRES_URL")
+}
+
+enum DefaultVariableSymbolType {
+  ico
+  custom
+}
+
+enum InvoiceStatus {
+  draft
+  issued
+  paid
+  cancelled
+}
+
+enum PaymentMethod {
+  bank_transfer
+}
+
+enum TaxClassification {
+  domestic_standard
+  domestic_reverse_charge
+  eu_service
+  eu_goods
+  export_third_country
+  exempt_without_credit
+}
+
+enum TaxReportType {
+  vat_return
+  summary_statement
+  control_statement
+}
+
+enum TaxPeriodType {
+  month
+  quarter
+}
+
+model User {
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  passwordHash        String
+  isActive            Boolean              @default(true)
+  lastLoginAt         DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  sessions            UserSession[]
+  passwordResetTokens PasswordResetToken[]
+  subject             Subject?
+  pdfExports          PdfExportMetadata[]
+  taxReportRuns       TaxReportRun[]
+  apiKey              ApiKey?
+  idempotencyRecords  IdempotencyRecord[]
+}
+
+model UserSession {
+  id               String    @id @default(uuid())
+  userId           String
+  sessionTokenHash String    @unique
+  userAgent        String?
+  ipAddress        String?
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subject {
+  id                         String                    @id @default(uuid())
+  userId                     String                    @unique
+  firstName                  String
+  lastName                   String
+  businessName               String?
+  ico                        String                    @db.VarChar(8)
+  dic                        String?
+  isVatPayer                 Boolean
+  vatPeriodType              TaxPeriodType             @default(quarter)
+  vatRegistrationDate        DateTime?
+  taxOfficePracufo           String?                   @db.VarChar(4)
+  contactPhone               String?
+  contactEmail               String?
+  street                     String
+  city                       String
+  postalCode                 String
+  countryCode                String                    @default("CZ") @db.VarChar(2)
+  bankAccountPrefix          String?
+  bankAccountNumber          String
+  bankCode                   String                    @db.VarChar(4)
+  defaultVariableSymbolType  DefaultVariableSymbolType
+  defaultVariableSymbolValue String?
+  defaultDueDays             Int                       @default(14)
+  createdAt                  DateTime                  @default(now())
+  updatedAt                  DateTime                  @updatedAt
+  user                       User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices                   Invoice[]
+  numberSequences            InvoiceNumberSequence[]
+  taxReportRuns              TaxReportRun[]
+  receivedDocuments          ReceivedDocument[]
+}
+
+model Invoice {
+  id                  String        @id @default(uuid())
+  subjectId           String
+  status              InvoiceStatus @default(draft)
+  invoiceNumber       String?
+  variableSymbol      String
+  issueDate           DateTime
+  taxableSupplyDate   DateTime
+  dueDate             DateTime
+  paymentMethod       PaymentMethod @default(bank_transfer)
+  taxClassification   TaxClassification?
+  reverseChargeCode   String?       @db.VarChar(4)
+  customerName        String
+  customerIco         String?
+  customerDic         String?
+  customerStreet      String
+  customerCity        String
+  customerPostalCode  String
+  customerCountryCode String        @default("CZ") @db.VarChar(2)
+  supplierSnapshot    Json?
+  note                String?
+  totalWithoutVat     Decimal       @db.Decimal(15, 2)
+  totalVat            Decimal       @db.Decimal(15, 2)
+  totalWithVat        Decimal       @db.Decimal(15, 2)
+  pdfVersion          Int           @default(0)
+  pdfPayloadHash      String?
+  paidAt              DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  subject             Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  items               InvoiceItem[]
+  pdfExports          PdfExportMetadata[]
+  taxReportEntries    TaxReportRunEntry[]
+
+  @@unique([subjectId, invoiceNumber])
+  @@index([subjectId, issueDate(sort: Desc)])
+  @@index([subjectId, dueDate])
+  @@index([subjectId, status])
+  @@index([subjectId, taxableSupplyDate])
+}
+
+model InvoiceItem {
+  id                  String   @id @default(uuid())
+  invoiceId           String
+  position            Int
+  description         String
+  quantity            Decimal  @db.Decimal(15, 3)
+  unit                String   @db.VarChar(20)
+  unitPrice           Decimal  @db.Decimal(15, 2)
+  vatRate             Int
+  lineTotalWithoutVat Decimal  @db.Decimal(15, 2)
+  lineVatAmount       Decimal  @db.Decimal(15, 2)
+  lineTotalWithVat    Decimal  @db.Decimal(15, 2)
+  invoice             Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId, position])
+}
+
+model InvoiceNumberSequence {
+  id           String   @id @default(uuid())
+  subjectId    String
+  periodYear   Int
+  currentValue Int      @default(0)
+  subject      Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([subjectId, periodYear])
+}
+
+model PdfExportMetadata {
+  id               String   @id @default(uuid())
+  invoiceId        String
+  exportedAt       DateTime @default(now())
+  exportedByUserId String
+  pdfVersion       Int
+  payloadHash      String
+  invoice          Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [exportedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId, exportedAt])
+}
+
+model TaxReportRun {
+  id                String          @id @default(uuid())
+  subjectId         String
+  reportType        TaxReportType
+  periodType        TaxPeriodType
+  periodYear        Int
+  periodValue       Int
+  runVersion        Int
+  datasetHash       String
+  generatedByUserId String
+  generatedAt       DateTime        @default(now())
+  subject           Subject         @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  generatedByUser   User            @relation(fields: [generatedByUserId], references: [id], onDelete: Cascade)
+  entries           TaxReportRunEntry[]
+
+  @@index([subjectId, reportType, periodType, periodYear, periodValue, generatedAt(sort: Desc)])
+}
+
+model TaxReportRunEntry {
+  id                     String      @id @default(uuid())
+  runId                  String
+  invoiceId              String
+  invoiceUpdatedAtSnapshot DateTime
+  run                    TaxReportRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  invoice                Invoice     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([runId, invoiceId])
+}
+
+/// API klíč uživatele (CR-0058) – jeden na uživatele, v DB jen hash.
+model ApiKey {
+  id         String    @id @default(uuid())
+  userId     String    @unique
+  keyHash    String    @unique
+  /// Začátek klíče pro zobrazení v UI (např. "fai_Ab12cD").
+  prefix     String    @db.VarChar(16)
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Uložené odpovědi pro hlavičku Idempotency-Key (CR-0058).
+model IdempotencyRecord {
+  id             String   @id @default(uuid())
+  userId         String
+  key            String   @db.VarChar(255)
+  /// Metoda + cesta požadavku.
+  scope          String   @db.VarChar(255)
+  requestHash    String   @db.VarChar(64)
+  /// null = požadavek se právě zpracovává.
+  responseStatus Int?
+  responseBody   Json?
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@index([createdAt])
+}
+
+/// Režim DPH přijatého dokladu (CR-0060).
+enum ReceivedVatRegime {
+  /// Tuzemské plnění od plátce s DPH – odpočet ř. 40/41, KH B.2/B.3
+  domestic_standard
+  /// Přenesení daňové povinnosti – příjemce přizná daň (ř. 10/11) a odečte (ř. 43/44), KH B.1
+  domestic_reverse_charge
+  /// Pořízení zboží z jiného členského státu – ř. 3/4 + ř. 43/44, KH A.2
+  eu_goods
+  /// Přijetí služby z jiného členského státu (§ 9 odst. 1) – ř. 5/6 + ř. 43/44, KH A.2
+  eu_service
+  /// Bez nároku na odpočet (neplátce, osobní spotřeba…) – do podání nevstupuje
+  no_deduction
+}
+
+/// Přijatý doklad (faktura od dodavatele) – CR-0060.
+model ReceivedDocument {
+  id                  String            @id @default(uuid())
+  subjectId           String
+  /// Evidenční číslo dokladu dodavatele (KH c_evid_dd).
+  documentNumber      String            @db.VarChar(60)
+  supplierName        String
+  supplierIco         String?           @db.VarChar(8)
+  /// DIČ (CZ…) nebo VAT ID z jiného členského státu včetně kódu státu.
+  supplierVatId       String?           @db.VarChar(20)
+  supplierStreet      String?
+  supplierCity        String?
+  supplierPostalCode  String?
+  supplierCountryCode String            @default("CZ") @db.VarChar(2)
+  description         String?
+  issueDate           DateTime?
+  /// DUZP / datum povinnosti přiznat daň.
+  taxableSupplyDate   DateTime
+  /// Období, ve kterém se uplatňuje odpočet (tuzemská plnění).
+  deductionDate       DateTime
+  dueDate             DateTime?
+  paidAt              DateTime?
+  vatRegime           ReceivedVatRegime
+  reverseChargeCode   String?           @db.VarChar(4)
+  totalWithoutVat     Decimal           @db.Decimal(15, 2)
+  /// DPH z dokladu (tuzemsko) nebo vyměřená příjemcem (přenesení, EU).
+  totalVat            Decimal           @db.Decimal(15, 2)
+  /// Částka k úhradě dodavateli.
+  totalPayable        Decimal           @db.Decimal(15, 2)
+  note                String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  subject             Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  lines               ReceivedDocumentLine[]
+  attachments         ReceivedDocumentAttachment[]
+
+  @@index([subjectId, taxableSupplyDate])
+  @@index([subjectId, deductionDate])
+}
+
+/// Rozpis DPH přijatého dokladu po sazbách.
+model ReceivedDocumentLine {
+  id         String           @id @default(uuid())
+  documentId String
+  position   Int
+  vatRate    Int
+  base       Decimal          @db.Decimal(15, 2)
+  vat        Decimal          @db.Decimal(15, 2)
+  document   ReceivedDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, position])
+}
+
+/// Příloha přijatého dokladu; soubor leží v ATTACHMENTS_DIR pod `storageKey`.
+model ReceivedDocumentAttachment {
+  id          String           @id @default(uuid())
+  documentId  String
+  fileName    String
+  contentType String           @db.VarChar(100)
+  size        Int
+  storageKey  String           @unique
+  createdAt   DateTime         @default(now())
+  document    ReceivedDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+}

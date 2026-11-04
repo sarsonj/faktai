@@ -75,15 +75,21 @@ Poznámka: srovnání je orientační. Ruční odhad je obchodní retrospektiva,
 docker compose up -d --build
 ```
 
-- Web: `http://localhost:3000`
-- API: `http://localhost:4000/api/v1`
+- Aplikace: `http://localhost:3000` (web i API `/api/v1` v jednom kontejneru, data ve volume `faktai_data`)
 
 ### Varianta 2: Dev režim (pnpm workspace)
 
 ```bash
+cp .env.example apps/api/.env   # DATABASE_URL=file:../storage/faktai.db (SQLite)
 pnpm install
+pnpm --filter @tappyfaktur/api exec prisma migrate deploy
 pnpm dev
 ```
+
+- Web (Vite): `http://localhost:5173`, požadavky na `/api` přesměruje na API (`http://localhost:4000`).
+- Převod dat ze staré PostgreSQL databáze: `IMPORT_FROM_POSTGRES_URL=postgresql://… pnpm --filter @tappyfaktur/api import:postgres` (po `pnpm build`).
+
+Nasazení: [doc/nasazeni-caprover.md](doc/nasazeni-caprover.md).
 
 ## Pravidlo pro aktualizaci času
 

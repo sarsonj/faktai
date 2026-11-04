@@ -1,100 +1,111 @@
-# Nasazení FakturAI na CapRover
+# Nasazení FaktAI na CapRover
 
-## 1. Cílová topologie
-- `fakturai-api` (NestJS API)
-- `fakturai-web` (React SPA)
-- `postgres` (CapRover One-Click App)
-
-Poznámka:
-- Jedna CapRover app = jeden kontejner/služba.
-- Pro tento projekt je správné nasazení minimálně na 2 appky (`api`, `web`) + DB zvlášť.
+## 1. Cílová topologie (od CR-0061)
+- **Jedna appka** `faktai`: API servíruje i sestavený web, obojí na jedné doméně (`https://app.tvoje-domena.cz`, API pod `/api/v1`).
+- Data leží v perzistentním adresáři `/data`:
+  - `/data/faktai.db` – databáze SQLite,
+  - `/data/attachments/` – přílohy přijatých dokladů,
+  - `/data/backups/` – denní zálohy databáze (posledních 14).
+- Samostatná databázová appka ani druhá appka pro web nejsou potřeba. Odpadá CORS a nastavování `WEB_ORIGIN` / `WEB_API_URL`.
 
 ## 2. Co je v projektu připraveno
-- Dockerfile pro API: `infra/docker/api.Dockerfile`
-- Dockerfile pro WEB: `infra/docker/web.Dockerfile`
-- Captain definition soubory:
-  - `captain-definition-api.json`
-  - `captain-definition-web.json`
-- Runtime API konfigurace webu přes env `WEB_API_URL` (není nutný rebuild při změně URL API)
-- Start skript webu: `infra/docker/start-web-with-runtime-config.sh`
-- Env šablony:
-  - `infra/caprover/api.env.example`
-  - `infra/caprover/web.env.example`
+- Dockerfile: `infra/docker/app.Dockerfile`
+- Captain definition: `captain-definition` v kořeni repozitáře (výchozí cesta CapRoveru)
+- Env šablona: `infra/caprover/app.env.example`
+- Start skript: `apps/api/scripts/start-with-migrations.sh`:
+  1. aplikuje migrace,
+  2. volitelně převede data ze staré PostgreSQL databáze,
+  3. spustí aplikaci.
 
-## 3. Předpoklady
-1. Funkční CapRover server.
-2. DNS záznamy pro:
-   - `api.tvoje-domena.cz`
-   - `app.tvoje-domena.cz`
-3. Zapnuté HTTPS certifikáty v CapRoveru.
-4. Deploy je veden přes `Captain Definition Path`.
+## 3. Nová instalace
 
-Poznámka:
-- CapRover bere build context podle umístění `captain-definition` souboru.
-- Proto jsou `captain-definition-*.json` umístěny v rootu repozitáře, aby byl v build contextu celý projekt (včetně `package.json`).
+### 3.1 Vytvoření appky
+1. V CapRoveru vytvořte appku `faktai` a **zaškrtněte „Has Persistent Data“**. Dodatečně to zapnout nejde.
+2. V *App Configs* nastavte:
+   - **Container HTTP Port:** `3000`,
+   - **Persistent Directories:** *Path in App* `/data`, *Label* např. `faktai-data`,
+   - **Environmental Variables** podle `infra/caprover/app.env.example`. Minimálně:
+     - `NODE_ENV=production`,
+     - `TRUST_PROXY=1`,
+     - `APP_BASE_URL=https://app.tvoje-domena.cz`,
+     - `SESSION_SECRET`,
+     - `TZ=Europe/Prague`.
+3. V *HTTP Settings* připojte doménu a zapněte HTTPS + *Force HTTPS*.
+4. V *Deployment* nasaďte z repozitáře. *Captain Definition Path* nechte výchozí (`./captain-definition`).
 
-## 4. Krok za krokem
+### 3.2 Ověření
+1. Otevřete `https://app.tvoje-domena.cz` a přihlaste se.
+2. Vyzkoušejte:
+   - otevření a stažení PDF faktury,
+   - náhled DPH podkladů,
+   - nahrání přílohy u přijatého dokladu.
+3. Restartujte appku a ověřte, že data i příloha zůstaly.
+4. V logu má být při startu řádek `Záloha databáze: /data/backups/faktai-RRRR-MM-DD.db`.
 
-### 4.1 Vytvoření Postgres
-1. V CapRoveru otevři `One-Click Apps/Databases`.
-2. Nainstaluj `PostgreSQL`.
-3. Poznamenej si:
-   - název služby (např. `srv-captain--postgres`)
-   - user/password/db name.
+## 4. Přechod ze staré instalace (API + web + PostgreSQL)
 
-### 4.2 Vytvoření appky API
-1. Vytvoř app `fakturai-api`.
-2. V `App Configs` nastav:
-   - `Container HTTP Port = 4000`
-3. V `HTTP Settings` připoj doménu `api.tvoje-domena.cz` + HTTPS.
-4. V `App Configs > Environmental Variables` vlož hodnoty podle `infra/caprover/api.env.example`:
-   - minimálně: `NODE_ENV`, `API_PORT`, `TRUST_PROXY`, `WEB_ORIGIN`, `APP_BASE_URL`, `DATABASE_URL`, `SESSION_SECRET`.
-5. V `Deployment` zvol `Deploy from GitHub/GitLab/Bitbucket` (nebo tar upload) a nastav `Captain Definition Path`:
-   - `captain-definition-api.json`
-6. Deployni app.
+Převod dat dělá aplikace sama při prvním startu, pokud dostane adresu staré databáze.
 
-### 4.2.1 Perzistentní úložiště příloh (CR-0060)
-1. V appce API otevřete *App Configs → Persistent Directories* a přidejte adresář:
-   - **Path in App:** `/data`
-   - **Label:** např. `faktai-attachments` (CapRover vytvoří pojmenovaný volume).
-2. Ověřte proměnnou `ATTACHMENTS_DIR=/data/attachments` (je i výchozí v Docker image).
-3. Uložte a nasaďte znovu. Bez perzistentního adresáře by se přílohy přijatých dokladů při každém nasazení ztratily.
-4. Zálohování: přílohy nejsou v databázi – zálohujte i volume `/data` (spolu s Postgresem).
+**Jak převod probíhá:**
+1. Nejdřív dorovná starou PostgreSQL databázi chybějícími migracemi (včetně normalizace dat faktur z CR-0051). Tím **mění starou databázi**, proto ji předem zálohujte.
+2. Zkopíruje všechny tabulky v jedné transakci.
+3. Porovná počty řádků a součty částek. Při neshodě se nic neuloží a appka nenastartuje (chyba je v logu).
+4. Do databáze, která už data obsahuje, se nic nepřevádí. Proměnná proto po převodu ničemu nevadí, ale je lepší ji smazat.
 
-### 4.3 Vytvoření appky WEB
-1. Vytvoř app `fakturai-web`.
-2. V `App Configs` nastav:
-   - `Container HTTP Port = 3000`
-3. V `HTTP Settings` připoj doménu `app.tvoje-domena.cz` + HTTPS.
-4. V `App Configs > Environmental Variables` vlož hodnoty podle `infra/caprover/web.env.example`:
-   - `NODE_ENV=production`
-   - `WEB_API_URL=https://api.tvoje-domena.cz/api/v1`
-5. V `Deployment` nastav `Captain Definition Path`:
-   - `captain-definition-web.json`
-6. Deployni app.
+**Postup:**
+1. **Záloha Postgresu.** Ve starém Postgres kontejneru na serveru:
+   ```bash
+   docker exec $(docker ps -q -f name=srv-captain--postgres) \
+     pg_dump -U <user> -d <db> -Fc > faktai-pred-sqlite.dump
+   ```
+   (název služby, uživatele a databáze najdete v `DATABASE_URL` staré API appky).
+2. **Nová appka.** Založte appku `faktai` podle kapitoly 3.1:
+   - env proměnné zkopírujte ze staré API appky (*Bulk Edit*),
+   - smažte z nich `DATABASE_URL`, `API_PORT`, `WEB_ORIGIN` a `ATTACHMENTS_DIR`,
+   - přidejte:
+     ```
+     IMPORT_FROM_POSTGRES_URL=<hodnota DATABASE_URL ze staré API appky>
+     ```
+   - `SESSION_SECRET` ponechte stejný.
+3. **Nasazení.** Nasaďte appku a sledujte log. Musí v něm být:
+   ```
+   [import] Hotovo, kontrola počtů a součtů prošla.
+   ```
+   Před tímto řádkem jsou vypsané počty řádků a součty částek.
+4. **Kontrola.** Ověřte data na dočasné adrese appky (`faktai.<captain-doména>`):
+   - seznam faktur a jejich počty,
+   - PDF faktury,
+   - DPH podklady za poslední období.
+   
+   Přihlášení funguje se stávajícím heslem.
+5. **Přepnutí domény:**
+   - u staré web appky odeberte doménu `app.tvoje-domena.cz`,
+   - přidejte ji k appce `faktai`,
+   - zapněte HTTPS + *Force HTTPS*.
+6. **Úklid:**
+   - smažte `IMPORT_FROM_POSTGRES_URL` a uložte,
+   - po pár dnech bez problémů smažte staré appky (API, web, PostgreSQL),
+   - doménu `api.tvoje-domena.cz` můžete zrušit. Pokud ji používají skripty s API klíčem, změňte v nich adresu na `https://app.tvoje-domena.cz/api/v1`.
 
-## 5. Ověření po nasazení
-1. API health:
-   - otevři `https://api.tvoje-domena.cz/api/v1/health`
-2. Web:
-   - otevři `https://app.tvoje-domena.cz`
-   - vytvoř účet, přihlas se, dokonči onboarding.
-3. Funkční smoke test:
-   - vytvoření faktury,
-   - export PDF,
-   - export XML.
+**Pokud se převod nepovede:**
+- Stará instalace běží dál beze změny dat. Změnilo se jen schéma, nové sloupce staré verze aplikace ignorují.
+- Opravte chybu z logu a postup zopakujte. Před dalším pokusem smažte soubor `/data/faktai.db`, nebo appku založte znovu.
 
-## 6. Důležité provozní poznámky
-- `TRUST_PROXY=1` je důležité kvůli throttlingu a IP adresám za reverse proxy.
-- Web používá runtime config přes `WEB_API_URL`; změna API URL nevyžaduje nový build image (stačí restart appky).
-- Pokud nenastavíš SMTP, reset hesla se nevypne, ale reset odkaz bude jen v logu API.
+## 5. Provozní poznámky
+- **Zálohy:**
+  - Aplikace jednou denně vytvoří konzistentní kopii databáze do `/data/backups` (`VACUUM INTO`) a ponechá posledních `BACKUP_KEEP` (výchozí 14).
+  - Do externí zálohy kopírujte **`/data/backups` a `/data/attachments`**.
+  - Samotný `/data/faktai.db` za běhu nekopírujte, kopie by nemusela být konzistentní (WAL).
+- **Obnova:**
+  1. Zastavte appku (*Instance Count* 0).
+  2. Nahraďte `/data/faktai.db` zálohou a smažte `faktai.db-wal` a `faktai.db-shm`.
+  3. Appku znovu spusťte.
+- **Škálování:** appka musí běžet v jedné instanci (SQLite). Persistent Data appky v CapRoveru víc instancí stejně nepovolují.
+- **`TRUST_PROXY=1`** je důležité kvůli throttlingu a IP adresám za reverse proxy.
+- **SMTP:** pokud ho nenastavíte, reset hesla funguje dál, ale odkaz bude jen v logu aplikace.
 
-## 7. Nejčastější problémy
-- `401/403` po loginu:
-  - zkontroluj, že `WEB_ORIGIN` přesně odpovídá URL webu.
-- CORS chyba:
-  - opět `WEB_ORIGIN` + správné HTTPS domény.
-- API nedostupné z webu:
-  - zkontroluj `WEB_API_URL` ve web appce.
-- DB migration fail při startu:
-  - zkontroluj `DATABASE_URL` a dostupnost postgres služby v CapRover síti.
+## 6. Nejčastější problémy
+- **Po nasazení se ztratila data:** appka nemá *Persistent Directory* `/data` (nebo nebyla založena s „Has Persistent Data“).
+- **Převod skončil chybou `Kontrola převodu selhala`:** v logu je, která tabulka nebo součet nesedí. Nic se neuložilo, stará instalace je beze změny.
+- **Převod skončil chybou připojení:** zkontrolujte `IMPORT_FROM_POSTGRES_URL`. V síti CapRoveru má host tvar `srv-captain--<název-appky>`.
+- **Odkaz pro reset hesla vede jinam:** zkontrolujte `APP_BASE_URL`.

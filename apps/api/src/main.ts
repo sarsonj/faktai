@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { setupWebApp } from './common/web-app';
 import { HttpExceptionFilter } from './common/http-exception.filter';
 import { API_DOCS_PATH, setupOpenApi } from './common/openapi';
 import { createValidationException } from './common/validation';
@@ -19,7 +20,14 @@ async function bootstrap() {
     app.set('trust proxy', 1);
   }
   // Swagger UI potřebuje inline skripty – CSP vypínáme jen pro stránku dokumentace.
-  const strictHelmet = helmet();
+  const strictHelmet = helmet({
+    contentSecurityPolicy: {
+      directives: {
+        // Náhled příloh a PDF otevíráme přes blob: URL.
+        'img-src': ["'self'", 'data:', 'blob:'],
+      },
+    },
+  });
   const docsHelmet = helmet({ contentSecurityPolicy: false });
   app.use((req: Request, res: Response, next: NextFunction) =>
     req.path.startsWith(`/${API_DOCS_PATH}`)
@@ -38,11 +46,16 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix('api/v1');
   setupOpenApi(app);
-  app.enableCors({
-    origin: process.env.WEB_ORIGIN ?? true,
-    credentials: true,
-    exposedHeaders: ['Content-Disposition', 'Idempotency-Replayed'],
-  });
+  // Web a API běží na stejné adrese (CR-0061), CORS je potřeba jen pro
+  // vývoj s webem na jiném originu – stačí nastavit WEB_ORIGIN.
+  if (process.env.WEB_ORIGIN) {
+    app.enableCors({
+      origin: process.env.WEB_ORIGIN.split(',').map((origin) => origin.trim()),
+      credentials: true,
+      exposedHeaders: ['Content-Disposition', 'Idempotency-Replayed'],
+    });
+  }
+  setupWebApp(app, process.env.WEB_DIST_DIR);
 
   const port = Number(process.env.API_PORT ?? 4000);
   const prismaService = app.get(PrismaService);

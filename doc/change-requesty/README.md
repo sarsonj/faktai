@@ -77,3 +77,4 @@
 | `CR-0058` | API klíče, OpenAPI dokumentace a idempotence | `Implementováno` | `Must` |
 | `CR-0059` | Redesign UI aplikace (varianta A, Tailwind + shadcn/ui) | `Implementováno` | `Should` |
 | `CR-0060` | Přijaté doklady s přílohami a odpočtem DPH | `Implementováno` | `Must` |
+| `CR-0061` | Jedna aplikace a SQLite místo PostgreSQL | `Implementováno` | `Should` |

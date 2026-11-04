@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -88,21 +88,21 @@ model Subject {
   firstName                  String
   lastName                   String
   businessName               String?
-  ico                        String                    @db.VarChar(8)
+  ico                        String
   dic                        String?
   isVatPayer                 Boolean
   vatPeriodType              TaxPeriodType             @default(quarter)
   vatRegistrationDate        DateTime?
-  taxOfficePracufo           String?                   @db.VarChar(4)
+  taxOfficePracufo           String?
   contactPhone               String?
   contactEmail               String?
   street                     String
   city                       String
   postalCode                 String
-  countryCode                String                    @default("CZ") @db.VarChar(2)
+  countryCode                String                    @default("CZ")
   bankAccountPrefix          String?
   bankAccountNumber          String
-  bankCode                   String                    @db.VarChar(4)
+  bankCode                   String
   defaultVariableSymbolType  DefaultVariableSymbolType
   defaultVariableSymbolValue String?
   defaultDueDays             Int                       @default(14)
@@ -126,19 +126,19 @@ model Invoice {
   dueDate             DateTime
   paymentMethod       PaymentMethod @default(bank_transfer)
   taxClassification   TaxClassification?
-  reverseChargeCode   String?       @db.VarChar(4)
+  reverseChargeCode   String?
   customerName        String
   customerIco         String?
   customerDic         String?
   customerStreet      String
   customerCity        String
   customerPostalCode  String
-  customerCountryCode String        @default("CZ") @db.VarChar(2)
+  customerCountryCode String        @default("CZ")
   supplierSnapshot    Json?
   note                String?
-  totalWithoutVat     Decimal       @db.Decimal(15, 2)
-  totalVat            Decimal       @db.Decimal(15, 2)
-  totalWithVat        Decimal       @db.Decimal(15, 2)
+  totalWithoutVat     Decimal
+  totalVat            Decimal
+  totalWithVat        Decimal
   pdfVersion          Int           @default(0)
   pdfPayloadHash      String?
   paidAt              DateTime?
@@ -161,13 +161,13 @@ model InvoiceItem {
   invoiceId           String
   position            Int
   description         String
-  quantity            Decimal  @db.Decimal(15, 3)
-  unit                String   @db.VarChar(20)
-  unitPrice           Decimal  @db.Decimal(15, 2)
+  quantity            Decimal
+  unit                String
+  unitPrice           Decimal
   vatRate             Int
-  lineTotalWithoutVat Decimal  @db.Decimal(15, 2)
-  lineVatAmount       Decimal  @db.Decimal(15, 2)
-  lineTotalWithVat    Decimal  @db.Decimal(15, 2)
+  lineTotalWithoutVat Decimal
+  lineVatAmount       Decimal
+  lineTotalWithVat    Decimal
   invoice             Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId, position])
@@ -231,7 +231,7 @@ model ApiKey {
   userId     String    @unique
   keyHash    String    @unique
   /// Začátek klíče pro zobrazení v UI (např. "fai_Ab12cD").
-  prefix     String    @db.VarChar(16)
+  prefix     String
   createdAt  DateTime  @default(now())
   lastUsedAt DateTime?
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -241,10 +241,10 @@ model ApiKey {
 model IdempotencyRecord {
   id             String   @id @default(uuid())
   userId         String
-  key            String   @db.VarChar(255)
+  key            String
   /// Metoda + cesta požadavku.
-  scope          String   @db.VarChar(255)
-  requestHash    String   @db.VarChar(64)
+  scope          String
+  requestHash    String
   /// null = požadavek se právě zpracovává.
   responseStatus Int?
   responseBody   Json?
@@ -274,15 +274,15 @@ model ReceivedDocument {
   id                  String            @id @default(uuid())
   subjectId           String
   /// Evidenční číslo dokladu dodavatele (KH c_evid_dd).
-  documentNumber      String            @db.VarChar(60)
+  documentNumber      String
   supplierName        String
-  supplierIco         String?           @db.VarChar(8)
+  supplierIco         String?
   /// DIČ (CZ…) nebo VAT ID z jiného členského státu včetně kódu státu.
-  supplierVatId       String?           @db.VarChar(20)
+  supplierVatId       String?
   supplierStreet      String?
   supplierCity        String?
   supplierPostalCode  String?
-  supplierCountryCode String            @default("CZ") @db.VarChar(2)
+  supplierCountryCode String            @default("CZ")
   description         String?
   issueDate           DateTime?
   /// DUZP / datum povinnosti přiznat daň.
@@ -292,12 +292,12 @@ model ReceivedDocument {
   dueDate             DateTime?
   paidAt              DateTime?
   vatRegime           ReceivedVatRegime
-  reverseChargeCode   String?           @db.VarChar(4)
-  totalWithoutVat     Decimal           @db.Decimal(15, 2)
+  reverseChargeCode   String?
+  totalWithoutVat     Decimal
   /// DPH z dokladu (tuzemsko) nebo vyměřená příjemcem (přenesení, EU).
-  totalVat            Decimal           @db.Decimal(15, 2)
+  totalVat            Decimal
   /// Částka k úhradě dodavateli.
-  totalPayable        Decimal           @db.Decimal(15, 2)
+  totalPayable        Decimal
   note                String?
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
@@ -315,8 +315,8 @@ model ReceivedDocumentLine {
   documentId String
   position   Int
   vatRate    Int
-  base       Decimal          @db.Decimal(15, 2)
-  vat        Decimal          @db.Decimal(15, 2)
+  base       Decimal
+  vat        Decimal
   document   ReceivedDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@index([documentId, position])
@@ -327,7 +327,7 @@ model ReceivedDocumentAttachment {
   id          String           @id @default(uuid())
   documentId  String
   fileName    String
-  contentType String           @db.VarChar(100)
+  contentType String
   size        Int
   storageKey  String           @unique
   createdAt   DateTime         @default(now())
