@@ -566,6 +566,11 @@ Umožnit vygenerovat profesionální PDF faktury v českém formátu včetně QR
    - `X-VS` (variabilní symbol).
 3. Pokud nelze účet převést do validního vstupu pro SPD, export je blokován s chybou.
 4. QR se generuje z aktuálních údajů faktury v okamžiku exportu.
+5. QR platba v aplikaci (CR-0062): u vystavené faktury (`issued|overdue|paid`) lze QR kód zobrazit i přímo v aplikaci – tlačítko `QR platba` v detailu faktury a položka `QR platba` v menu řádku seznamu (u neuhrazených faktur).
+   - Dialog ukazuje QR kód (stejný obsah jako v PDF) a údaje s tlačítkem pro kopírování: částka, číslo účtu, IBAN, variabilní symbol; dále splatnost.
+   - U neuhrazené faktury nabízí tlačítko `Zaplaceno dnes`, které fakturu označí jako uhrazenou k dnešnímu datu.
+   - U uhrazené faktury dialog upozorní, že faktura už je uhrazená.
+   - QR kód má vždy bílé pozadí (čitelnost v bankovních aplikacích).
 
 ### 4.6 Verze PDF a chování při editaci `issued`
 1. Při každém exportu se vygeneruje PDF z aktuálního stavu faktury.

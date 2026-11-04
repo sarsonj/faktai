@@ -152,6 +152,12 @@ export class InvoiceController {
     response.send(pdf.content);
   }
 
+  /** QR platba vystavené faktury – SPD payload, platební údaje a SVG (CR-0062). */
+  @Get(':id/payment-qr')
+  async getPaymentQr(@Req() request: RequestWithUser, @Param('id') id: string) {
+    return this.invoiceService.getPaymentQr(request.user!.id, id);
+  }
+
   @Get(':id')
   async getInvoice(@Req() request: RequestWithUser, @Param('id') id: string) {
     return this.invoiceService.getInvoiceDetail(request.user!.id, id);

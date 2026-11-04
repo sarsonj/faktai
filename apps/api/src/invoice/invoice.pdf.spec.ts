@@ -123,3 +123,41 @@ describe('InvoiceService PDF export', () => {
     expect(countPages(pdf)).toBe(1);
   });
 });
+
+describe('InvoiceService payment QR', () => {
+  function serviceFor(overrides: Record<string, unknown>) {
+    const invoice = buildInvoice(2, overrides);
+    const prisma = {
+      subject: { findUnique: jest.fn().mockResolvedValue(invoice.subject) },
+      invoice: { findFirst: jest.fn().mockResolvedValue(invoice) },
+    } as any;
+    return new InvoiceService(prisma, new InvoicePdfRenderer());
+  }
+
+  it('returns payment details and an SVG QR code for an issued invoice', async () => {
+    const qr = await serviceFor({}).getPaymentQr('user-1', 'inv-1');
+    expect(qr.bankAccount).toBe('123456789/0100');
+    expect(qr.amount).toBe('242');
+    expect(qr.variableSymbol).toBe('2026000001');
+    expect(qr.dueDate).toBe('2026-11-17');
+    expect(qr.paid).toBe(false);
+    expect(qr.spdPayload).toBe(
+      `SPD*1.0*ACC:${qr.iban}*AM:242*CC:CZK*X-VS:2026000001`,
+    );
+    expect(qr.qrSvg).toContain('<svg');
+  });
+
+  it('flags a paid invoice', async () => {
+    const qr = await serviceFor({ status: 'paid' }).getPaymentQr(
+      'user-1',
+      'inv-1',
+    );
+    expect(qr.paid).toBe(true);
+  });
+
+  it('refuses drafts', async () => {
+    await expect(
+      serviceFor({ status: 'draft' }).getPaymentQr('user-1', 'inv-1'),
+    ).rejects.toThrow('vystavené faktury');
+  });
+});

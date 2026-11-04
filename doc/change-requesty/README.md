@@ -78,3 +78,4 @@
 | `CR-0059` | Redesign UI aplikace (varianta A, Tailwind + shadcn/ui) | `Implementováno` | `Should` |
 | `CR-0060` | Přijaté doklady s přílohami a odpočtem DPH | `Implementováno` | `Must` |
 | `CR-0061` | Jedna aplikace a SQLite místo PostgreSQL | `Implementováno` | `Should` |
+| `CR-0062` | Zobrazení QR platby vystavené faktury v aplikaci | `Implementováno` | `Should` |

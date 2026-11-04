@@ -65,6 +65,23 @@ export async function markInvoicePaid(invoiceId: string, paidAt?: string): Promi
   });
 }
 
+/** QR platba vystavené faktury (CR-0062). */
+export type InvoicePaymentQr = {
+  iban: string;
+  bankAccount: string;
+  amount: string;
+  currency: 'CZK';
+  variableSymbol: string;
+  dueDate: string;
+  paid: boolean;
+  spdPayload: string;
+  qrSvg: string;
+};
+
+export async function getInvoicePaymentQr(invoiceId: string): Promise<InvoicePaymentQr> {
+  return apiRequest<InvoicePaymentQr>(`/invoices/${invoiceId}/payment-qr`);
+}
+
 export async function markInvoiceUnpaid(invoiceId: string): Promise<InvoiceDetail> {
   return apiRequest<InvoiceDetail>(`/invoices/${invoiceId}/mark-unpaid`, {
     method: 'POST',

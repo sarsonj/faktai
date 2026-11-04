@@ -409,6 +409,7 @@ Pravidla:
 
 ### 5.4 PDF export (Scope 4)
 1. `GET /invoices/:id/pdf`
+2. `GET /invoices/:id/payment-qr` (CR-0062) – JSON `{ iban, bankAccount, amount, currency, variableSymbol, dueDate, paid, spdPayload, qrSvg }`; stejné stavy jako PDF (`draft`/`cancelled` → `409`). Platební údaje počítá `invoice/payment/payment-qr.ts` (`invoicePayment`) společně pro PDF i toto API; QR jako SVG přes `qrcode`.
 
 Pravidla:
 - Povolené stavy: `issued|paid|overdue`.

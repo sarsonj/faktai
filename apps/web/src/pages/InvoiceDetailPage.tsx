@@ -9,6 +9,7 @@ import {
   Hash,
   MoreHorizontal,
   Pencil,
+  QrCode,
   RefreshCw,
   Send,
   Undo2,
@@ -29,6 +30,7 @@ import { formatDateCz, toLocalDateInputValue } from '../date-utils';
 import { formatMoney } from '../lib/format';
 import { REVERSE_CHARGE_CODES, TAX_CLASSIFICATION_LABELS } from '../vat-regime';
 import { useConfirm } from '../components/app/confirm-context';
+import { PaymentQrDialog } from '../features/invoice-payment/PaymentQrDialog';
 import { StatusBadge } from '../components/app/StatusBadge';
 import type { InvoiceDetail } from '../types';
 import { Button } from '@/components/ui/button';
@@ -81,6 +83,7 @@ export function InvoiceDetailPage() {
   const [searchParams] = useSearchParams();
 
   const [paidDialogOpen, setPaidDialogOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   const [paidAtInput, setPaidAtInput] = useState('');
   const [numberDialogOpen, setNumberDialogOpen] = useState(false);
   const [numberInput, setNumberInput] = useState('');
@@ -269,6 +272,12 @@ export function InvoiceDetailPage() {
             <Button onClick={openPaidDialog} disabled={busy}>
               <BadgeCheck />
               Označit jako uhrazenou
+            </Button>
+          )}
+          {canPdf && (
+            <Button variant="outline" onClick={() => setQrOpen(true)}>
+              <QrCode />
+              QR platba
             </Button>
           )}
           {canPdf && (
@@ -488,6 +497,14 @@ export function InvoiceDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {canPdf && (
+        <PaymentQrDialog
+          invoiceId={invoice.id}
+          invoiceNumber={invoice.invoiceNumber}
+          open={qrOpen}
+          onOpenChange={setQrOpen}
+        />
+      )}
     </div>
   );
 }

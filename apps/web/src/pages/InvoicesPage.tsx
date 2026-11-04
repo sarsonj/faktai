@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Copy, Download, Eye, FilePlus2, MoreHorizontal, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy, Download, Eye, FilePlus2, MoreHorizontal, Pencil, Plus, QrCode, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { deleteInvoice, downloadInvoicePdf, listInvoices } from '../invoice-api';
+import { PaymentQrDialog } from '../features/invoice-payment/PaymentQrDialog';
 import { formatDateCz } from '../date-utils';
 import { formatMoney } from '../lib/format';
 import { useConfirm } from '../components/app/confirm-context';
@@ -57,6 +58,7 @@ export function InvoicesPage() {
 
   // Vyhledávání: lokální text, do URL se propíše se zpožděním.
   const [searchText, setSearchText] = useState(q);
+  const [qrInvoice, setQrInvoice] = useState<InvoiceListItem | null>(null);
 
   const setQuery = (
     patch: Partial<{ status: InvoiceListFilter; page: number; pageSize: PageSize; year: number; q: string }>,
@@ -298,6 +300,12 @@ export function InvoicesPage() {
                           <Copy />
                           Kopírovat
                         </DropdownMenuItem>
+                        {(item.status === 'issued' || item.status === 'overdue') && (
+                          <DropdownMenuItem onSelect={() => setQrInvoice(item)}>
+                            <QrCode />
+                            QR platba
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem variant="destructive" onSelect={() => void onDelete(item)}>
                           <Trash2 />
@@ -351,6 +359,17 @@ export function InvoicesPage() {
           </div>
         )}
       </div>
+      )}
+
+      {qrInvoice && (
+        <PaymentQrDialog
+          invoiceId={qrInvoice.id}
+          invoiceNumber={qrInvoice.invoiceNumber}
+          open
+          onOpenChange={(open) => {
+            if (!open) setQrInvoice(null);
+          }}
+        />
       )}
     </div>
   );

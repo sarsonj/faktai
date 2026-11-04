@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, Subject, TaxClassification } from '@prisma/client';
-import QRCode from 'qrcode';
+import QRCode, { toString as renderQrCode } from 'qrcode';
 import { PrismaService } from '../prisma/prisma.service';
 import { addDaysDateOnly, todayDateOnly } from '../utils/date-only';
 import { ChangeInvoiceNumberDto } from './dto/change-invoice-number.dto';
@@ -28,7 +28,7 @@ import {
   buildSupplierSnapshot,
   resolveSupplierSnapshot,
 } from './domain/supplier-snapshot';
-import { buildSpdPayload, toCzIban } from './payment/payment-qr';
+import { invoicePayment, type InvoicePayment } from './payment/payment-qr';
 import {
   InvoicePdfRenderer,
   createInvoicePdfHash,
@@ -402,6 +402,50 @@ export class InvoiceService {
       year,
       availableYears,
       statusCounts,
+    };
+  }
+
+  /**
+   * QR platba vystavené faktury pro zobrazení v aplikaci (CR-0062) – stejné
+   * údaje jako QR kód v PDF, jen jako SVG.
+   */
+  async getPaymentQr(
+    userId: string,
+    invoiceId: string,
+  ): Promise<
+    InvoicePayment & {
+      currency: 'CZK';
+      dueDate: string;
+      paid: boolean;
+      qrSvg: string;
+    }
+  > {
+    const subject = await this.getSubjectByUserOrThrow(userId);
+    const invoice = await this.getInvoiceBySubjectOrThrow(
+      subject.id,
+      invoiceId,
+    );
+    if (invoice.status === 'draft' || invoice.status === 'cancelled') {
+      throw new ConflictException(
+        'QR platba je k dispozici jen u vystavené faktury.',
+      );
+    }
+    const payment = invoicePayment(
+      resolveSupplierSnapshot(invoice),
+      invoice.totalWithVat.toString(),
+      invoice.variableSymbol,
+    );
+    const qrSvg = await renderQrCode(payment.spdPayload, {
+      type: 'svg',
+      errorCorrectionLevel: 'M',
+      margin: 2,
+    });
+    return {
+      ...payment,
+      currency: 'CZK',
+      dueDate: invoice.dueDate.toISOString().slice(0, 10),
+      paid: invoice.status === 'paid',
+      qrSvg,
     };
   }
 
@@ -914,13 +958,8 @@ export class InvoiceService {
     }
 
     const supplier = resolveSupplierSnapshot(invoice);
-    const iban = toCzIban(
-      supplier.bankAccountPrefix,
-      supplier.bankAccountNumber,
-      supplier.bankCode,
-    );
-    const spdPayload = buildSpdPayload(
-      iban,
+    const { iban, spdPayload } = invoicePayment(
+      supplier,
       invoice.totalWithVat.toString(),
       invoice.variableSymbol,
     );

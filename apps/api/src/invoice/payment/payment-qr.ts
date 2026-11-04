@@ -51,3 +51,39 @@ export function buildSpdPayload(
 ): string {
   return `SPD*1.0*ACC:${iban}*AM:${amount}*CC:CZK*X-VS:${variableSymbol}`;
 }
+
+export type InvoicePayment = {
+  iban: string;
+  /** Číslo účtu v českém formátu (prefix-číslo/kód banky). */
+  bankAccount: string;
+  amount: string;
+  variableSymbol: string;
+  spdPayload: string;
+};
+
+/** Platební údaje faktury pro QR platbu (PDF i zobrazení v aplikaci, CR-0062). */
+export function invoicePayment(
+  account: {
+    bankAccountPrefix: string | null;
+    bankAccountNumber: string;
+    bankCode: string;
+  },
+  amount: string,
+  variableSymbol: string,
+): InvoicePayment {
+  const iban = toCzIban(
+    account.bankAccountPrefix,
+    account.bankAccountNumber,
+    account.bankCode,
+  );
+  const number = account.bankAccountPrefix
+    ? `${account.bankAccountPrefix}-${account.bankAccountNumber}`
+    : account.bankAccountNumber;
+  return {
+    iban,
+    bankAccount: `${number}/${account.bankCode}`,
+    amount,
+    variableSymbol,
+    spdPayload: buildSpdPayload(iban, amount, variableSymbol),
+  };
+}
